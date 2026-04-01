@@ -1781,6 +1781,16 @@ function onModeToggle(field, mode) {
   onInputChange();
 }
 
+function fieldPctEur(dataFieldEur, valEur, dataFieldPct, valPct, computedEur, mode) {
+  if (mode === 'eur') {
+    return '<input type="number" data-field="' + dataFieldEur + '" value="' + (valEur||'') + '" onchange="onInputChange()">';
+  }
+  return '<div style="display:flex;gap:6px;align-items:center;">' +
+    '<input type="number" data-field="' + dataFieldPct + '" value="' + (valPct||'') + '" onchange="onInputChange();renderCurrentTab()" style="flex:1;">' +
+    '<span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;">= ' + new Intl.NumberFormat('fr-FR').format(Math.round(computedEur||0)) + ' €</span>' +
+    '</div>';
+}
+
 function renderInputs(p) {
   const i = p.inputs;
   // Calculs automatiques
@@ -1812,13 +1822,7 @@ function renderInputs(p) {
             <button onclick="onModeToggle('frais_notaire_mode','eur')" style="\${toggleStyle(i.frais_notaire_mode==='eur')}">€</button>
           </span>
         </label>
-        \${i.frais_notaire_mode === 'eur'
-          ? `<input type="number" data-field="frais_notaire" value="\${i.frais_notaire}" onchange="onInputChange()">`
-          : `<div style="display:flex;gap:6px;align-items:center;">
-               <input type="number" data-field="frais_notaire_pct" value="\${i.frais_notaire_pct}" onchange="onInputChange();renderCurrentTab()" style="flex:1;">
-               <span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;">= \${new Intl.NumberFormat('fr-FR').format(notaireEur)} €</span>
-             </div>`
-        }
+        ${fieldPctEur('frais_notaire', i.frais_notaire, 'frais_notaire_pct', i.frais_notaire_pct, notaireEur, i.frais_notaire_mode)}
       </div>
 
       <div class="field">
@@ -1829,13 +1833,7 @@ function renderInputs(p) {
             <button onclick="onModeToggle('frais_agence_mode','eur')" style="\${toggleStyle(i.frais_agence_mode!=='pct')}">€</button>
           </span>
         </label>
-        \${i.frais_agence_mode === 'pct'
-          ? `<div style="display:flex;gap:6px;align-items:center;">
-               <input type="number" data-field="frais_agence_pct" value="\${i.frais_agence_pct}" onchange="onInputChange();renderCurrentTab()" style="flex:1;">
-               <span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;">= \${new Intl.NumberFormat('fr-FR').format(agenceEur)} €</span>
-             </div>`
-          : `<input type="number" data-field="frais_agence" value="\${i.frais_agence}" onchange="onInputChange()">`
-        }
+        ${fieldPctEur('frais_agence', i.frais_agence, 'frais_agence_pct', i.frais_agence_pct, agenceEur, i.frais_agence_mode)}
       </div>
 
       <div class="field"><label>Travaux (€)</label><input type="number" data-field="travaux" value="\${i.travaux}" onchange="onInputChange()"></div>
@@ -1854,13 +1852,7 @@ function renderInputs(p) {
             <button onclick="onModeToggle('emprunt_mode','eur')" style="\${toggleStyle(i.emprunt_mode!=='pct')}">€</button>
           </span>
         </label>
-        \${i.emprunt_mode === 'pct'
-          ? `<div style="display:flex;gap:6px;align-items:center;">
-               <input type="number" data-field="emprunt_pct" value="\${i.emprunt_pct}" onchange="onInputChange();renderCurrentTab()" style="flex:1;">
-               <span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;">= \${new Intl.NumberFormat('fr-FR').format(empruntEur)} €</span>
-             </div>`
-          : `<input type="number" data-field="montant_emprunt" value="\${i.montant_emprunt}" onchange="onInputChange()">`
-        }
+        ${fieldPctEur('montant_emprunt', i.montant_emprunt, 'emprunt_pct', i.emprunt_pct, empruntEur, i.emprunt_mode)}
       </div>
 
       <div class="field"><label>Durée (ans)</label><input type="number" data-field="duree_pret" value="\${i.duree_pret}" onchange="onInputChange()"></div>
@@ -1868,7 +1860,7 @@ function renderInputs(p) {
       <div class="field">
         <label>Assurance décès (% capital/an)</label>
         <input type="number" data-field="assurance_deces_pct" value="\${i.assurance_deces_pct}" step="0.01" onchange="onInputChange();renderCurrentTab()">
-        \${assuranceDeces > 0 ? `<div class="field-hint">= \${new Intl.NumberFormat('fr-FR').format(assuranceDeces)} €/an — inclus dans le coût total</div>` : '<div class="field-hint">Remboursement du capital si décès de l'emprunteur</div>'}
+        ${assuranceDeces > 0 ? '<div class="field-hint">= ' + new Intl.NumberFormat('fr-FR').format(assuranceDeces) + ' €/an — inclus dans le coût total</div>' : '<div class="field-hint">Remboursement du capital si décès de l\'emprunteur</div>'}
       </div>
     </div>
 
