@@ -1781,25 +1781,53 @@ function calcAgenceFromMode(i) {
 function onModeToggle(field, mode) {
   const p = state.projects[state.activeId];
   if (!p) return;
+  // Save all current input values before re-rendering
+  document.querySelectorAll('[data-field]').forEach(el => {
+    const f = el.dataset.field;
+    const t = el.dataset.type;
+    if (f && p.inputs) {
+      if (t === 'bool') p.inputs[f] = el.value === 'true';
+      else if (el.type === 'number') p.inputs[f] = parseFloat(el.value)||0;
+      else p.inputs[f] = el.value;
+    }
+  });
   p.inputs[field] = mode;
   renderCurrentTab();
-  onInputChange();
+  persistState();
+}
+
+function renderCurrentTab() {
+  const p = state.projects[state.activeId];
+  if (!p) return;
+  const content = document.getElementById('mainContent');
+  if (!content) return;
+  const tab = state.activeTab || 'inputs';
+  if (tab === 'inputs') content.innerHTML = renderInputs(p);
+  else if (tab === 'referentiel') content.innerHTML = renderReferentiel(p);
 }
 
 function fieldPctEur(dataFieldEur, valEur, dataFieldPct, valPct, computedEur, mode) {
   if (mode === 'eur') {
-    return '<input type="number" data-field="' + dataFieldEur + '" value="' + (valEur||'') + '" onchange="onInputChange()">';
+    return '<input type="number" data-field="' + dataFieldEur + '" value="' + (valEur||'') + '" onchange="onInputChange()" onkeyup="onInputChange()">';
   }
   const fmt = new Intl.NumberFormat('fr-FR').format(Math.round(computedEur||0));
   return '<div style="display:flex;gap:8px;align-items:center;">' +
-    '<input type="number" data-field="' + dataFieldPct + '" value="' + (valPct||'') + '" onchange="onInputChange();renderCurrentTab()" style="flex:1;min-width:60px;">' +
-    '<span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;font-family:inherit;">≈ ' + fmt + ' €</span>' +
+    '<input type="number" data-field="' + dataFieldPct + '" value="' + (valPct||'') + '" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()" style="flex:1;min-width:60px;">' +
+    '<span style="font-size:0.74rem;color:var(--text3);white-space:nowrap;">≈ ' + fmt + ' €</span>' +
     '</div>';
+}
+
+function pctEurSwitch(fieldName, mode) {
+  const active = 'display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:3px;border:none;cursor:pointer;font-size:0.7rem;font-weight:700;background:var(--navy);color:#fff;font-family:inherit;';
+  const inactive = 'display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:3px;border:1px solid var(--border2);cursor:pointer;font-size:0.7rem;font-weight:600;background:transparent;color:var(--text3);font-family:inherit;';
+  return '<span style="display:inline-flex;gap:2px;background:var(--surface2);border-radius:4px;padding:2px;">' +
+    '<button onclick="onModeToggle(\'' + fieldName + '_mode\',\'pct\')" style="' + (mode!=='eur' ? active : inactive) + '">%</button>' +
+    '<button onclick="onModeToggle(\'' + fieldName + '_mode\',\'eur\')" style="' + (mode==='eur' ? active : inactive) + '">€</button>' +
+    '</span>';
 }
 
 function renderInputs(p) {
   const i = p.inputs;
-  // Calculs automatiques
   const anneeDebut = i.date_acquisition ? new Date(i.date_acquisition).getFullYear() : new Date().getFullYear();
   const anneeCession = anneeDebut + (parseInt(i.duree_analyse)||20);
   const empruntEur = calcEmpruntFromMode(i);
@@ -1807,39 +1835,33 @@ function renderInputs(p) {
   const agenceEur = calcAgenceFromMode(i);
   const assuranceDeces = Math.round((parseFloat(i.assurance_deces_pct)||0) / 100 * empruntEur);
 
-  const toggleStyle = (active) => active
-    ? 'padding:2px 10px;border-radius:3px;border:none;cursor:pointer;font-size:0.68rem;font-weight:700;background:var(--navy);color:#fff;font-family:inherit;letter-spacing:0.04em;transition:all 0.15s;'
-    : 'padding:2px 10px;border-radius:3px;border:1px solid var(--border2);cursor:pointer;font-size:0.68rem;font-weight:600;background:#fff;color:var(--text3);font-family:inherit;letter-spacing:0.04em;transition:all 0.15s;';
-
   return `
   <div style="display:flex;gap:14px;padding-bottom:16px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto;">
 
     <!-- Card: Le Bien -->
     <div class="form-card" style="min-width:185px;flex:1;">
       <div class="form-card-title"><span class="icon">⌂</span> Le Bien</div>
-      <div class="field"><label>Prix acquisition (€)</label><input type="number" data-field="prix_acquisition" value="\${i.prix_acquisition}" onchange="onInputChange();renderCurrentTab()"></div>
-      <div class="field"><label>Date d'acquisition</label><input type="date" data-field="date_acquisition" value="\${i.date_acquisition||''}" onchange="onInputChange();renderCurrentTab()" style="font-family:inherit;font-size:0.8rem;"></div>
-
-      <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;">
-          <span>Frais de notaire</span>
-          <span>
-            <button onclick="onModeToggle('frais_notaire_mode','pct')" style="\${toggleStyle(i.frais_notaire_mode!=='eur')}">%</button>
-            <button onclick="onModeToggle('frais_notaire_mode','eur')" style="\${toggleStyle(i.frais_notaire_mode==='eur')}">€</button>
-          </span>
-        </label>
-        ${fieldPctEur('frais_notaire', i.frais_notaire, 'frais_notaire_pct', i.frais_notaire_pct, notaireEur, i.frais_notaire_mode)}
+      <div class="field"><label>Prix acquisition (€)</label>
+        <input type="number" data-field="prix_acquisition" value="\${i.prix_acquisition}" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()">
+      </div>
+      <div class="field"><label>Date d'acquisition</label>
+        <input type="date" data-field="date_acquisition" value="\${i.date_acquisition||''}" onchange="onInputChange();renderCurrentTab()" style="font-family:inherit;font-size:0.8rem;">
       </div>
 
       <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;">
-          <span>Frais d'agence</span>
-          <span>
-            <button onclick="onModeToggle('frais_agence_mode','pct')" style="\${toggleStyle(i.frais_agence_mode==='pct')}">%</button>
-            <button onclick="onModeToggle('frais_agence_mode','eur')" style="\${toggleStyle(i.frais_agence_mode!=='pct')}">€</button>
-          </span>
+        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span>Frais de notaire</span>
+          \${pctEurSwitch('frais_notaire', i.frais_notaire_mode)}
         </label>
-        ${fieldPctEur('frais_agence', i.frais_agence, 'frais_agence_pct', i.frais_agence_pct, agenceEur, i.frais_agence_mode)}
+        \${fieldPctEur('frais_notaire', i.frais_notaire, 'frais_notaire_pct', i.frais_notaire_pct, notaireEur, i.frais_notaire_mode)}
+      </div>
+
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span>Frais d'agence</span>
+          \${pctEurSwitch('frais_agence', i.frais_agence_mode)}
+        </label>
+        \${fieldPctEur('frais_agence', i.frais_agence, 'frais_agence_pct', i.frais_agence_pct, agenceEur, i.frais_agence_mode)}
       </div>
 
       <div class="field"><label>Travaux (€)</label><input type="number" data-field="travaux" value="\${i.travaux}" onchange="onInputChange()"></div>
@@ -1851,22 +1873,25 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">🏦</span> Financement</div>
 
       <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;">
+        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
           <span>Montant emprunté</span>
-          <span>
-            <button onclick="onModeToggle('emprunt_mode','pct')" style="\${toggleStyle(i.emprunt_mode==='pct')}">%</button>
-            <button onclick="onModeToggle('emprunt_mode','eur')" style="\${toggleStyle(i.emprunt_mode!=='pct')}">€</button>
-          </span>
+          \${pctEurSwitch('emprunt', i.emprunt_mode)}
         </label>
-        ${fieldPctEur('montant_emprunt', i.montant_emprunt, 'emprunt_pct', i.emprunt_pct, empruntEur, i.emprunt_mode)}
+        \${fieldPctEur('montant_emprunt', i.montant_emprunt, 'emprunt_pct', i.emprunt_pct, empruntEur, i.emprunt_mode)}
       </div>
 
       <div class="field"><label>Durée (ans)</label><input type="number" data-field="duree_pret" value="\${i.duree_pret}" onchange="onInputChange()"></div>
       <div class="field"><label>Taux nominal (%)</label><input type="number" data-field="taux_pret" value="\${i.taux_pret}" onchange="onInputChange()"></div>
       <div class="field">
-        <label>Assurance décès (% capital/an)</label>
-        <input type="number" data-field="assurance_deces_pct" value="\${i.assurance_deces_pct}" step="0.01" onchange="onInputChange();renderCurrentTab()">
-        ${assuranceDeces > 0 ? '<div class="field-hint">= ' + new Intl.NumberFormat('fr-FR').format(assuranceDeces) + ' €/an — inclus dans le coût total</div>' : '<div class="field-hint">Remboursement du capital si décès de l\'emprunteur</div>'}
+        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span>Assurance décès</span>
+          <span style="font-size:0.65rem;color:var(--text3);">% capital/an</span>
+        </label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" data-field="assurance_deces_pct" value="\${i.assurance_deces_pct}" step="0.01" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()" style="flex:1;">
+          \${empruntEur > 0 ? '<span style="font-size:0.74rem;color:var(--text3);white-space:nowrap;">≈ ' + new Intl.NumberFormat("fr-FR").format(assuranceDeces) + ' €/an</span>' : ''}
+        </div>
+        <div class="field-hint">Si décès, l'assurance rembourse le capital restant dû</div>
       </div>
     </div>
 
@@ -1875,14 +1900,18 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">📅</span> Analyse & Cession</div>
       <div class="field">
         <label>Année de début</label>
-        <input type="number" value="\${anneeDebut}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly>
+        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">\${anneeDebut}</div>
         <div class="field-hint">Déduite de la date d'acquisition</div>
       </div>
-      <div class="field"><label>Durée analyse (ans)</label><input type="number" data-field="duree_analyse" value="\${i.duree_analyse}" onchange="onInputChange();renderCurrentTab()"></div>
+      <div class="field"><label>Durée analyse (ans)</label>
+        <input type="number" data-field="duree_analyse" value="\${i.duree_analyse}"
+          onchange="onInputChange();renderCurrentTab()"
+          onkeyup="onInputChange();renderCurrentTab()">
+      </div>
       <div class="field"><label>Prix de cession (€)</label><input type="number" data-field="prix_cession" value="\${i.prix_cession}" onchange="onInputChange()"></div>
       <div class="field">
         <label>Année de cession</label>
-        <input type="number" value="\${anneeCession}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly>
+        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">\${anneeCession}</div>
         <div class="field-hint">= Année début + durée analyse</div>
       </div>
     </div>
@@ -1894,9 +1923,9 @@ function renderInputs(p) {
       <div class="field"><label>Durée immo (ans)</label><input type="number" data-field="duree_amort_immo" value="\${i.duree_amort_immo}" onchange="onInputChange()"></div>
       <div class="field"><label>Durée travaux (ans)</label><input type="number" data-field="duree_amort_travaux" value="\${i.duree_amort_travaux}" onchange="onInputChange()"></div>
       <div class="field"><label>Durée meubles (ans)</label><input type="number" data-field="duree_amort_meubles" value="\${i.duree_amort_meubles}" onchange="onInputChange()"></div>
-      <div class="field" style="background:var(--navy-dim2);border-radius:6px;padding:8px;">
-        <div style="font-size:0.72rem;font-weight:600;color:var(--navy);">⚖ LdF 2025 — Réintégration amort. LMNP à la revente active</div>
-        <div class="field-hint">Les amortissements cumulés sont réintégrés dans le calcul de la plus-value LMNP</div>
+      <div style="background:var(--navy-dim2);border-radius:6px;padding:8px;font-size:0.68rem;color:var(--navy);font-weight:600;">
+        ⚖ LdF 2025 — Réintégration amort. LMNP active
+        <div class="field-hint">Amortissements déduits réintégrés dans la PV</div>
       </div>
     </div>
 
@@ -1958,26 +1987,6 @@ function renderInputs(p) {
 
   </div>
   `;
-}
-
-// Scénarios actifs dans la synthèse
-let activeScenarios = { lmnp: true, foncier: true, is: true, micro_bic: true, micro_foncier: true, lmp: false };
-
-function toggleScenario(sc) {
-  const next = { ...activeScenarios, [sc]: !activeScenarios[sc] };
-  if (!next.lmnp && !next.foncier && !next.is && !next.micro_bic && !next.micro_foncier && !next.lmp) return;
-  activeScenarios = next;
-  showTab('synthese');
-}
-
-function renderCurrentTab() {
-  const p = state.projects[state.activeId];
-  if (!p) return;
-  const content = document.getElementById('mainContent');
-  if (!content) return;
-  const tab = state.activeTab || 'inputs';
-  if (tab === 'inputs') content.innerHTML = renderInputs(p);
-  else if (tab === 'referentiel') content.innerHTML = renderReferentiel(p);
 }
 
 function calcRecettes() {
