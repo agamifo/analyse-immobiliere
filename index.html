@@ -1842,30 +1842,30 @@ function renderInputs(p) {
     <div class="form-card" style="min-width:185px;flex:1;">
       <div class="form-card-title"><span class="icon">⌂</span> Le Bien</div>
       <div class="field"><label>Prix acquisition (€)</label>
-        <input type="number" data-field="prix_acquisition" value="\${i.prix_acquisition}" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()">
+        <input type="number" data-field="prix_acquisition" value="${i.prix_acquisition}" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()">
       </div>
       <div class="field"><label>Date d'acquisition</label>
-        <input type="date" data-field="date_acquisition" value="\${i.date_acquisition||''}" onchange="onInputChange();renderCurrentTab()" style="font-family:inherit;font-size:0.8rem;">
+        <input type="date" data-field="date_acquisition" value="${i.date_acquisition||''}" onchange="onInputChange();renderCurrentTab()" style="font-family:inherit;font-size:0.8rem;">
       </div>
 
       <div class="field">
         <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
           <span>Frais de notaire</span>
-          \${pctEurSwitch('frais_notaire', i.frais_notaire_mode)}
+          ${pctEurSwitch('frais_notaire', i.frais_notaire_mode)}
         </label>
-        \${fieldPctEur('frais_notaire', i.frais_notaire, 'frais_notaire_pct', i.frais_notaire_pct, notaireEur, i.frais_notaire_mode)}
+        ${fieldPctEur('frais_notaire', i.frais_notaire, 'frais_notaire_pct', i.frais_notaire_pct, notaireEur, i.frais_notaire_mode)}
       </div>
 
       <div class="field">
         <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
           <span>Frais d'agence</span>
-          \${pctEurSwitch('frais_agence', i.frais_agence_mode)}
+          ${pctEurSwitch('frais_agence', i.frais_agence_mode)}
         </label>
-        \${fieldPctEur('frais_agence', i.frais_agence, 'frais_agence_pct', i.frais_agence_pct, agenceEur, i.frais_agence_mode)}
+        ${fieldPctEur('frais_agence', i.frais_agence, 'frais_agence_pct', i.frais_agence_pct, agenceEur, i.frais_agence_mode)}
       </div>
 
-      <div class="field"><label>Travaux (€)</label><input type="number" data-field="travaux" value="\${i.travaux}" onchange="onInputChange()"></div>
-      <div class="field"><label>Meubles (€)</label><input type="number" data-field="meubles" value="\${i.meubles}" onchange="onInputChange()"></div>
+      <div class="field"><label>Travaux (€)</label><input type="number" data-field="travaux" value="${i.travaux}" onchange="onInputChange()"></div>
+      <div class="field"><label>Meubles (€)</label><input type="number" data-field="meubles" value="${i.meubles}" onchange="onInputChange()"></div>
     </div>
 
     <!-- Card: Financement -->
@@ -1875,21 +1875,21 @@ function renderInputs(p) {
       <div class="field">
         <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
           <span>Montant emprunté</span>
-          \${pctEurSwitch('emprunt', i.emprunt_mode)}
+          ${pctEurSwitch('emprunt', i.emprunt_mode)}
         </label>
-        \${fieldPctEur('montant_emprunt', i.montant_emprunt, 'emprunt_pct', i.emprunt_pct, empruntEur, i.emprunt_mode)}
+        ${fieldPctEur('montant_emprunt', i.montant_emprunt, 'emprunt_pct', i.emprunt_pct, empruntEur, i.emprunt_mode)}
       </div>
 
-      <div class="field"><label>Durée (ans)</label><input type="number" data-field="duree_pret" value="\${i.duree_pret}" onchange="onInputChange()"></div>
-      <div class="field"><label>Taux nominal (%)</label><input type="number" data-field="taux_pret" value="\${i.taux_pret}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée (ans)</label><input type="number" data-field="duree_pret" value="${i.duree_pret}" onchange="onInputChange()"></div>
+      <div class="field"><label>Taux nominal (%)</label><input type="number" data-field="taux_pret" value="${i.taux_pret}" onchange="onInputChange()"></div>
       <div class="field">
         <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
           <span>Assurance décès</span>
           <span style="font-size:0.65rem;color:var(--text3);">% capital/an</span>
         </label>
         <div style="display:flex;gap:8px;align-items:center;">
-          <input type="number" data-field="assurance_deces_pct" value="\${i.assurance_deces_pct}" step="0.01" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()" style="flex:1;">
-          \${empruntEur > 0 ? '<span style="font-size:0.74rem;color:var(--text3);white-space:nowrap;">≈ ' + new Intl.NumberFormat("fr-FR").format(assuranceDeces) + ' €/an</span>' : ''}
+          <input type="number" data-field="assurance_deces_pct" value="${i.assurance_deces_pct}" step="0.01" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()" style="flex:1;">
+          ${empruntEur > 0 ? '<span style="font-size:0.74rem;color:var(--text3);white-space:nowrap;">≈ ' + new Intl.NumberFormat("fr-FR").format(assuranceDeces) + ' €/an</span>' : ''}
         </div>
         <div class="field-hint">Si décès, l'assurance rembourse le capital restant dû</div>
       </div>
@@ -1900,18 +1900,18 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">📅</span> Analyse & Cession</div>
       <div class="field">
         <label>Année de début</label>
-        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">\${anneeDebut}</div>
+        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">${anneeDebut}</div>
         <div class="field-hint">Déduite de la date d'acquisition</div>
       </div>
       <div class="field"><label>Durée analyse (ans)</label>
-        <input type="number" data-field="duree_analyse" value="\${i.duree_analyse}"
+        <input type="number" data-field="duree_analyse" value="${i.duree_analyse}"
           onchange="onInputChange();renderCurrentTab()"
           onkeyup="onInputChange();renderCurrentTab()">
       </div>
-      <div class="field"><label>Prix de cession (€)</label><input type="number" data-field="prix_cession" value="\${i.prix_cession}" onchange="onInputChange()"></div>
+      <div class="field"><label>Prix de cession (€)</label><input type="number" data-field="prix_cession" value="${i.prix_cession}" onchange="onInputChange()"></div>
       <div class="field">
         <label>Année de cession</label>
-        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">\${anneeCession}</div>
+        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">${anneeCession}</div>
         <div class="field-hint">= Année début + durée analyse</div>
       </div>
     </div>
@@ -1919,10 +1919,10 @@ function renderInputs(p) {
     <!-- Card: Amortissements -->
     <div class="form-card" style="min-width:160px;flex:1;">
       <div class="form-card-title"><span class="icon">📉</span> Amortissements</div>
-      <div class="field"><label>Part terrain (%)</label><input type="number" data-field="part_terrain" value="\${i.part_terrain}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée immo (ans)</label><input type="number" data-field="duree_amort_immo" value="\${i.duree_amort_immo}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée travaux (ans)</label><input type="number" data-field="duree_amort_travaux" value="\${i.duree_amort_travaux}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée meubles (ans)</label><input type="number" data-field="duree_amort_meubles" value="\${i.duree_amort_meubles}" onchange="onInputChange()"></div>
+      <div class="field"><label>Part terrain (%)</label><input type="number" data-field="part_terrain" value="${i.part_terrain}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée immo (ans)</label><input type="number" data-field="duree_amort_immo" value="${i.duree_amort_immo}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée travaux (ans)</label><input type="number" data-field="duree_amort_travaux" value="${i.duree_amort_travaux}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée meubles (ans)</label><input type="number" data-field="duree_amort_meubles" value="${i.duree_amort_meubles}" onchange="onInputChange()"></div>
       <div style="background:var(--navy-dim2);border-radius:6px;padding:8px;font-size:0.68rem;color:var(--navy);font-weight:600;">
         ⚖ LdF 2025 — Réintégration amort. LMNP active
         <div class="field-hint">Amortissements déduits réintégrés dans la PV</div>
@@ -1934,18 +1934,18 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">€</span> Exploitation</div>
       <div class="field"><label>Type de location</label>
         <select data-field="type_location" onchange="onInputChange()">
-          <option value="meuble" \${i.type_location==='meuble'?'selected':''}>Meublée (LMNP/LMP)</option>
-          <option value="nu" \${i.type_location==='nu'?'selected':''}>Nue</option>
+          <option value="meuble" ${i.type_location==='meuble'?'selected':''}>Meublée (LMNP/LMP)</option>
+          <option value="nu" ${i.type_location==='nu'?'selected':''}>Nue</option>
         </select>
       </div>
-      <div class="field"><label>Loyer mensuel (€)</label><input type="number" data-field="montant_loyer" value="\${i.montant_loyer}" onchange="calcRecettes()"></div>
-      <div class="field"><label>Recettes annuelles (€)</label><input type="number" data-field="recettes_annuelles" id="recettes_annuelles_field" value="\${(parseFloat(i.montant_loyer)||0)*12||i.recettes_annuelles}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly></div>
-      <div class="field"><label>Assurance MRH (€/an)</label><input type="number" data-field="assurance" value="\${i.assurance}" onchange="onInputChange()"></div>
-      <div class="field"><label>Copropriété (€/an)</label><input type="number" data-field="copropriete" value="\${i.copropriete}" onchange="onInputChange()"></div>
-      <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="\${i.taxe_fonciere}" onchange="onInputChange()"></div>
-      <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="\${i.honoraires_gestion}" onchange="onInputChange()"></div>
-      <div class="field"><label>Comptable (€/an)</label><input type="number" data-field="comptable" value="\${i.comptable}" onchange="onInputChange()"></div>
-      <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="\${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
+      <div class="field"><label>Loyer mensuel (€)</label><input type="number" data-field="montant_loyer" value="${i.montant_loyer}" onchange="calcRecettes()"></div>
+      <div class="field"><label>Recettes annuelles (€)</label><input type="number" data-field="recettes_annuelles" id="recettes_annuelles_field" value="${(parseFloat(i.montant_loyer)||0)*12||i.recettes_annuelles}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly></div>
+      <div class="field"><label>Assurance MRH (€/an)</label><input type="number" data-field="assurance" value="${i.assurance}" onchange="onInputChange()"></div>
+      <div class="field"><label>Copropriété (€/an)</label><input type="number" data-field="copropriete" value="${i.copropriete}" onchange="onInputChange()"></div>
+      <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="${i.taxe_fonciere}" onchange="onInputChange()"></div>
+      <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="${i.honoraires_gestion}" onchange="onInputChange()"></div>
+      <div class="field"><label>Comptable (€/an)</label><input type="number" data-field="comptable" value="${i.comptable}" onchange="onInputChange()"></div>
+      <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
     </div>
 
     <!-- Card: Fiscalité particulier -->
@@ -1953,25 +1953,25 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">⚖</span> Fiscalité particulier</div>
       <div class="field"><label>TMI</label>
         <select data-field="tmi" onchange="onInputChange()">
-          <option value="0" \${parseFloat(i.tmi)===0?'selected':''}>0%</option>
-          <option value="11" \${parseFloat(i.tmi)===11?'selected':''}>11%</option>
-          <option value="30" \${parseFloat(i.tmi)===30?'selected':''}>30%</option>
-          <option value="41" \${parseFloat(i.tmi)===41?'selected':''}>41%</option>
-          <option value="45" \${parseFloat(i.tmi)===45?'selected':''}>45%</option>
+          <option value="0" ${parseFloat(i.tmi)===0?'selected':''}>0%</option>
+          <option value="11" ${parseFloat(i.tmi)===11?'selected':''}>11%</option>
+          <option value="30" ${parseFloat(i.tmi)===30?'selected':''}>30%</option>
+          <option value="41" ${parseFloat(i.tmi)===41?'selected':''}>41%</option>
+          <option value="45" ${parseFloat(i.tmi)===45?'selected':''}>45%</option>
         </select>
       </div>
       <div class="field"><label>Déclaration conjointe</label>
         <select data-field="declaration_conjoint" data-type="bool" onchange="onInputChange()">
-          <option value="true" \${i.declaration_conjoint?'selected':''}>Oui</option>
-          <option value="false" \${!i.declaration_conjoint?'selected':''}>Non</option>
+          <option value="true" ${i.declaration_conjoint?'selected':''}>Oui</option>
+          <option value="false" ${!i.declaration_conjoint?'selected':''}>Non</option>
         </select>
       </div>
-      <div class="field"><label>Revenu fiscal réf. (€)</label><input type="number" data-field="revenu_fiscal_ref" value="\${i.revenu_fiscal_ref}" onchange="onInputChange()"><div class="field-hint">Détection LMP auto</div></div>
+      <div class="field"><label>Revenu fiscal réf. (€)</label><input type="number" data-field="revenu_fiscal_ref" value="${i.revenu_fiscal_ref}" onchange="onInputChange()"><div class="field-hint">Détection LMP auto</div></div>
       <div class="field"><label>CEHR (%)</label>
         <select data-field="cehr_taux" onchange="onInputChange()">
-          <option value="0" \${parseFloat(i.cehr_taux)===0?'selected':''}>0% — Non assujetti</option>
-          <option value="3" \${parseFloat(i.cehr_taux)===3?'selected':''}>3% — RFR 250k–500k€</option>
-          <option value="4" \${parseFloat(i.cehr_taux)===4?'selected':''}>4% — RFR > 500k€</option>
+          <option value="0" ${parseFloat(i.cehr_taux)===0?'selected':''}>0% — Non assujetti</option>
+          <option value="3" ${parseFloat(i.cehr_taux)===3?'selected':''}>3% — RFR 250k–500k€</option>
+          <option value="4" ${parseFloat(i.cehr_taux)===4?'selected':''}>4% — RFR > 500k€</option>
         </select>
         <div class="field-hint">Contribution exceptionnelle hauts revenus</div>
       </div>
@@ -1980,9 +1980,9 @@ function renderInputs(p) {
     <!-- Card: IFI -->
     <div class="form-card" style="min-width:150px;flex:1;">
       <div class="form-card-title"><span class="icon">🏛</span> IFI</div>
-      <div class="field"><label>Actif immobilier pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="\${i.ifi_base_pre}" onchange="onInputChange()"></div>
-      <div class="field"><label>Passif (dettes) pré-acq. (€)</label><input type="number" data-field="ifi_passif_pre" value="\${i.ifi_passif_pre}" onchange="onInputChange()"></div>
-      <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="\${i.ifi_ir_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Actif immobilier pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="${i.ifi_base_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Passif (dettes) pré-acq. (€)</label><input type="number" data-field="ifi_passif_pre" value="${i.ifi_passif_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="${i.ifi_ir_pre}" onchange="onInputChange()"></div>
     </div>
 
   </div>
