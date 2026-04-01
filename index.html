@@ -2847,15 +2847,25 @@ function hideLoginScreen() {
   document.getElementById('loginScreen').style.display = 'none';
 }
 
+const ALLOWED_DOMAINS = ['agami.com', 'agami.fr'];
+
 async function sendMagicLink() {
-  const email = document.getElementById('loginEmail').value.trim();
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   if (!email) return;
+  // Vérification domaine
+  const domain = email.split('@')[1];
+  if (!domain || !ALLOWED_DOMAINS.includes(domain)) {
+    document.getElementById('loginMsg').textContent = 'Accès réservé aux emails Agami (@agami.com ou @agami.fr).';
+    document.getElementById('loginMsg').style.color = 'var(--red)';
+    return;
+  }
   const btn = document.getElementById('loginBtn');
   btn.disabled = true;
   btn.textContent = 'Envoi…';
   const { error } = await supaClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
   if (error) {
     document.getElementById('loginMsg').textContent = 'Erreur : ' + error.message;
+    document.getElementById('loginMsg').style.color = 'var(--red)';
     btn.disabled = false;
     btn.textContent = 'Envoyer le lien';
   } else {
