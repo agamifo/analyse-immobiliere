@@ -1013,6 +1013,14 @@ function defaultProject(name, prefill = false) {
       ifi_revenus_n1: prefill ? 0 : '',
       ifi_ir_pre: prefill ? 0 : '',
       revenu_fiscal_ref: prefill ? 168000 : '',  // pour détection LMP
+      // ── Nouveaux champs UX ──
+      frais_notaire_mode: 'pct',   // 'pct' ou 'eur'
+      frais_notaire_pct: prefill ? 7.5 : 7.5,
+      frais_agence_mode: 'eur',    // 'pct' ou 'eur'
+      frais_agence_pct: prefill ? 0 : 0,
+      emprunt_mode: 'eur',         // 'pct' ou 'eur'
+      emprunt_pct: prefill ? 70 : 70,
+      assurance_deces_pct: prefill ? 0.3 : 0.3,  // % du capital emprunté/an
       // ── Paramètres fiscaux — chargés depuis les défauts globaux ──
       ...loadFiscalDefaults(),
     }
@@ -1373,13 +1381,13 @@ function calcMicroBIC(inp) {
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const montant_imposable = recettes * (1 - abat);
   const impot_annuel = montant_imposable * (tmi + tps);
-  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
-  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
+  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
   const years = [];
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
-    const year = _n(inp.annee_debut, 2024) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { annuites:0, crd:0 };
+    const year = getAnneeDebut(inp) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { annuites:0, crd:0 };
     const treso = recettes - charges_base - la.annuites - impot_annuel;
     years.push({ year, recettes, impot: impot_annuel, annuites: la.annuites, treso, crd: la.crd });
   }
@@ -1398,13 +1406,13 @@ function calcMicroFoncier(inp) {
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const montant_imposable = recettes * (1 - abat);
   const impot_annuel = montant_imposable * (tmi + tps);
-  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
-  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
+  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
   const years = [];
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
-    const year = _n(inp.annee_debut, 2024) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { annuites:0, crd:0 };
+    const year = getAnneeDebut(inp) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { annuites:0, crd:0 };
     const treso = recettes - charges_base - la.annuites - impot_annuel;
     years.push({ year, recettes, impot: impot_annuel, annuites: la.annuites, treso, crd: la.crd });
   }
@@ -1425,17 +1433,17 @@ function calcYearsLMP(inp) {
   // LMP : comme LMNP mais déficits imputables sur revenu global SANS plafond
   // + exonération PV après 5 ans d'activité si recettes < 90k€
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const years = [];
   let cumul_deficit = 0;
-  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
 
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
-    const year = _n(inp.annee_debut, 2024) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets:0, capital:0, annuites:0, crd:0 };
+    const year = getAnneeDebut(inp) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { interets:0, capital:0, annuites:0, crd:0 };
     const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
     const total_charges = charges + la.interets;
     const amort_immo = y < amort.duree_immo ? amort.immo_annuel : 0;
@@ -1465,20 +1473,20 @@ function calcYearsLMP(inp) {
 
 function calcYearsLMNP(inp) {
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const meubles_val = _n(inp.meubles);
   const years = [];
   let cumul_amort_differe = 0;
-  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
   const duree = _n(inp.duree_analyse, 20);
 
   for (let y = 0; y < duree; y++) {
-    const year = _n(inp.annee_debut, 2024) + y;
+    const year = getAnneeDebut(inp) + y;
     const la = year < annee_fin_pret
-      ? getAnnualLoan(loan.rows, _n(inp.annee_debut, 2024), year)
+      ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year)
       : { interets: 0, capital: 0, annuites: 0, crd: 0 };
 
     // Gorrest: mobiliers si pas d'amortissement = valeur meubles en année 1 seulement
@@ -1535,19 +1543,19 @@ function calcYearsLMNP(inp) {
 
 function calcYearsFoncier(inp) {
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps, 17.2) / 100;
-  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
   const years = [];
   let deficit_reportable = 0;
 
   for (let y = 0; y < (_n(inp.duree_analyse, 20)); y++) {
-    const year = _n(inp.annee_debut, 2024) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
+    const year = getAnneeDebut(inp) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
     const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
     // Foncier : frais acquisition déductibles année 1 (traitement Gorrest)
-    const extra_y1 = y === 0 ? _n(inp.frais_notaire) : 0;
+    const extra_y1 = y === 0 ? getFraisNotaire(inp) : 0;
     const revenu_foncier = _n(inp.recettes_annuelles) - charges - la.interets - extra_y1;
 
     let revenu_net = 0, impot = 0, ir = 0, ps = 0;
@@ -1580,9 +1588,9 @@ function calcYearsFoncier(inp) {
 
 function calcYearsIS(inp) {
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
-  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
   const is_reduit = _n(inp.is_taux_reduit, 15) / 100;
   const is_plafond = _n(inp.is_plafond_reduit, 42500);
   const is_normal = _n(inp.is_taux_normal, 25) / 100;
@@ -1590,10 +1598,10 @@ function calcYearsIS(inp) {
   let deficit_reportable = 0;
 
   for (let y = 0; y < _n(inp.duree_analyse, 20); y++) {
-    const year = _n(inp.annee_debut, 2024) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
+    const year = getAnneeDebut(inp) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
     // IS: frais acquisition déductibles année 1 (via provisions ou charges)
-    const frais_acq_y1 = y === 0 ? _n(inp.frais_notaire) + _n(inp.frais_agence) : 0;
+    const frais_acq_y1 = y === 0 ? getFraisNotaire(inp) + _n(inp.frais_agence) : 0;
     const charges_courantes = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable) + _n(inp.remuneration_gerant);
     const amort_immo = y < amort.duree_immo ? amort.immo_annuel : 0;
     const amort_trav = y < amort.duree_travaux ? amort.travaux_annuel : 0;
@@ -1744,53 +1752,153 @@ function renderFiscal(p) {
 /* ══════════════════════════════════════════════════════
    RENDER INPUTS
 ══════════════════════════════════════════════════════ */
+function calcEmpruntFromMode(i) {
+  if (i.emprunt_mode === 'pct') {
+    return Math.round((parseFloat(i.emprunt_pct)||70) / 100 * (parseFloat(i.prix_acquisition)||0));
+  }
+  return parseFloat(i.montant_emprunt)||0;
+}
+
+function calcNotaireFromMode(i) {
+  if (i.frais_notaire_mode === 'pct') {
+    return Math.round((parseFloat(i.frais_notaire_pct)||7.5) / 100 * (parseFloat(i.prix_acquisition)||0));
+  }
+  return parseFloat(i.frais_notaire)||0;
+}
+
+function calcAgenceFromMode(i) {
+  if (i.frais_agence_mode === 'pct') {
+    return Math.round((parseFloat(i.frais_agence_pct)||0) / 100 * (parseFloat(i.prix_acquisition)||0));
+  }
+  return parseFloat(i.frais_agence)||0;
+}
+
+function onModeToggle(field, mode) {
+  const p = state.projects[state.activeId];
+  if (!p) return;
+  p.inputs[field] = mode;
+  renderCurrentTab();
+  onInputChange();
+}
+
 function renderInputs(p) {
   const i = p.inputs;
+  // Calculs automatiques
+  const anneeDebut = i.date_acquisition ? new Date(i.date_acquisition).getFullYear() : new Date().getFullYear();
+  const anneeCession = anneeDebut + (parseInt(i.duree_analyse)||20);
+  const empruntEur = calcEmpruntFromMode(i);
+  const notaireEur = calcNotaireFromMode(i);
+  const agenceEur = calcAgenceFromMode(i);
+  const assuranceDeces = Math.round((parseFloat(i.assurance_deces_pct)||0) / 100 * empruntEur);
+
+  const toggleStyle = (active) => active
+    ? 'padding:2px 8px;border-radius:4px;border:none;cursor:pointer;font-size:0.72rem;background:var(--navy);color:#fff;font-family:inherit;'
+    : 'padding:2px 8px;border-radius:4px;border:1px solid var(--border);cursor:pointer;font-size:0.72rem;background:transparent;color:var(--text3);font-family:inherit;';
+
   return `
   <div style="display:flex;gap:14px;padding-bottom:16px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto;">
 
     <!-- Card: Le Bien -->
-    <div class="form-card" style="min-width:180px;flex:1;">
+    <div class="form-card" style="min-width:185px;flex:1;">
       <div class="form-card-title"><span class="icon">⌂</span> Le Bien</div>
-      <div class="field"><label>Prix acquisition (€)</label><input type="number" data-field="prix_acquisition" value="${i.prix_acquisition}" onchange="onInputChange()"></div>
-      <div class="field"><label>Date d'acquisition</label><input type="date" data-field="date_acquisition" value="${i.date_acquisition||''}" onchange="onInputChange()" style="font-family:'Instrument Sans',sans-serif;font-size:0.8rem;"></div>
-      <div class="field"><label>Frais de notaire (€)</label><input type="number" data-field="frais_notaire" value="${i.frais_notaire}" onchange="onInputChange()"></div>
-      <div class="field"><label>Frais d'agence (€)</label><input type="number" data-field="frais_agence" value="${i.frais_agence}" onchange="onInputChange()"></div>
-      <div class="field"><label>Travaux (€)</label><input type="number" data-field="travaux" value="${i.travaux}" onchange="onInputChange()"></div>
-      <div class="field"><label>Meubles (€)</label><input type="number" data-field="meubles" value="${i.meubles}" onchange="onInputChange()"></div>
-      <div class="field"><label>Valeur actuelle (€)</label><input type="number" data-field="valeur_actuelle" value="${i.valeur_actuelle}" onchange="onInputChange()"></div>
+      <div class="field"><label>Prix acquisition (€)</label><input type="number" data-field="prix_acquisition" value="\${i.prix_acquisition}" onchange="onInputChange();renderCurrentTab()"></div>
+      <div class="field"><label>Date d'acquisition</label><input type="date" data-field="date_acquisition" value="\${i.date_acquisition||''}" onchange="onInputChange();renderCurrentTab()" style="font-family:'Instrument Sans',sans-serif;font-size:0.8rem;"></div>
+
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Frais de notaire</span>
+          <span>
+            <button onclick="onModeToggle('frais_notaire_mode','pct')" style="\${toggleStyle(i.frais_notaire_mode!=='eur')}">%</button>
+            <button onclick="onModeToggle('frais_notaire_mode','eur')" style="\${toggleStyle(i.frais_notaire_mode==='eur')}">€</button>
+          </span>
+        </label>
+        \${i.frais_notaire_mode === 'eur'
+          ? `<input type="number" data-field="frais_notaire" value="\${i.frais_notaire}" onchange="onInputChange()">`
+          : `<div style="display:flex;gap:6px;align-items:center;">
+               <input type="number" data-field="frais_notaire_pct" value="\${i.frais_notaire_pct}" onchange="onInputChange();renderCurrentTab()" style="flex:1;">
+               <span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;">= \${new Intl.NumberFormat('fr-FR').format(notaireEur)} €</span>
+             </div>`
+        }
+      </div>
+
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Frais d'agence</span>
+          <span>
+            <button onclick="onModeToggle('frais_agence_mode','pct')" style="\${toggleStyle(i.frais_agence_mode==='pct')}">%</button>
+            <button onclick="onModeToggle('frais_agence_mode','eur')" style="\${toggleStyle(i.frais_agence_mode!=='pct')}">€</button>
+          </span>
+        </label>
+        \${i.frais_agence_mode === 'pct'
+          ? `<div style="display:flex;gap:6px;align-items:center;">
+               <input type="number" data-field="frais_agence_pct" value="\${i.frais_agence_pct}" onchange="onInputChange();renderCurrentTab()" style="flex:1;">
+               <span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;">= \${new Intl.NumberFormat('fr-FR').format(agenceEur)} €</span>
+             </div>`
+          : `<input type="number" data-field="frais_agence" value="\${i.frais_agence}" onchange="onInputChange()">`
+        }
+      </div>
+
+      <div class="field"><label>Travaux (€)</label><input type="number" data-field="travaux" value="\${i.travaux}" onchange="onInputChange()"></div>
+      <div class="field"><label>Meubles (€)</label><input type="number" data-field="meubles" value="\${i.meubles}" onchange="onInputChange()"></div>
     </div>
 
     <!-- Card: Financement -->
-    <div class="form-card" style="min-width:160px;flex:1;">
+    <div class="form-card" style="min-width:185px;flex:1;">
       <div class="form-card-title"><span class="icon">🏦</span> Financement</div>
-      <div class="field"><label>Montant emprunté (€)</label><input type="number" data-field="montant_emprunt" value="${i.montant_emprunt}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée (ans)</label><input type="number" data-field="duree_pret" value="${i.duree_pret}" onchange="onInputChange()"></div>
-      <div class="field"><label>Taux (%)</label><input type="number" data-field="taux_pret" value="${i.taux_pret}" onchange="onInputChange()"></div>
+
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Montant emprunté</span>
+          <span>
+            <button onclick="onModeToggle('emprunt_mode','pct')" style="\${toggleStyle(i.emprunt_mode==='pct')}">%</button>
+            <button onclick="onModeToggle('emprunt_mode','eur')" style="\${toggleStyle(i.emprunt_mode!=='pct')}">€</button>
+          </span>
+        </label>
+        \${i.emprunt_mode === 'pct'
+          ? `<div style="display:flex;gap:6px;align-items:center;">
+               <input type="number" data-field="emprunt_pct" value="\${i.emprunt_pct}" onchange="onInputChange();renderCurrentTab()" style="flex:1;">
+               <span style="font-size:0.75rem;color:var(--text3);white-space:nowrap;">= \${new Intl.NumberFormat('fr-FR').format(empruntEur)} €</span>
+             </div>`
+          : `<input type="number" data-field="montant_emprunt" value="\${i.montant_emprunt}" onchange="onInputChange()">`
+        }
+      </div>
+
+      <div class="field"><label>Durée (ans)</label><input type="number" data-field="duree_pret" value="\${i.duree_pret}" onchange="onInputChange()"></div>
+      <div class="field"><label>Taux nominal (%)</label><input type="number" data-field="taux_pret" value="\${i.taux_pret}" onchange="onInputChange()"></div>
+      <div class="field">
+        <label>Assurance décès (% capital/an)</label>
+        <input type="number" data-field="assurance_deces_pct" value="\${i.assurance_deces_pct}" step="0.01" onchange="onInputChange();renderCurrentTab()">
+        \${assuranceDeces > 0 ? `<div class="field-hint">= \${new Intl.NumberFormat('fr-FR').format(assuranceDeces)} €/an — inclus dans le coût total</div>` : '<div class="field-hint">Remboursement du capital si décès de l'emprunteur</div>'}
+      </div>
     </div>
 
     <!-- Card: Analyse & Cession -->
     <div class="form-card" style="min-width:160px;flex:1;">
       <div class="form-card-title"><span class="icon">📅</span> Analyse & Cession</div>
-      <div class="field"><label>Année de début</label><input type="number" data-field="annee_debut" value="${i.annee_debut}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée analyse (ans)</label><input type="number" data-field="duree_analyse" value="${i.duree_analyse}" onchange="onInputChange()"></div>
-      <div class="field"><label>Prix de cession (€)</label><input type="number" data-field="prix_cession" value="${i.prix_cession}" onchange="onInputChange()"></div>
-      <div class="field"><label>Année de cession</label><input type="number" data-field="annee_cession" value="${i.annee_cession}" onchange="onInputChange()"></div>
+      <div class="field">
+        <label>Année de début</label>
+        <input type="number" value="\${anneeDebut}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly>
+        <div class="field-hint">Déduite de la date d'acquisition</div>
+      </div>
+      <div class="field"><label>Durée analyse (ans)</label><input type="number" data-field="duree_analyse" value="\${i.duree_analyse}" onchange="onInputChange();renderCurrentTab()"></div>
+      <div class="field"><label>Prix de cession (€)</label><input type="number" data-field="prix_cession" value="\${i.prix_cession}" onchange="onInputChange()"></div>
+      <div class="field">
+        <label>Année de cession</label>
+        <input type="number" value="\${anneeCession}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly>
+        <div class="field-hint">= Année début + durée analyse</div>
+      </div>
     </div>
 
     <!-- Card: Amortissements -->
     <div class="form-card" style="min-width:160px;flex:1;">
       <div class="form-card-title"><span class="icon">📉</span> Amortissements</div>
-      <div class="field"><label>Part terrain (%)</label><input type="number" data-field="part_terrain" value="${i.part_terrain}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée immo (ans)</label><input type="number" data-field="duree_amort_immo" value="${i.duree_amort_immo}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée travaux (ans)</label><input type="number" data-field="duree_amort_travaux" value="${i.duree_amort_travaux}" onchange="onInputChange()"></div>
-      <div class="field"><label>Durée meubles (ans)</label><input type="number" data-field="duree_amort_meubles" value="${i.duree_amort_meubles}" onchange="onInputChange()"></div>
-      <div class="field"><label>Réintégration amort. à la revente</label>
-        <select data-field="lmnp_reintegration_amort" data-type="bool" onchange="onInputChange()">
-          <option value="true" \${i.lmnp_reintegration_amort!==false?'selected':''}>Oui — LF 2025</option>
-          <option value="false" \${i.lmnp_reintegration_amort===false?'selected':''}>Non — Ancien régime</option>
-        </select>
-        <div class="field-hint">Amort. cumulés réintégrés dans la PV LMNP</div>
+      <div class="field"><label>Part terrain (%)</label><input type="number" data-field="part_terrain" value="\${i.part_terrain}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée immo (ans)</label><input type="number" data-field="duree_amort_immo" value="\${i.duree_amort_immo}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée travaux (ans)</label><input type="number" data-field="duree_amort_travaux" value="\${i.duree_amort_travaux}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée meubles (ans)</label><input type="number" data-field="duree_amort_meubles" value="\${i.duree_amort_meubles}" onchange="onInputChange()"></div>
+      <div class="field" style="background:var(--navy-dim2);border-radius:6px;padding:8px;">
+        <div style="font-size:0.72rem;font-weight:600;color:var(--navy);">⚖ LdF 2025 — Réintégration amort. LMNP à la revente active</div>
+        <div class="field-hint">Les amortissements cumulés sont réintégrés dans le calcul de la plus-value LMNP</div>
       </div>
     </div>
 
@@ -1805,7 +1913,7 @@ function renderInputs(p) {
       </div>
       <div class="field"><label>Loyer mensuel (€)</label><input type="number" data-field="montant_loyer" value="\${i.montant_loyer}" onchange="calcRecettes()"></div>
       <div class="field"><label>Recettes annuelles (€)</label><input type="number" data-field="recettes_annuelles" id="recettes_annuelles_field" value="\${(parseFloat(i.montant_loyer)||0)*12||i.recettes_annuelles}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly></div>
-      <div class="field"><label>Assurance (€/an)</label><input type="number" data-field="assurance" value="\${i.assurance}" onchange="onInputChange()"></div>
+      <div class="field"><label>Assurance MRH (€/an)</label><input type="number" data-field="assurance" value="\${i.assurance}" onchange="onInputChange()"></div>
       <div class="field"><label>Copropriété (€/an)</label><input type="number" data-field="copropriete" value="\${i.copropriete}" onchange="onInputChange()"></div>
       <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="\${i.taxe_fonciere}" onchange="onInputChange()"></div>
       <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="\${i.honoraires_gestion}" onchange="onInputChange()"></div>
@@ -1813,9 +1921,9 @@ function renderInputs(p) {
       <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="\${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
     </div>
 
-    <!-- Card: Fiscalité -->
+    <!-- Card: Fiscalité particulier -->
     <div class="form-card" style="min-width:160px;flex:1;">
-      <div class="form-card-title"><span class="icon">⚖</span> Fiscalité</div>
+      <div class="form-card-title"><span class="icon">⚖</span> Fiscalité particulier</div>
       <div class="field"><label>TMI</label>
         <select data-field="tmi" onchange="onInputChange()">
           <option value="0" \${parseFloat(i.tmi)===0?'selected':''}>0%</option>
@@ -1845,7 +1953,8 @@ function renderInputs(p) {
     <!-- Card: IFI -->
     <div class="form-card" style="min-width:150px;flex:1;">
       <div class="form-card-title"><span class="icon">🏛</span> IFI</div>
-      <div class="field"><label>Base IFI pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="\${i.ifi_base_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Actif immobilier pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="\${i.ifi_base_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Passif (dettes) pré-acq. (€)</label><input type="number" data-field="ifi_passif_pre" value="\${i.ifi_passif_pre}" onchange="onInputChange()"></div>
       <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="\${i.ifi_ir_pre}" onchange="onInputChange()"></div>
     </div>
 
@@ -1861,6 +1970,15 @@ function toggleScenario(sc) {
   if (!next.lmnp && !next.foncier && !next.is && !next.micro_bic && !next.micro_foncier && !next.lmp) return;
   activeScenarios = next;
   showTab('synthese');
+}
+
+function renderCurrentTab() {
+  const p = state.projects[state.activeId];
+  if (!p) return;
+  const content = document.getElementById('mainContent');
+  if (!content) return;
+  const tab = state.activeTab || 'inputs';
+  if (tab === 'inputs') content.innerHTML = renderInputs(p);
 }
 
 function calcRecettes() {
@@ -2312,10 +2430,10 @@ function renderReventeHtml(i, pv, foncier_bilan, lmnp_bilan, is_bilan) {
 
 function renderLoanTable(inp) {
   var _n = function(v,d) { return parseFloat(v) || (d||0); };
-  var montant = _n(inp.montant_emprunt);
+  var montant = getMontantEmprunt(inp);
   var taux = _n(inp.taux_pret);
   var duree = _n(inp.duree_pret, 20);
-  var annee_debut = _n(inp.annee_debut, 2024);
+  var annee_debut = getAnneeDebut(inp);
   if (!montant || !duree) return '<div style="padding:12px;color:var(--text3);font-size:0.72rem;">Saisissez les paramètres du prêt.</div>';
 
   var loan = calcLoanSchedule(montant, taux, duree);
@@ -2510,7 +2628,7 @@ function calcPV(inp) {
   const is_plafond = parseFloat(inp.is_plafond_reduit)||42500;
   const is_normal = (parseFloat(inp.is_taux_normal)||25) / 100;
   const cehr = (parseFloat(inp.cehr_taux)||0) / 100;
-  const reintegration = inp.lmnp_reintegration_amort !== false;
+  const reintegration = true;
 
   // Abattements communs
   const abat_ir = annees_detention >= 22 ? 1.0 : annees_detention >= 6 ? Math.min(1, (annees_detention - 5) * 0.06) : 0;
