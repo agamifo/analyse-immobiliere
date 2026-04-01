@@ -1799,11 +1799,12 @@ function onModeToggle(field, mode) {
 function renderCurrentTab() {
   const p = state.projects[state.activeId];
   if (!p) return;
-  const content = document.getElementById('mainContent');
-  if (!content) return;
+  const el = document.getElementById('tabContent');
+  if (!el) return;
   const tab = state.activeTab || 'inputs';
-  if (tab === 'inputs') content.innerHTML = renderInputs(p);
-  else if (tab === 'referentiel') content.innerHTML = renderReferentiel(p);
+  if (tab === 'inputs') el.innerHTML = renderInputs(p);
+  else if (tab === 'referentiel') el.innerHTML = renderReferentiel(p);
+  else if (tab === 'fiscal') el.innerHTML = renderFiscal(p);
 }
 
 function fieldPctEur(dataFieldEur, valEur, dataFieldPct, valPct, computedEur, mode) {
@@ -2008,150 +2009,102 @@ function calcRecettes() {
 ══════════════════════════════════════════════════════ */
 function renderReferentiel(p) {
   const f = p.inputs;
-  const fd = loadFiscalDefaults();
-  // Merge project fiscal params with defaults
-  const fv = (key, def) => f[key] !== undefined ? f[key] : (fd[key] !== undefined ? fd[key] : def);
+  const fv = (key, def) => f[key] !== undefined ? f[key] : def;
 
-  const regCard = (title, color, acro, fields) => `
-    <div style="background:#fff;border:1px solid var(--border);border-top:3px solid ${color};border-radius:var(--radius2);padding:16px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <span style="background:${color};color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:0.08em;">${acro}</span>
-        <span style="font-size:0.72rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;">${title}</span>
+  const row = (label, key, def, hint='') =>
+    `<tr>
+      <td style="padding:6px 10px;font-size:0.72rem;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;">${label}${hint ? '<div style="font-size:0.62rem;color:var(--text3);">'+hint+'</div>' : ''}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border);width:100px;">
+        <input type="number" value="${fv(key,def)}" step="any" onchange="onRefFieldChange('${key}',this.value)" style="width:100%;border:1px solid var(--border2);border-radius:3px;padding:3px 6px;font-size:0.78rem;text-align:right;font-family:'DM Mono',monospace;">
+      </td>
+    </tr>`;
+
+  const infoRow = (label, val) =>
+    `<tr>
+      <td style="padding:5px 10px;font-size:0.7rem;color:var(--text2);border-bottom:1px solid var(--border);">${label}</td>
+      <td style="padding:5px 10px;font-size:0.7rem;color:var(--navy);font-weight:600;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;">${val}</td>
+    </tr>`;
+
+  const section = (title, color, badge, rows) =>
+    `<div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;">
+      <div style="background:${color};padding:7px 12px;display:flex;align-items:center;gap:8px;">
+        <span style="background:rgba(255,255,255,0.25);color:#fff;font-size:0.58rem;font-weight:700;padding:1px 6px;border-radius:3px;letter-spacing:0.08em;">${badge}</span>
+        <span style="font-size:0.72rem;font-weight:700;color:#fff;letter-spacing:0.05em;">${title}</span>
       </div>
-      ${fields}
-    </div>`;
-
-  const refField = (label, dataKey, val, hint='', step='0.01') => `
-    <div class="field">
-      <label>${label}</label>
-      <input type="number" step="${step}" data-ref-field="${dataKey}" value="${val}" onchange="onRefFieldChange('${dataKey}', this.value)">
-      ${hint ? '<div class="field-hint">' + hint + '</div>' : ''}
-    </div>`;
-
-  const infoLine = (label, val) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
-      <span style="font-size:0.72rem;color:var(--text2);font-family:inherit;">${label}</span>
-      <span style="font-size:0.78rem;font-weight:700;color:var(--navy);font-family:inherit;">${val}</span>
+      <table style="width:100%;border-collapse:collapse;">${rows}</table>
     </div>`;
 
   return `
-  <div style="padding:4px 0;">
-
-    <!-- Header -->
-    <div style="margin-bottom:20px;">
-      <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Référentiel fiscal personnel</div>
-      <div style="font-size:0.82rem;color:var(--text2);line-height:1.5;">Ces paramètres sont propres à votre compte. Ils s'appliquent par défaut à tous vos nouveaux projets. Vous pouvez les ajuster projet par projet dans l'onglet <strong>Paramètres fiscaux</strong>.</div>
-    </div>
-
-    <!-- Paramètres généraux -->
-    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border);">Taux généraux 2025</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
-      <div class="form-card">
-        <div class="form-card-title">Prélèvements sociaux</div>
-        ${refField('Taux PS (%)', 'taux_ps', fv('taux_ps',17.2), 'Applicable sur revenus locatifs et PV')}
-      </div>
-      <div class="form-card">
-        <div class="form-card-title">Flat Tax (PFU)</div>
-        ${refField('Taux flat tax (%)', 'taux_flat_tax', fv('taux_flat_tax',31.4), 'Dividendes IS — LdF 2025 : 31,4%')}
-      </div>
-      <div class="form-card">
-        <div class="form-card-title">Impôt société</div>
-        ${refField('IS taux réduit (%)', 'is_taux_reduit', fv('is_taux_reduit',15), 'Jusqu\'à 42 500 €')}
-        ${refField('IS taux normal (%)', 'is_taux_normal', fv('is_taux_normal',25))}
-        ${refField('Plafond taux réduit (€)', 'is_plafond_reduit', fv('is_plafond_reduit',42500), '', '1')}
-      </div>
-      <div class="form-card">
-        <div class="form-card-title">Plus-values directes</div>
-        ${refField('IR PV (%)', 'taux_ir_pv', fv('taux_ir_pv',19), 'Taux IR sur PV immobilières')}
-        ${refField('PS PV (%)', 'taux_ps_pv', fv('taux_ps_pv',17.2))}
-      </div>
-    </div>
-
-    <!-- Régimes -->
-    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border);">Paramètres par régime</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;">
-
-      ${regCard('LMNP Réel', '#1c2b45', 'LMNP',
-        refField('Abattement micro-BIC (%)', 'micro_bic_abat', fv('micro_bic_abat',50), 'Plafond 77 700 €/an') +
-        '<div class="field-hint" style="margin-top:-6px;margin-bottom:10px;">Report illimité des amortissements différés. Réintégration PV — LdF 2025 active.</div>'
+  <div style="padding:0;">
+    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Taux généraux 2025</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+      ${section('Prélèvements sociaux','#1b3a6b','PS',row('Taux PS (%)', 'taux_ps', 17.2, 'Revenus locatifs + PV'))}
+      ${section('Flat Tax (PFU)','#1b3a6b','PFU',row('Taux (%)', 'taux_flat_tax', 31.4, 'LdF 2025 : 31,4%'))}
+      ${section('IS','#1b3a6b','IS',
+        row('Taux réduit (%)', 'is_taux_reduit', 15) +
+        row('Plafond réduit (€)', 'is_plafond_reduit', 42500) +
+        row('Taux normal (%)', 'is_taux_normal', 25)
       )}
-
-      ${regCard('Micro-BIC', '#2563a8', 'μBIC',
-        refField('Abattement (%)', 'micro_bic_abat', fv('micro_bic_abat',50)) +
-        '<div class="field" style="padding:8px;background:var(--navy-dim2);border-radius:4px;font-size:0.72rem;color:var(--text2);">' +
-        infoLine('Plafond standard', '77 700 €/an') +
-        infoLine('Plafond meublé tourisme classé', '188 700 €/an') +
-        '</div>'
-      )}
-
-      ${regCard('LMP', '#15653a', 'LMP',
-        refField('Seuil recettes (€)', 'lmp_seuil_recettes', fv('lmp_seuil_recettes',23000), '', '1') +
-        '<div class="field" style="padding:8px;background:var(--green-dim);border-radius:4px;font-size:0.72rem;color:var(--text2);">' +
-        infoLine('Condition 1', '> 23 000 €/an') +
-        infoLine('Condition 2', '> 50% revenu fiscal foyer') +
-        infoLine('Avantage', 'Déficit imputable revenu global') +
-        infoLine('PV pro exo totale si', '< 90 000 €/an + 5 ans activité') +
-        '</div>'
-      )}
-
-      ${regCard('Foncier Réel', '#92400e', 'FONC',
-        refField('Plafond déficit imputable (€)', 'deficit_foncier_plafond', fv('deficit_foncier_plafond',10700), 'Sur revenu global/an', '1') +
-        '<div class="field" style="padding:8px;background:var(--orange-dim);border-radius:4px;font-size:0.72rem;color:var(--text2);">' +
-        infoLine('Excédent de déficit', 'Reportable 10 ans') +
-        infoLine('Intérêts d\'emprunt', 'Déductibles des revenus fonciers') +
-        infoLine('Notaire/travaux', 'Déductibles en charge année 1') +
-        '</div>'
-      )}
-
-      ${regCard('Micro-Foncier', '#b45309', 'μFONC',
-        refField('Abattement (%)', 'micro_foncier_abat', fv('micro_foncier_abat',30)) +
-        refField('Plafond (€)', 'micro_foncier_plafond', fv('micro_foncier_plafond',15000), '', '1') +
-        '<div class="field-hint">Si recettes > plafond → basculement automatique en foncier réel</div>'
-      )}
-
-      ${regCard('Société IS', '#5b21b6', 'STE IS',
-        refField('IS taux réduit (%)', 'is_taux_reduit', fv('is_taux_reduit',15), 'Jusqu\'au plafond') +
-        refField('IS taux normal (%)', 'is_taux_normal', fv('is_taux_normal',25)) +
-        refField('Plafond taux réduit (€)', 'is_plafond_reduit', fv('is_plafond_reduit',42500), '', '1') +
-        '<div class="field" style="padding:8px;background:var(--blue-dim);border-radius:4px;font-size:0.72rem;color:var(--text2);">' +
-        infoLine('Distribution', 'Flat tax ' + fv('taux_flat_tax',31.4) + '%') +
-        infoLine('PV revente', 'Imposée à l\'IS sur VNC') +
-        infoLine('Notaire/travaux', 'Déductibles en charge année 1') +
-        '</div>'
+      ${section('Plus-values IR directes','#1b3a6b','PV',
+        row('IR PV (%)', 'taux_ir_pv', 19) +
+        row('PS PV (%)', 'taux_ps_pv', 17.2)
       )}
     </div>
 
-    <!-- Abattements PV -->
-    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border);">Abattements pour durée de détention (PV directes)</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
-      <div class="form-card">
-        <div class="form-card-title">IR — Abattement progressif</div>
-        <div style="font-size:0.72rem;color:var(--text2);line-height:1.8;">
-          ${infoLine('Années 1–5', 'Aucun abattement')}
-          ${infoLine('Années 6–21', '6%/an')}
-          ${infoLine('Année 22', '4% → Exonération IR totale')}
-          ${infoLine('Années 23–30', 'PS toujours dus')}
-          ${infoLine('> 30 ans', 'Exonération IR + PS totale')}
-        </div>
-      </div>
-      <div class="form-card">
-        <div class="form-card-title">Prélèvements sociaux — Abattement</div>
-        <div style="font-size:0.72rem;color:var(--text2);line-height:1.8;">
-          ${infoLine('Années 1–5', 'Aucun abattement')}
-          ${infoLine('Années 6–21', '1,65%/an')}
-          ${infoLine('Année 22', '1,60%')}
-          ${infoLine('Années 23–30', '9%/an')}
-          ${infoLine('> 30 ans', 'Exonération totale')}
-        </div>
-      </div>
+    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Paramètres par régime</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+      ${section('LMNP Réel','#1b3a6b','LMNP',
+        row('Abatt. Micro-BIC (%)', 'micro_bic_abat', 50) +
+        infoRow('Déficit', 'Report illimité') +
+        infoRow('PV revente', 'Réintégration amort. LdF 2025')
+      )}
+      ${section('Micro-BIC','#2563a8','μBIC',
+        row('Abattement (%)', 'micro_bic_abat', 50) +
+        infoRow('Plafond standard', '77 700 €/an') +
+        infoRow('Plafond tourisme classé', '188 700 €/an')
+      )}
+      ${section('LMP','#15653a','LMP',
+        row('Seuil recettes (€)', 'lmp_seuil_recettes', 23000) +
+        infoRow('Condition 1', '> 23 000 €/an') +
+        infoRow('Condition 2', '> 50% revenu foyer') +
+        infoRow('PV exo totale si', '< 90k€/an + 5 ans')
+      )}
+      ${section('Foncier Réel','#8f4010','FONC',
+        row('Plafond déficit (€)', 'deficit_foncier_plafond', 10700) +
+        infoRow('Excédent', 'Reportable 10 ans') +
+        infoRow('Notaire/travaux', 'Déduit en charge an. 1')
+      )}
+      ${section('Micro-Foncier','#8f4010','μFONC',
+        row('Abattement (%)', 'micro_foncier_abat', 30) +
+        row('Plafond (€)', 'micro_foncier_plafond', 15000) +
+        infoRow('Si dépassement', 'Bascule foncier réel')
+      )}
+      ${section('Société IS','#5b21b6','STE IS',
+        row('IS taux réduit (%)', 'is_taux_reduit', 15) +
+        row('Plafond réduit (€)', 'is_plafond_reduit', 42500) +
+        infoRow('Distribution', 'Flat tax ' + fv('taux_flat_tax',31.4) + '%') +
+        infoRow('PV revente', 'Imposée IS sur VNC')
+      )}
     </div>
 
-    <div style="padding:12px 14px;background:var(--navy-dim2);border-radius:var(--radius2);font-size:0.72rem;color:var(--text2);border-left:3px solid var(--accent);">
-      <strong>Surtaxe sur PV élevées :</strong> PV > 50 000 € → surtaxe progressive de 2% à 6%. PV > 260 000 € → taxe additionnelle 6%. Ces paramètres sont fixes et non modifiables.
+    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Abattements PV pour durée de détention</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;">
+        <div style="background:var(--navy);padding:7px 12px;font-size:0.72rem;font-weight:700;color:#fff;">IR — Abattement annuel</div>
+        <table style="width:100%;border-collapse:collapse;">
+          ${infoRow('Ans 1–5','0%')}${infoRow('Ans 6–21','6%/an')}${infoRow('An 22','4% → Exonération IR')}${infoRow('> 30 ans','Exonération IR + PS')}
+        </table>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;">
+        <div style="background:var(--navy);padding:7px 12px;font-size:0.72rem;font-weight:700;color:#fff;">Prélèvements sociaux — Abattement</div>
+        <table style="width:100%;border-collapse:collapse;">
+          ${infoRow('Ans 1–5','0%')}${infoRow('Ans 6–21','1,65%/an')}${infoRow('An 22','1,60%')}${infoRow('Ans 23–30','9%/an')}
+        </table>
+      </div>
     </div>
-
   </div>`;
 }
+
 
 function onRefFieldChange(key, val) {
   const p = state.projects[state.activeId];
