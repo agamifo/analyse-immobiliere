@@ -6,7 +6,7 @@
 <title>Agami — Analyse Investissement Immobilier</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1/dist/main.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <style>
   :root {
     --bg: #d4e3f0;
@@ -915,7 +915,15 @@
 const SUPABASE_URL = 'https://tvzlzfnffwdqjmfmpqrr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2emx6Zm5mZndkcWptZm1wcXJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDcyMDcsImV4cCI6MjA5MDYyMzIwN30.RET4DIwlYjZRVoWfKb3WYCwPvIzyHjdeBG-OF2c3Q9Q';
 const { createClient } = supabase;
-const supaClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supaClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    storage: window.localStorage,
+    persistSession: true,
+    detectSessionInUrl: true,
+    autoRefreshToken: true,
+    flowType: 'pkce'
+  }
+});
 
 let currentUser = null;
 
@@ -2845,7 +2853,7 @@ async function sendMagicLink() {
   const btn = document.getElementById('loginBtn');
   btn.disabled = true;
   btn.textContent = 'Envoi…';
-  const { error } = await supaClient.auth.signIn({ email });
+  const { error } = await supaClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
   if (error) {
     document.getElementById('loginMsg').textContent = 'Erreur : ' + error.message;
     btn.disabled = false;
@@ -2890,30 +2898,28 @@ async function loadUserData(user) {
   }
 }
 
-// AUTH v1 — simple et fiable
-supaClient.auth.onAuthStateChange(async (event, session) => {
+// AUTH — setTimeout pour sortir du contexte de l'auth callback
+// et permettre aux requêtes supabase de fonctionner
+let _authDone = false;
+supaClient.auth.onAuthStateChange((event, session) => {
   console.log('AUTH EVENT:', event, session?.user?.email || 'no user');
-  if (event === 'SIGNED_IN' && session?.user) {
-    if (currentUser?.id === session.user.id) return;
-    await loadUserData(session.user);
-  } else if (event === 'SIGNED_OUT') {
+  if (event === 'SIGNED_OUT') {
+    _authDone = false;
     currentUser = null;
     state.projects = {};
     state.activeId = null;
     showLoginScreen();
+    return;
   }
-});
-
-// Vérifier session existante au chargement
-(async () => {
-  const session = supaClient.auth.session();
-  console.log('Session au chargement:', session?.user?.email || 'aucune');
   if (session?.user) {
-    await loadUserData(session.user);
-  } else {
+    if (_authDone && currentUser?.id === session.user.id) return;
+    _authDone = true;
+    // setTimeout 0 pour sortir du contexte auth et débloquer les requêtes fetch
+    setTimeout(() => loadUserData(session.user), 0);
+  } else if (event === 'INITIAL_SESSION') {
     showLoginScreen();
   }
-})();
+});
 </script>
 </body>
 </html>
