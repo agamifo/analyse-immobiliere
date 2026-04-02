@@ -1359,8 +1359,9 @@ function showEmpty() {
    MODE
 ══════════════════════════════════════════════════════ */
 async function setMode(mode, rerender = true) {
-  // Sauvegarder avant de changer de mode (évite de perdre les saisies non enregistrées)
-  if (state.activeId) {
+  // Sauvegarder uniquement si on quitte le mode saisie
+  // (si on est déjà en présentation, collectInputs ne ferait rien mais persistState inutile)
+  if (state.activeId && state.mode === 'saisie') {
     collectInputs();
     await persistState();
   }
@@ -1432,13 +1433,28 @@ async function saveProject() {
 }
 function collectInputs() {
   const p = state.projects[state.activeId];
-  document.querySelectorAll('[data-field]').forEach(el => {
+  if (!p) return;
+  // Ne collecter QUE si on est dans un onglet de saisie
+  // Les onglets Client (synthese, cashflow, pv, pret, ifi) ne contiennent pas de vrais champs
+  // de saisie — leurs data-field sont soit vides soit des valeurs calculées
+  const saisieTab = ['inputs', 'referentiel', 'fiscal'];
+  if (!saisieTab.includes(state.activeTab)) return;
+
+  // Pour l'onglet referentiel et fiscal, les champs écrivent directement via onInputChange()
+  // → pas besoin de re-collecter, c'est déjà dans p.inputs
+  // Pour l'onglet inputs : collecter tous les [data-field] du tabContent uniquement
+  const container = document.getElementById('tabContent');
+  if (!container) return;
+
+  container.querySelectorAll('[data-field]').forEach(el => {
     const k = el.dataset.field;
     let v = el.value;
-    if (el.type === 'number') v = parseFloat(v) || 0;
+    if (el.type === 'number') {
+      // Garder '' si le champ est vide (ne pas écraser avec 0)
+      v = el.value === '' ? '' : (parseFloat(el.value) || 0);
+    }
     if (el.type === 'checkbox') v = el.checked;
     if (el.tagName === 'SELECT' && el.dataset.type === 'bool') v = v === 'true';
-    if (el.tagName === 'SELECT' && el.dataset.type !== 'bool') v = v;
     p.inputs[k] = v;
   });
 }
