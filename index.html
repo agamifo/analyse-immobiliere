@@ -1181,6 +1181,21 @@ function defaultProject(name, prefill = false) {
     id: Date.now().toString(),
     name,
     inputs: {
+      // ── Description du bien & client ──
+      client_nom: '',
+      client_prenom: '',
+      bien_titre: '',
+      bien_type: 'appartement',
+      bien_adresse: '',
+      bien_code_postal: '',
+      bien_ville: '',
+      bien_surface: '',
+      bien_pieces: '',
+      bien_etage: '',
+      bien_annee_construction: '',
+      bien_etat: 'bon',
+      bien_notes: '',
+      // ── Financier ──
       prix_acquisition: prefill ? 600000 : '',
       frais_notaire: prefill ? 7.5 : '',
       frais_notaire_mode: 'pct',
@@ -1626,7 +1641,12 @@ function onInputChange() {
         } else if (el.tagName === 'SELECT') {
           p.inputs[k] = el.dataset.type === 'bool' ? el.value === 'true' : el.value;
         } else {
-          if (el.value !== '') p.inputs[k] = el.value;
+          // textarea et input text : mettre à jour même si vide (permettre d'effacer)
+          if (el.tagName === 'TEXTAREA' || el.type === 'text') {
+            p.inputs[k] = el.value;
+          } else if (el.value !== '') {
+            p.inputs[k] = el.value;
+          }
         }
       });
 
@@ -2530,6 +2550,102 @@ function renderFiscal(p) {
 function renderInputs(p) {
   const i = p.inputs;
   return `
+  <!-- ── Card: Client & Description du bien ── -->
+  <div style="background:#fff;border-radius:var(--radius2);padding:12px 14px 10px;margin-bottom:14px;
+              box-shadow:0 1px 6px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
+    <div class="form-card-title" style="margin-bottom:10px;"><span class="icon">📋</span> Client & Description du bien</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr) repeat(4,1fr) 2fr;gap:10px 14px;align-items:start;">
+
+      <!-- Bloc client -->
+      <div>
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Client</div>
+        <div class="field" style="margin-bottom:6px;">
+          <label>Nom</label>
+          <input type="text" data-field="client_nom" value="${i.client_nom||''}" onchange="onInputChange()" placeholder="Martin">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Prénom</label>
+          <input type="text" data-field="client_prenom" value="${i.client_prenom||''}" onchange="onInputChange()" placeholder="Jean-Pierre">
+        </div>
+      </div>
+
+      <!-- Bloc type & titre -->
+      <div>
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Type de bien</div>
+        <div class="field" style="margin-bottom:6px;">
+          <label>Titre / Nom</label>
+          <input type="text" data-field="bien_titre" value="${i.bien_titre||''}" onchange="onInputChange()" placeholder="Appt. Paris 16e">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Type</label>
+          <select data-field="bien_type" onchange="onInputChange()">
+            ${['appartement','maison','immeuble','local_commercial','parking','terrain'].map(v=>`<option value="${v}" ${(i.bien_type||'appartement')===v?'selected':''}>${{appartement:'Appartement',maison:'Maison',immeuble:'Immeuble',local_commercial:'Local commercial',parking:'Parking',terrain:'Terrain'}[v]}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Bloc adresse -->
+      <div style="grid-column:span 2;">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Adresse</div>
+        <div class="field" style="margin-bottom:6px;">
+          <label>Adresse</label>
+          <input type="text" data-field="bien_adresse" value="${i.bien_adresse||''}" onchange="onInputChange()" placeholder="12 rue du Faubourg Saint-Honoré">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="field" style="flex:0 0 90px;margin-bottom:0;">
+            <label>Code postal</label>
+            <input type="text" data-field="bien_code_postal" value="${i.bien_code_postal||''}" onchange="onInputChange()" placeholder="75008">
+          </div>
+          <div class="field" style="flex:1;margin-bottom:0;">
+            <label>Ville</label>
+            <input type="text" data-field="bien_ville" value="${i.bien_ville||''}" onchange="onInputChange()" placeholder="Paris">
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloc caractéristiques -->
+      <div style="grid-column:span 2;">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Caractéristiques</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px 8px;">
+          <div class="field" style="margin-bottom:0;">
+            <label>Surface (m²)</label>
+            <input type="number" data-field="bien_surface" value="${i.bien_surface||''}" onchange="onInputChange()" placeholder="85">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Pièces</label>
+            <input type="number" data-field="bien_pieces" value="${i.bien_pieces||''}" onchange="onInputChange()" placeholder="3">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Étage</label>
+            <input type="number" data-field="bien_etage" value="${i.bien_etage||''}" onchange="onInputChange()" placeholder="3">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Année constr.</label>
+            <input type="number" data-field="bien_annee_construction" value="${i.bien_annee_construction||''}" onchange="onInputChange()" placeholder="1890">
+          </div>
+        </div>
+        <div class="field" style="margin-top:6px;margin-bottom:0;">
+          <label>État du bien</label>
+          <select data-field="bien_etat" onchange="onInputChange()">
+            ${['neuf','bon','renover','travaux'].map(v=>`<option value="${v}" ${(i.bien_etat||'bon')===v?'selected':''}>${{neuf:'Neuf',bon:'Bon état',renover:'À rénover',travaux:'Travaux importants'}[v]}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Bloc notes -->
+      <div>
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Notes</div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Description libre</label>
+          <textarea data-field="bien_notes" onchange="onInputChange()"
+            style="width:100%;height:76px;resize:vertical;background:var(--surface-card);border:1px solid rgba(0,32,70,0.15);border-radius:6px;padding:5px 8px;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--on-surface);outline:none;line-height:1.4;"
+            placeholder="Vue dégagée, parquet, double vitrage...">${i.bien_notes||''}</textarea>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <div style="display:flex;gap:14px;padding-bottom:16px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto;">
 
     <!-- Card: Le Bien -->
@@ -4485,7 +4601,36 @@ async function generateDocx() {
 
     // ── PAGE 1 : RÉSUMÉ EXÉCUTIF ─────────────────────────────────────────────
     sectionTitle('Résumé exécutif'),
-    para(`${p.name} · ${today}`, {size:18, color:'5a7a96', spAfter:200}),
+
+    // Fiche identité client + bien
+    (() => {
+      const client = [i.client_prenom, i.client_nom].filter(Boolean).join(' ');
+      const typesLabel = {appartement:'Appartement',maison:'Maison',immeuble:'Immeuble',local_commercial:'Local commercial',parking:'Parking',terrain:'Terrain'};
+      const etatsLabel = {neuf:'Neuf',bon:'Bon état',renover:'À rénover',travaux:'Travaux importants'};
+      const typeStr = typesLabel[i.bien_type||'appartement'] || '';
+      const etatStr = etatsLabel[i.bien_etat||'bon'] || '';
+      const adresse = [i.bien_adresse, [i.bien_code_postal, i.bien_ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+      const caract = [
+        i.bien_surface ? i.bien_surface+' m²' : '',
+        i.bien_pieces  ? i.bien_pieces+' pièces' : '',
+        i.bien_etage   ? 'Étage '+i.bien_etage : '',
+        i.bien_annee_construction ? 'Construit en '+i.bien_annee_construction : '',
+      ].filter(Boolean).join(' · ');
+      const rows = [
+        client    ? tblRow2('Client', client) : '',
+        (i.bien_titre||p.name) ? tblRow2('Bien', i.bien_titre||p.name) : '',
+        typeStr   ? tblRow2('Type', typeStr + (etatStr?' · '+etatStr:'')) : '',
+        adresse   ? tblRow2('Adresse', adresse) : '',
+        caract    ? tblRow2('Caractéristiques', caract) : '',
+        i.bien_notes ? tblRow2('Description', i.bien_notes) : '',
+      ].filter(Boolean).join('');
+      return rows ? [
+        para('Identification', {bold:true, size:20, color:'002046', spBefore:80, spAfter:80}),
+        tbl2(tblRow2('','',true)+rows),
+      ].join('') : '';
+    })(),
+
+    para(`Analyse du ${today}`, {size:18, color:'5a7a96', spAfter:200}),
 
     para(`Régime optimal : ${best.label}`, {bold:true, size:22, color:'002046', spBefore:120}),
     para(`Sur ${duree} ans, la structure ${best.label} génère la meilleure trésorerie nette cumulée de ${fmtE(best.treso)}.`, {size:20, spAfter:80}),
