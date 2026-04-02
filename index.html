@@ -1409,18 +1409,32 @@ async function setMode(mode, rerender = true) {
 }
 
 async function reloadActiveProject() {
-  if (!currentUser || !state.activeId) return;
+  if (!currentUser || !state.activeId) {
+    console.warn('reloadActiveProject: pas de currentUser ou activeId');
+    return;
+  }
+  console.log('reloadActiveProject: chargement id=', state.activeId);
   const { data, error } = await sb
     .from('projects')
     .select('id, name, data')
     .eq('id', state.activeId)
-    .single();
-  if (error || !data) {
-    console.warn('reloadActiveProject error:', error);
+    .maybeSingle();
+  console.log('reloadActiveProject result: data=', data, 'error=', error);
+  if (error) {
+    console.error('reloadActiveProject error:', error);
+    notify('Erreur rechargement: ' + error.message);
     return;
   }
-  const base   = defaultProject(data.name, false).inputs;
+  if (!data) {
+    console.warn('reloadActiveProject: aucune donnée retournée pour id=', state.activeId);
+    return;
+  }
+  const base = defaultProject(data.name, false).inputs;
   const merged = Object.assign({}, base, loadFiscalDefaults(), data.data || {});
+  console.log('reloadActiveProject: montant_loyer=', merged.montant_loyer, '| recettes=', merged.recettes_annuelles);
+  if (!state.projects[state.activeId]) {
+    state.projects[state.activeId] = { id: data.id, name: data.name, inputs: {} };
+  }
   state.projects[state.activeId].inputs = merged;
   state.projects[state.activeId].name   = data.name;
 }
