@@ -1516,7 +1516,6 @@ function computedPctEuro(value, mode, base, label) {
 
 function onInputChange() {
   // Sync p.inputs depuis le DOM pour TOUS les champs data-field de l'onglet actif
-  // (sauf si on est en mode présentation — pas de champs à collecter)
   if (state.mode === 'saisie' && ['inputs','referentiel','fiscal'].includes(state.activeTab)) {
     const p = state.projects[state.activeId];
     const container = document.getElementById('tabContent');
@@ -1525,7 +1524,6 @@ function onInputChange() {
         const k = el.dataset.field;
         if (el.type === 'number') {
           if (el.value !== '' && el.value !== null) p.inputs[k] = parseFloat(el.value) || 0;
-          // Si vide → NE PAS écraser ce qui est déjà en mémoire
         } else if (el.type === 'checkbox') {
           p.inputs[k] = el.checked;
         } else if (el.tagName === 'SELECT') {
@@ -1534,6 +1532,20 @@ function onInputChange() {
           if (el.value !== '') p.inputs[k] = el.value;
         }
       });
+
+      // Recalcul automatique des années dérivées
+      if (p.inputs.date_acquisition) {
+        const yr = new Date(p.inputs.date_acquisition).getFullYear();
+        if (!isNaN(yr)) p.inputs.annee_debut = yr;
+      }
+      const duree = parseFloat(p.inputs.duree_analyse) || 20;
+      p.inputs.annee_cession = (p.inputs.annee_debut || new Date().getFullYear()) + duree;
+
+      // Mettre à jour les champs readonly dans le DOM
+      const elDebut = container.querySelector('[data-field="annee_debut"]');
+      const elCession = container.querySelector('[data-field="annee_cession"]');
+      if (elDebut) elDebut.value = p.inputs.annee_debut;
+      if (elCession) elCession.value = p.inputs.annee_cession;
     }
   }
 
@@ -2506,10 +2518,24 @@ function renderInputs(p) {
     <!-- Card: Analyse & Cession -->
     <div class="form-card" style="min-width:160px;flex:1;">
       <div class="form-card-title"><span class="icon">📅</span> Analyse & Cession</div>
-      <div class="field"><label>Année de début</label><input type="number" data-field="annee_debut" value="${i.annee_debut}" onchange="onInputChange()"></div>
+      <div class="field">
+        <label>Année de début</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" data-field="annee_debut" value="${i.annee_debut}" readonly
+            style="background:var(--surface-low);color:var(--on-surface-3);cursor:not-allowed;border-color:transparent;">
+          <span style="font-size:0.62rem;color:var(--on-surface-3);">= année d'acquisition</span>
+        </div>
+      </div>
       <div class="field"><label>Durée analyse (ans)</label><input type="number" data-field="duree_analyse" value="${i.duree_analyse}" onchange="onInputChange()"></div>
       <div class="field"><label>Prix de cession (€)</label><input type="number" data-field="prix_cession" value="${i.prix_cession}" onchange="onInputChange()"></div>
-      <div class="field"><label>Année de cession</label><input type="number" data-field="annee_cession" value="${i.annee_cession}" onchange="onInputChange()"></div>
+      <div class="field">
+        <label>Année de cession</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" data-field="annee_cession" value="${i.annee_cession}" readonly
+            style="background:var(--surface-low);color:var(--on-surface-3);cursor:not-allowed;border-color:transparent;">
+          <span style="font-size:0.62rem;color:var(--on-surface-3);">= début + durée</span>
+        </div>
+      </div>
     </div>
 
     <!-- Card: Amortissements -->
