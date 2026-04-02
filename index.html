@@ -1359,10 +1359,9 @@ function showEmpty() {
    MODE
 ══════════════════════════════════════════════════════ */
 async function setMode(mode, rerender = true) {
-  // Sauvegarder uniquement si on quitte le mode saisie
-  // (si on est déjà en présentation, collectInputs ne ferait rien mais persistState inutile)
+  // Sauvegarder p.inputs tel quel en mémoire — pas besoin de relire le DOM
+  // p.inputs est déjà à jour via onInputChange() qui tourne à chaque frappe
   if (state.activeId && state.mode === 'saisie') {
-    collectInputs();
     await persistState();
   }
   state.mode = mode;
@@ -1426,7 +1425,8 @@ async function saveProject() {
   if (!state.activeId) return;
   const btn = document.getElementById('btnSave');
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
-  collectInputs();
+  // collectInputs seulement si on est en mode saisie et sur un onglet de saisie
+  if (state.mode === 'saisie') collectInputs();
   await persistState();
   if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   notify('Enregistré ✓');
@@ -1434,15 +1434,11 @@ async function saveProject() {
 function collectInputs() {
   const p = state.projects[state.activeId];
   if (!p) return;
-  // Ne collecter QUE si on est dans un onglet de saisie
-  // Les onglets Client (synthese, cashflow, pv, pret, ifi) ne contiennent pas de vrais champs
-  // de saisie — leurs data-field sont soit vides soit des valeurs calculées
-  const saisieTab = ['inputs', 'referentiel', 'fiscal'];
-  if (!saisieTab.includes(state.activeTab)) return;
+  // Seulement sur les onglets de saisie, jamais sur Client
+  if (!['inputs','referentiel','fiscal'].includes(state.activeTab)) return;
+  // Seulement en mode saisie
+  if (state.mode !== 'saisie') return;
 
-  // Pour l'onglet referentiel et fiscal, les champs écrivent directement via onInputChange()
-  // → pas besoin de re-collecter, c'est déjà dans p.inputs
-  // Pour l'onglet inputs : collecter tous les [data-field] du tabContent uniquement
   const container = document.getElementById('tabContent');
   if (!container) return;
 
@@ -1450,8 +1446,14 @@ function collectInputs() {
     const k = el.dataset.field;
     let v = el.value;
     if (el.type === 'number') {
-      // Garder '' si le champ est vide (ne pas écraser avec 0)
-      v = el.value === '' ? '' : (parseFloat(el.value) || 0);
+      if (el.value === '' || el.value === null) {
+        // Ne pas écraser une valeur existante non-nulle avec vide
+        // (peut arriver si le champ est rendu avant que la valeur soit injectée)
+        if (p.inputs[k] !== undefined && p.inputs[k] !== '' && p.inputs[k] !== 0) return;
+        v = '';
+      } else {
+        v = parseFloat(el.value) || 0;
+      }
     }
     if (el.type === 'checkbox') v = el.checked;
     if (el.tagName === 'SELECT' && el.dataset.type === 'bool') v = v === 'true';
