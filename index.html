@@ -1134,7 +1134,8 @@ async function loadState() {
   console.log('loadState: ' + (data?.length || 0) + ' projets trouvés');
   state.projects = {};
   (data || []).forEach(row => {
-    state.projects[row.id] = { id: row.id, name: row.name, inputs: row.data };
+    console.log('loadState row:', row.id, '| data keys:', row.data ? Object.keys(row.data).length : 'NULL');
+    state.projects[row.id] = { id: row.id, name: row.name, inputs: row.data || {} };
   });
 }
 
@@ -1143,26 +1144,33 @@ async function persistState() {
   const p = state.projects[state.activeId];
   if (!p) return;
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.id);
+  console.log('persistState — id:', p.id, '| isUUID:', isUUID, '| user:', currentUser?.id);
   if (isUUID) {
+    const payload = { name: p.name, data: p.inputs };
     // Essai avec updated_at
-    let { error } = await sb.from('projects').update({
-      name: p.name,
-      data: p.inputs,
+    let res = await sb.from('projects').update({
+      ...payload,
       updated_at: new Date().toISOString()
-    }).eq('id', p.id).eq('user_id', currentUser.id);
+    }).eq('id', p.id).eq('user_id', currentUser.id).select('id');
 
-    // Si erreur (ex: colonne updated_at absente), retry sans
-    if (error) {
-      console.warn('persistState (with updated_at) failed:', error.message, '— retrying without');
-      const r2 = await sb.from('projects').update({
-        name: p.name,
-        data: p.inputs
-      }).eq('id', p.id).eq('user_id', currentUser.id);
-      if (r2.error) {
-        console.error('persistState update error:', r2.error);
-        notify('Erreur sauvegarde : ' + r2.error.message);
-        return;
-      }
+    console.log('persistState update result:', JSON.stringify(res));
+
+    // Si erreur colonne updated_at, retry sans
+    if (res.error) {
+      console.warn('retry without updated_at — error was:', res.error.message);
+      res = await sb.from('projects').update(payload)
+        .eq('id', p.id).eq('user_id', currentUser.id).select('id');
+      console.log('persistState retry result:', JSON.stringify(res));
+    }
+
+    if (res.error) {
+      console.error('persistState FINAL error:', res.error);
+      notify('Erreur sauvegarde : ' + res.error.message);
+      return;
+    }
+    if (!res.data || res.data.length === 0) {
+      console.warn('persistState: UPDATE 0 rows affected — id ou user_id ne correspondent pas');
+      notify('⚠ Sauvegarde : aucune ligne mise à jour');
     }
   } else {
     // Id legacy (timestamp) — insérer proprement
