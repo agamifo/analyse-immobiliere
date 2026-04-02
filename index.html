@@ -987,20 +987,53 @@ let currentUser = null;
    STATE & STORAGE
 ══════════════════════════════════════════════════════ */
 const FISCAL_DEFAULTS = {
+  // ── Taux généraux ──
   is_taux_reduit: 15, is_plafond_reduit: 42500, is_taux_normal: 25,
   taux_flat_tax: 30, taux_ps: 17.2, micro_bic_abat: 50,
   micro_foncier_abat: 30, micro_foncier_plafond: 15000, lmp_seuil_recettes: 23000,
   taux_ir_pv: 19, taux_ps_pv: 17.2,
+  // ── Abattements PV ──
   abat_ir_debut: 6, abat_ir_debut_annee: 6, abat_ir_debut_jusqu: 21,
   abat_ir_fin: 4, abat_ir_fin_annee: 22, abat_exo_ir_annee: 22,
   abat_ps_debut: 1.65, abat_ps_debut_annee: 6, abat_ps_debut_jusqu: 21,
   abat_ps_fin: 1.6, abat_ps_fin_annee: 22,
   abat_ps_fin2: 9, abat_ps_fin2_annee: 23, abat_exo_ps_annee: 30,
+  // ── Surtaxe PV ──
   taxe_pv_seuil1: 50000, taxe_pv_taux1: 2,
   taxe_pv_seuil2: 150000, taxe_pv_taux2: 3,
   taxe_pv_seuil3: 200000, taxe_pv_taux3: 4,
   taxe_pv_seuil4: 250000, taxe_pv_taux4: 5,
   taxe_pv_seuil5: 260000, taxe_pv_taux5: 6,
+  // ── LMNP Réel — amortissements par composant ──
+  lmnp_seuil_statut: 23000,           // seuil recettes LMNP (< = non pro)
+  lmnp_condition_lmp_pct: 50,         // % revenus foyer pour basculer LMP
+  lmnp_part_terrain_pct: 15,          // % terrain non amortissable (défaut)
+  lmnp_gros_oeuvre_pct: 50,           // % du bâti
+  lmnp_gros_oeuvre_duree: 60,         // durée amortissement (ans)
+  lmnp_toiture_pct: 10,
+  lmnp_toiture_duree: 25,
+  lmnp_installations_pct: 15,
+  lmnp_installations_duree: 20,
+  lmnp_agencements_pct: 20,
+  lmnp_agencements_duree: 15,
+  lmnp_mobilier_duree: 7,             // mobilier (hors immobilier)
+  lmnp_seuil_immobilisation: 600,     // seuil € TTC pour immobiliser
+  // ── Micro-BIC variantes ──
+  micro_bic_tourisme_nc_abat: 30,     // tourisme non classé — abattement
+  micro_bic_tourisme_nc_plafond: 15000,
+  micro_bic_tourisme_c_abat: 50,      // tourisme classé — abattement
+  micro_bic_tourisme_c_plafond: 77700,
+  micro_bic_standard_plafond: 77700,  // meublé longue durée
+  // ── LMP ──
+  lmp_cotisations_ssi_pct: 11.5,      // SSI vs PS 17,2%
+  lmp_exo_pv_recettes_max: 90000,     // plafond recettes pour exo totale PV
+  lmp_exo_pv_duree_min: 5,            // années d'activité minimum
+  // ── Foncier Réel ──
+  deficit_foncier_plafond: 10700,
+  deficit_foncier_energie_plafond: 21400,  // travaux énergétiques (jusqu'à fin 2025)
+  deficit_foncier_report_ans: 10,
+  // ── Société IS ──
+  is_duree_amort_immo: 30,            // durée standard amort. IS (même règles LMNP)
 };
 
 let _fiscalDefaultsCache = null;
@@ -1745,99 +1778,159 @@ function onRefFieldChange(key, val) {
 
 function renderReferentiel(p) {
   const f = p.inputs;
-  const fv = (key, def) => f[key] !== undefined ? f[key] : def;
+  const fv = (key, def) => f[key] !== undefined ? f[key] : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
 
-  const row = (label, key, def, hint='') =>
-    `<tr>
-      <td style="padding:6px 10px;font-size:0.72rem;color:var(--on-surface-2);border-bottom:1px solid rgba(0,32,70,0.07);white-space:nowrap;">${label}${hint ? '<div style="font-size:0.6rem;color:var(--on-surface-3);">'+hint+'</div>' : ''}</td>
-      <td style="padding:6px 10px;border-bottom:1px solid rgba(0,32,70,0.07);width:110px;">
-        <input type="number" value="${fv(key,def)}" step="any" onchange="onRefFieldChange('${key}',this.value)" style="width:100%;border:1px solid rgba(0,32,70,0.15);border-radius:6px;padding:4px 8px;font-size:0.78rem;text-align:right;font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;outline:none;" onfocus="this.style.borderColor='rgba(0,32,70,0.45)';this.style.boxShadow='0 0 0 3px rgba(0,32,70,0.08)'" onblur="this.style.borderColor='rgba(0,32,70,0.15)';this.style.boxShadow='none'">
-      </td>
-    </tr>`;
+  // ── composants de base ──
+  const inputStyle = `width:100%;border:1px solid rgba(0,32,70,0.13);border-radius:5px;padding:3px 7px;font-size:0.75rem;text-align:right;font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;outline:none;background:#fafbfd;color:var(--primary);`;
+  const inputFocus = `onfocus="this.style.borderColor='rgba(0,32,70,0.4)';this.style.boxShadow='0 0 0 2px rgba(0,32,70,0.07)'" onblur="this.style.borderColor='rgba(0,32,70,0.13)';this.style.boxShadow='none'"`;
 
-  const infoRow = (label, val) =>
-    `<tr>
-      <td style="padding:5px 10px;font-size:0.68rem;color:var(--on-surface-3);border-bottom:1px solid rgba(0,32,70,0.05);">${label}</td>
-      <td style="padding:5px 10px;font-size:0.7rem;color:var(--primary);font-weight:600;text-align:right;border-bottom:1px solid rgba(0,32,70,0.05);white-space:nowrap;">${val}</td>
-    </tr>`;
-
-  const card = (badge, title, color, rows) =>
-    `<div style="background:#fff;border:none;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
-      <div style="background:${color};padding:7px 12px;display:flex;align-items:center;gap:8px;">
-        <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.58rem;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:0.1em;">${badge}</span>
-        <span style="font-family:'Inter',sans-serif;font-size:0.72rem;font-weight:700;color:#fff;letter-spacing:0.03em;">${title}</span>
+  const row = (label, key, def, hint='', unit='') =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,32,70,0.05);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.71rem;color:var(--on-surface-2);">${label}</div>
+        ${hint ? `<div style="font-size:0.6rem;color:var(--on-surface-3);margin-top:1px;">${hint}</div>` : ''}
       </div>
-      <table style="width:100%;border-collapse:collapse;">${rows}</table>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+        <input type="number" value="${fv(key,def)}" step="any" onchange="onRefFieldChange('${key}',this.value)" style="${inputStyle}width:72px;" ${inputFocus}>
+        ${unit ? `<span style="font-size:0.65rem;color:var(--on-surface-3);white-space:nowrap;">${unit}</span>` : ''}
+      </div>
     </div>`;
+
+  const infoRow = (label, val, accent=false) =>
+    `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
+      <span style="font-size:0.68rem;color:var(--on-surface-3);">${label}</span>
+      <span style="font-size:0.68rem;font-weight:600;${accent?'color:var(--secondary)':'color:var(--primary)'};white-space:nowrap;font-family:'DM Mono',monospace;">${val}</span>
+    </div>`;
+
+  const sectionTitle = (txt) =>
+    `<div style="font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:700;color:var(--on-surface-3);text-transform:uppercase;letter-spacing:0.1em;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(0,32,70,0.1);">${txt}</div>`;
+
+  const card = (badge, title, color, body) =>
+    `<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 5px rgba(0,32,70,0.06),0 0 0 1px rgba(0,32,70,0.07);">
+      <div style="background:${color};padding:6px 12px;display:flex;align-items:center;gap:8px;">
+        <span style="background:rgba(255,255,255,0.2);color:#fff;font-size:0.56rem;font-weight:800;padding:2px 6px;border-radius:4px;letter-spacing:0.12em;">${badge}</span>
+        <span style="font-family:'Inter',sans-serif;font-size:0.71rem;font-weight:700;color:#fff;letter-spacing:0.02em;">${title}</span>
+      </div>
+      <div style="padding:8px 12px 6px;">${body}</div>
+    </div>`;
+
+  // ── check total amort composants ──
+  const totalAmort = (fv('lmnp_gros_oeuvre_pct',50) + fv('lmnp_toiture_pct',10) + fv('lmnp_installations_pct',15) + fv('lmnp_agencements_pct',20));
+  const totalOk = Math.abs(totalAmort - 95) < 0.5;
+  const totalColor = totalOk ? '#15803d' : '#c0392b';
 
   return `
   <div style="padding:0;">
-    <div style="font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:700;color:var(--on-surface-3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">Taux généraux 2025</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
-      ${card('PS','Prélèvements sociaux','#002046', row('Taux PS (%)','taux_ps',17.2,'Revenus locatifs + PV'))}
-      ${card('PFU','Flat Tax (PFU)','#002046', row('Taux (%)','taux_flat_tax',30,'LdF 2025 : 31,4%'))}
-      ${card('IS','Impôt sur les Sociétés','#002046',
-        row('Taux réduit (%)','is_taux_reduit',15)+
-        row('Plafond réduit (€)','is_plafond_reduit',42500)+
-        row('Taux normal (%)','is_taux_normal',25)
-      )}
-      ${card('PV','Plus-values IR directes','#002046',
-        row('IR PV (%)','taux_ir_pv',19)+
-        row('PS PV (%)','taux_ps_pv',17.2)
-      )}
+
+    <!-- ══ LMNP Réel ══ -->
+    ${sectionTitle('LMNP Réel')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+
+      ${card('LMNP','Seuils & Statut','#1a4f8a',`
+        ${row('Seuil recettes LMNP','lmnp_seuil_statut',23000,'< seuil = non professionnel','€/an')}
+        ${row('Condition LMP (% revenus foyer)','lmnp_condition_lmp_pct',50,'Dépasser CE seuil → bascule LMP','%')}
+        ${infoRow('Déficit BIC non pro','Report 10 ans')}
+        ${infoRow('PV revente (LdF 2025)','Réintégration amortissements',true)}
+      `)}
+
+      ${card('LMNP','Micro-BIC — Variantes','#1a4f8a',`
+        ${row('Longue durée — abattement','micro_bic_abat',50,'','%')}
+        ${infoRow('Longue durée — plafond','77 700 €/an')}
+        ${row('Tourisme non classé — abattement','micro_bic_tourisme_nc_abat',30,'Loi Le Meur 2025','%')}
+        ${row('Tourisme non classé — plafond','micro_bic_tourisme_nc_plafond',15000,'','€/an')}
+        ${row('Tourisme classé — abattement','micro_bic_tourisme_c_abat',50,'','%')}
+        ${infoRow('Tourisme classé — plafond','77 700 €/an')}
+      `)}
     </div>
 
-    <div style="font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:700;color:var(--on-surface-3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">Paramètres par régime</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
-      ${card('LMNP','LMNP Réel','#1a4f8a',
-        row('Abatt. Micro-BIC (%)','micro_bic_abat',50)+
-        infoRow('Déficit','Report illimité')+
-        infoRow('PV revente','Réintégration amort. LdF 2025')
-      )}
-      ${card('μBIC','Micro-BIC','#2563a8',
-        row('Abattement (%)','micro_bic_abat',50)+
-        infoRow('Plafond standard','77 700 €/an')+
-        infoRow('Plafond tourisme classé','188 700 €/an')
-      )}
-      ${card('LMP','LMP','#15653a',
-        row('Seuil recettes (€)','lmp_seuil_recettes',23000)+
-        infoRow('Condition 1','> 23 000 €/an')+
-        infoRow('Condition 2','> 50% revenu foyer')+
-        infoRow('PV exo totale si','< 90k€/an + 5 ans')
-      )}
-      ${card('FONC','Foncier Réel','#944a00',
-        row('Plafond déficit (€)','deficit_foncier_plafond',10700)+
-        infoRow('Excédent','Reportable 10 ans')+
-        infoRow('Notaire/travaux','Déduit en charge an. 1')
-      )}
-      ${card('μFONC','Micro-Foncier','#944a00',
-        row('Abattement (%)','micro_foncier_abat',30)+
-        row('Plafond (€)','micro_foncier_plafond',15000)+
-        infoRow('Si dépassement','Bascule foncier réel')
-      )}
-      ${card('STE IS','Société IS','#1b0074',
-        row('IS taux réduit (%)','is_taux_reduit',15)+
-        row('Plafond réduit (€)','is_plafond_reduit',42500)+
-        infoRow('Distribution','Flat tax '+(fv('taux_flat_tax',30))+'%')+
-        infoRow('PV revente','Imposée IS sur VNC')
-      )}
+    <!-- ══ Amortissement LMNP par composant ══ -->
+    <div style="margin-bottom:14px;">
+      ${card('LMNP','Plan d\'amortissement par composant','#1a4f8a',`
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            ${sectionTitle('Répartition du bâti (hors terrain)')}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px;border-bottom:2px solid rgba(0,32,70,0.1);margin-bottom:4px;">
+              <span style="font-size:0.68rem;color:var(--on-surface-3);">Terrain (non amortissable)</span>
+              <span style="display:flex;align-items:center;gap:4px;">
+                <input type="number" value="${fv('lmnp_part_terrain_pct',15)}" step="1" onchange="onRefFieldChange('lmnp_part_terrain_pct',this.value)" style="${inputStyle}width:55px;" ${inputFocus}>
+                <span style="font-size:0.65rem;color:var(--on-surface-3);">%</span>
+              </span>
+            </div>
+            ${row('Gros œuvre','lmnp_gros_oeuvre_pct',50,'% du bâti amortissable','%')}
+            ${row('Toiture','lmnp_toiture_pct',10,'','%')}
+            ${row('Installations techniques','lmnp_installations_pct',15,'Électricité, plomberie, chauffage','%')}
+            ${row('Agencements intérieurs','lmnp_agencements_pct',20,'Cloisons, revêtements, finitions','%')}
+            <div style="display:flex;justify-content:space-between;padding:5px 0 2px;border-top:1px solid rgba(0,32,70,0.1);margin-top:2px;">
+              <span style="font-size:0.68rem;font-weight:600;color:var(--on-surface-2);">Total composants</span>
+              <span style="font-size:0.72rem;font-weight:700;color:${totalColor};font-family:'DM Mono',monospace;">${totalAmort.toFixed(0)}% ${totalOk ? '✓' : '⚠ doit = 95%'}</span>
+            </div>
+          </div>
+          <div>
+            ${sectionTitle('Durées d\'amortissement (ans)')}
+            ${row('Gros œuvre','lmnp_gros_oeuvre_duree',60,'Fourchette : 50–80 ans','ans')}
+            ${row('Toiture','lmnp_toiture_duree',25,'','ans')}
+            ${row('Installations techniques','lmnp_installations_duree',20,'15–25 ans','ans')}
+            ${row('Agencements intérieurs','lmnp_agencements_duree',15,'10–20 ans','ans')}
+            ${row('Mobilier & équipements','lmnp_mobilier_duree',7,'7–10 ans','ans')}
+            <div style="height:6px;"></div>
+            ${row('Seuil immobilisation','lmnp_seuil_immobilisation',600,'< seuil → charge directe','€ TTC')}
+          </div>
+        </div>
+      `)}
     </div>
 
-    <div style="font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:700;color:var(--on-surface-3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">Abattements PV pour durée de détention</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div style="background:#fff;border:none;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
-        <div style="background:var(--primary);padding:7px 12px;font-family:'Inter',sans-serif;font-size:0.72rem;font-weight:700;color:#fff;">IR — Abattement annuel</div>
-        <table style="width:100%;border-collapse:collapse;">
-          ${infoRow('Ans 1–5','0%')}${infoRow('Ans 6–21','6%/an')}${infoRow('An 22','4% → Exonération IR')}${infoRow('> 30 ans','Exonération IR + PS')}
-        </table>
-      </div>
-      <div style="background:#fff;border:none;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
-        <div style="background:var(--primary);padding:7px 12px;font-family:'Inter',sans-serif;font-size:0.72rem;font-weight:700;color:#fff;">Prélèvements sociaux — Abattement</div>
-        <table style="width:100%;border-collapse:collapse;">
-          ${infoRow('Ans 1–5','0%')}${infoRow('Ans 6–21','1,65%/an')}${infoRow('An 22','1,60%')}${infoRow('Ans 23–30','9%/an')}
-        </table>
-      </div>
+    <!-- ══ LMP ══ -->
+    ${sectionTitle('LMP — Loueur en Meublé Professionnel')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      ${card('LMP','Conditions & Seuils','#15653a',`
+        ${row('Seuil recettes LMP','lmp_seuil_recettes',23000,'Recettes > seuil ET > 50% revenus foyer','€/an')}
+        ${infoRow('Condition 2','> 50% des revenus du foyer fiscal')}
+        ${infoRow('Déficit imputable','Sur revenu global (illimité)')}
+        ${infoRow('PV exo totale si','Recettes < 90k€ + activité ≥ 5 ans')}
+      `)}
+      ${card('LMP','Cotisations sociales','#15653a',`
+        ${row('Cotisations SSI (LMP)','lmp_cotisations_ssi_pct',11.5,'Sécurité Sociale des Indépendants','%')}
+        ${infoRow('Prélèvements sociaux (LMNP)','17,2 % (pour comparaison)')}
+        ${infoRow('Exo PV — plafond recettes','90 000 €/an')}
+        ${row('Exo PV — durée min. activité','lmp_exo_pv_duree_min',5,'','ans')}
+      `)}
     </div>
+
+    <!-- ══ Foncier ══ -->
+    ${sectionTitle('Location Nue (Revenus Fonciers)')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      ${card('FONC','Foncier Réel','#944a00',`
+        ${row('Plafond déficit foncier standard','deficit_foncier_plafond',10700,'Imputable sur revenu global','€/an')}
+        ${row('Plafond déficit travaux énergétiques','deficit_foncier_energie_plafond',21400,'Jusqu\'à fin 2025 (doublé)','€/an')}
+        ${row('Report déficit sur rev. fonciers','deficit_foncier_report_ans',10,'Au-delà du plafond global','ans')}
+        ${infoRow('Frais notaire / travaux','Déductibles année 1')}
+      `)}
+      ${card('μFONC','Micro-Foncier','#944a00',`
+        ${row('Abattement forfaitaire','micro_foncier_abat',30,'','%')}
+        ${row('Plafond micro-foncier','micro_foncier_plafond',15000,'Au-delà → régime réel obligatoire','€/an')}
+        ${infoRow('Si dépassement','Bascule automatique foncier réel')}
+        ${infoRow('Charges déductibles micro','Aucune (abattement forfaitaire)')}
+      `)}
+    </div>
+
+    <!-- ══ Société IS ══ -->
+    ${sectionTitle('Société soumise à l\'IS')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      ${card('IS','Barème IS','#1b0074',`
+        ${row('Taux IS réduit','is_taux_reduit',15,'PME — sur premiers bénéfices','%')}
+        ${row('Plafond taux réduit','is_plafond_reduit',42500,'','€')}
+        ${row('Taux IS normal','is_taux_normal',25,'Au-delà du plafond','%')}
+        ${row('Flat tax dividendes (PFU)','taux_flat_tax',30,'Prélèvement Forfaitaire Unique','%')}
+      `)}
+      ${card('IS','Amortissements & PV','#1b0074',`
+        ${infoRow('Terrain','Non amortissable (même règle LMNP)')}
+        ${infoRow('Composants bâti','Mêmes durées que LMNP Réel')}
+        ${row('Durée amort. bâti (standard)','is_duree_amort_immo',30,'Si pas de décomposition par composant','ans')}
+        ${infoRow('PV revente','Calculée sur VNC (prix − amortissements)',true)}
+        ${infoRow('Distribution résultat','Flat tax '+(fv('taux_flat_tax',30))+'% sur dividendes')}
+      `)}
+    </div>
+
   </div>`;
 }
 
