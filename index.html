@@ -1872,15 +1872,13 @@ function renderInputs(p) {
         <input type="number" data-field="taux_pret" value="${i.taux_pret}" onchange="onInputChange()">
       </div>
       <div class="field">
-        <label>Assurance décès</label>
-        <div class="assurance-deces-row">
-          <div class="assurance-deces-input">
-            <input type="number" data-field="assurance_deces" value="${i.assurance_deces||''}" onblur="onInputChange()" placeholder="0" style="width:100%;">
-          </div>
-          <div class="assurance-deces-meta">
-            <div class="ads-label">% capital / an</div>
-            <div class="ads-computed">${(parseFloat(i.assurance_deces)||0) && (parseFloat(i.montant_emprunt)||0) ? '≈\u202f' + Math.round((parseFloat(i.montant_emprunt)||0)*(parseFloat(i.assurance_deces)||0)/100).toLocaleString('fr-FR') + '\u202f€ / an' : '—'}</div>
-          </div>
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Assurance décès</span>
+          <span style="font-size:0.62rem;color:var(--text3);font-weight:400;">% capital / an</span>
+        </label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" data-field="assurance_deces" value="${i.assurance_deces||''}" onblur="onInputChange()" placeholder="0" step="0.01" style="flex:1;">
+          <span style="font-size:0.72rem;color:var(--text3);white-space:nowrap;flex-shrink:0;">${(parseFloat(i.assurance_deces)||0) && (parseFloat(i.montant_emprunt)||0) ? '≈\u202f' + Math.round((parseFloat(i.montant_emprunt)||0)*(parseFloat(i.assurance_deces)||0)/100).toLocaleString('fr-FR') + '\u202f€/an' : ''}</span>
         </div>
         <div class="field-hint">Si décès, l'assurance rembourse le capital restant dû</div>
       </div>
