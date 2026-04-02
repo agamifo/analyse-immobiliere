@@ -1788,334 +1788,416 @@ function onRefFieldChange(key, val) {
 
 function renderReferentiel(p) {
   const f = p.inputs;
-  const fv = (key, def) => f[key] !== undefined ? f[key] : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
+  const fv = (key, def) => f[key] !== undefined ? f[key]
+              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
 
-  // ── composants de base ──
-  const inputStyle = `width:100%;border:1px solid rgba(0,32,70,0.13);border-radius:5px;padding:3px 7px;font-size:0.75rem;text-align:right;font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;outline:none;background:#fafbfd;color:var(--primary);`;
-  const inputFocus = `onfocus="this.style.borderColor='rgba(0,32,70,0.4)';this.style.boxShadow='0 0 0 2px rgba(0,32,70,0.07)'" onblur="this.style.borderColor='rgba(0,32,70,0.13)';this.style.boxShadow='none'"`;
+  // ═══ SHARED MICRO-COMPONENTS (Referentiel + Fiscal) ═══════════════════════
 
-  const row = (label, key, def, hint='', unit='') =>
-    `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,32,70,0.05);">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:0.71rem;color:var(--on-surface-2);">${label}</div>
-        ${hint ? `<div style="font-size:0.6rem;color:var(--on-surface-3);margin-top:1px;">${hint}</div>` : ''}
-      </div>
-      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-        <input type="number" value="${fv(key,def)}" step="any" onchange="onRefFieldChange('${key}',this.value)" style="${inputStyle}width:72px;" ${inputFocus}>
-        ${unit ? `<span style="font-size:0.65rem;color:var(--on-surface-3);white-space:nowrap;">${unit}</span>` : ''}
-      </div>
-    </div>`;
+  const _inp = (key, def, w='64px', step='any') =>
+    `<input type="number" value="${fv(key,def)}" step="${step}"
+      data-field="${key}" onchange="onInputChange()"
+      style="width:${w};border:none;border-radius:4px;padding:2px 6px;
+             font-size:0.72rem;text-align:right;font-family:'DM Mono',monospace;
+             font-variant-numeric:tabular-nums;outline:none;
+             background:rgba(255,255,255,0.55);color:var(--primary);
+             transition:background 0.15s;"
+      onfocus="this.style.background='rgba(255,255,255,0.9)';this.style.boxShadow='0 0 0 2px rgba(0,32,70,0.18)'"
+      onblur="this.style.background='rgba(255,255,255,0.55)';this.style.boxShadow='none'">`;
 
-  const infoRow = (label, val, accent=false) =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
-      <span style="font-size:0.68rem;color:var(--on-surface-3);">${label}</span>
-      <span style="font-size:0.68rem;font-weight:600;${accent?'color:var(--secondary)':'color:var(--primary)'};white-space:nowrap;font-family:'DM Mono',monospace;">${val}</span>
-    </div>`;
+  // one compact row: label + optional hint + input + unit
+  const _row = (label, key, def, unit='', hint='') =>
+    `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;
+                 border-bottom:1px solid rgba(0,32,70,0.05);">
+       <div style="flex:1;min-width:0;line-height:1.3;">
+         <span style="font-size:0.68rem;color:var(--on-surface-2);">${label}</span>
+         ${hint ? `<span style="font-size:0.58rem;color:var(--on-surface-3);display:block;">${hint}</span>` : ''}
+       </div>
+       ${_inp(key,def)}
+       ${unit ? `<span style="font-size:0.6rem;color:var(--on-surface-3);flex-shrink:0;">${unit}</span>` : ''}
+     </div>`;
 
-  const sectionTitle = (txt) =>
-    `<div style="font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:700;color:var(--on-surface-3);text-transform:uppercase;letter-spacing:0.1em;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(0,32,70,0.1);">${txt}</div>`;
+  // purely informational row (no input)
+  const _info = (label, val, accent=false) =>
+    `<div style="display:flex;align-items:baseline;gap:6px;padding:3px 0;
+                 border-bottom:1px solid rgba(0,32,70,0.04);">
+       <span style="flex:1;font-size:0.66rem;color:var(--on-surface-3);">${label}</span>
+       <span style="font-size:0.66rem;font-weight:600;white-space:nowrap;
+                    font-family:'DM Mono',monospace;
+                    color:${accent?'var(--secondary)':'var(--primary)'};">${val}</span>
+     </div>`;
 
-  const card = (badge, title, color, body) =>
-    `<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 5px rgba(0,32,70,0.06),0 0 0 1px rgba(0,32,70,0.07);">
-      <div style="background:${color};padding:6px 12px;display:flex;align-items:center;gap:8px;">
-        <span style="background:rgba(255,255,255,0.2);color:#fff;font-size:0.56rem;font-weight:800;padding:2px 6px;border-radius:4px;letter-spacing:0.12em;">${badge}</span>
-        <span style="font-family:'Inter',sans-serif;font-size:0.71rem;font-weight:700;color:#fff;letter-spacing:0.02em;">${title}</span>
-      </div>
-      <div style="padding:8px 12px 6px;">${body}</div>
-    </div>`;
+  // card with colour-gradient header
+  const _card = (badge, title, color, body, cols=1) =>
+    `<div style="background:#fff;border-radius:8px;
+                 box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);
+                 overflow:hidden;">
+       <div style="background:linear-gradient(100deg,${color} 0%,${color}cc 100%);
+                   padding:5px 10px;display:flex;align-items:center;gap:7px;">
+         <span style="background:rgba(255,255,255,0.2);color:#fff;font-size:0.54rem;
+                      font-weight:800;padding:1px 5px;border-radius:3px;
+                      letter-spacing:0.1em;">${badge}</span>
+         <span style="font-family:'Inter',sans-serif;font-size:0.68rem;
+                      font-weight:700;color:#fff;">${title}</span>
+       </div>
+       <div style="padding:6px 10px 4px;
+                   ${cols>1 ? 'display:grid;grid-template-columns:repeat('+cols+',1fr);gap:0 12px;' : ''}">
+         ${body}
+       </div>
+     </div>`;
 
-  // ── check total amort composants ──
-  const totalAmort = (fv('lmnp_gros_oeuvre_pct',50) + fv('lmnp_toiture_pct',10) + fv('lmnp_installations_pct',15) + fv('lmnp_agencements_pct',20));
+  // section separator
+  const _sep = (txt) =>
+    `<div style="font-size:0.56rem;font-weight:800;letter-spacing:0.12em;
+                 text-transform:uppercase;color:var(--on-surface-3);
+                 padding:10px 0 5px;border-bottom:1px solid rgba(0,32,70,0.08);
+                 margin-bottom:6px;">${txt}</div>`;
+
+  const totalAmort = +fv('lmnp_gros_oeuvre_pct',50) + +fv('lmnp_toiture_pct',10)
+                   + +fv('lmnp_installations_pct',15) + +fv('lmnp_agencements_pct',20);
   const totalOk = Math.abs(totalAmort - 95) < 0.5;
-  const totalColor = totalOk ? '#15803d' : '#c0392b';
 
-  return `
-  <div style="padding:0;">
+  return `<div style="padding:0;">
 
-    <!-- ══ LMNP Réel ══ -->
-    ${sectionTitle('LMNP Réel')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+  <!-- ══ LMNP ══ -->
+  ${_sep('LMNP Réel')}
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
 
-      ${card('LMNP','Seuils & Statut','#1a4f8a',`
-        ${row('Seuil recettes LMNP','lmnp_seuil_statut',23000,'< seuil = non professionnel','€/an')}
-        ${row('Condition LMP (% revenus foyer)','lmnp_condition_lmp_pct',50,'Dépasser CE seuil → bascule LMP','%')}
-        ${infoRow('Déficit BIC non pro','Report 10 ans')}
-        ${infoRow('PV revente (LdF 2025)','Réintégration amortissements',true)}
-      `)}
+    ${_card('LMNP','Seuils & Statut','#1a4f8a',
+      _row('Seuil recettes LMNP','lmnp_seuil_statut',23000,'€/an','< seuil = non pro') +
+      _row('Cond. LMP (% revenus foyer)','lmnp_condition_lmp_pct',50,'%') +
+      _info('Déficit BIC non pro','Report 10 ans') +
+      _info('PV revente LdF 2025','Réintégration amort.',true)
+    )}
 
-      ${card('LMNP','Micro-BIC — Variantes','#1a4f8a',`
-        ${row('Longue durée — abattement','micro_bic_abat',50,'','%')}
-        ${infoRow('Longue durée — plafond','77 700 €/an')}
-        ${row('Tourisme non classé — abattement','micro_bic_tourisme_nc_abat',30,'Loi Le Meur 2025','%')}
-        ${row('Tourisme non classé — plafond','micro_bic_tourisme_nc_plafond',15000,'','€/an')}
-        ${row('Tourisme classé — abattement','micro_bic_tourisme_c_abat',50,'','%')}
-        ${infoRow('Tourisme classé — plafond','77 700 €/an')}
-      `)}
-    </div>
+    ${_card('μBIC','Micro-BIC — variantes','#1a4f8a',
+      _row('Longue durée — abattement','micro_bic_abat',50,'%') +
+      _info('Longue durée — plafond','77 700 €/an') +
+      _row('Tourisme non classé — abat.','micro_bic_tourisme_nc_abat',30,'%','Loi Le Meur 2025') +
+      _row('Tourisme non classé — plafond','micro_bic_tourisme_nc_plafond',15000,'€/an') +
+      _row('Tourisme classé — abattement','micro_bic_tourisme_c_abat',50,'%') +
+      _info('Tourisme classé — plafond','77 700 €/an')
+    )}
 
-    <!-- ══ Amortissement LMNP par composant ══ -->
-    <div style="margin-bottom:14px;">
-      ${card('LMNP','Plan d\'amortissement par composant','#1a4f8a',`
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            ${sectionTitle('Répartition du bâti (hors terrain)')}
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px;border-bottom:2px solid rgba(0,32,70,0.1);margin-bottom:4px;">
-              <span style="font-size:0.68rem;color:var(--on-surface-3);">Terrain (non amortissable)</span>
-              <span style="display:flex;align-items:center;gap:4px;">
-                <input type="number" value="${fv('lmnp_part_terrain_pct',15)}" step="1" onchange="onRefFieldChange('lmnp_part_terrain_pct',this.value)" style="${inputStyle}width:55px;" ${inputFocus}>
-                <span style="font-size:0.65rem;color:var(--on-surface-3);">%</span>
-              </span>
-            </div>
-            ${row('Gros œuvre','lmnp_gros_oeuvre_pct',50,'% du bâti amortissable','%')}
-            ${row('Toiture','lmnp_toiture_pct',10,'','%')}
-            ${row('Installations techniques','lmnp_installations_pct',15,'Électricité, plomberie, chauffage','%')}
-            ${row('Agencements intérieurs','lmnp_agencements_pct',20,'Cloisons, revêtements, finitions','%')}
-            <div style="display:flex;justify-content:space-between;padding:5px 0 2px;border-top:1px solid rgba(0,32,70,0.1);margin-top:2px;">
-              <span style="font-size:0.68rem;font-weight:600;color:var(--on-surface-2);">Total composants</span>
-              <span style="font-size:0.72rem;font-weight:700;color:${totalColor};font-family:'DM Mono',monospace;">${totalAmort.toFixed(0)}% ${totalOk ? '✓' : '⚠ doit = 95%'}</span>
-            </div>
-          </div>
-          <div>
-            ${sectionTitle('Durées d\'amortissement (ans)')}
-            ${row('Gros œuvre','lmnp_gros_oeuvre_duree',60,'Fourchette : 50–80 ans','ans')}
-            ${row('Toiture','lmnp_toiture_duree',25,'','ans')}
-            ${row('Installations techniques','lmnp_installations_duree',20,'15–25 ans','ans')}
-            ${row('Agencements intérieurs','lmnp_agencements_duree',15,'10–20 ans','ans')}
-            ${row('Mobilier & équipements','lmnp_mobilier_duree',7,'7–10 ans','ans')}
-            <div style="height:6px;"></div>
-            ${row('Seuil immobilisation','lmnp_seuil_immobilisation',600,'< seuil → charge directe','€ TTC')}
-          </div>
+    ${_card('LMNP','Seuil & Mobilier','#1a4f8a',
+      _row('Seuil immobilisation','lmnp_seuil_immobilisation',600,'€ TTC','< seuil → charge directe') +
+      _row('Durée mobilier & équip.','lmnp_mobilier_duree',7,'ans','7–10 ans') +
+      _info('Déficit','Stocké, utilisable sur bénéfices')
+    )}
+
+  </div>
+
+  <!-- ══ Plan amortissement par composant ══ -->
+  ${_card('LMNP','Plan d\'amortissement par composant','#1a4f8a',`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+      <div>
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.08em;
+                    text-transform:uppercase;color:var(--on-surface-3);
+                    padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.08);margin-bottom:2px;">
+          Répartition du bâti (hors terrain)
         </div>
-      `)}
+        ${_row('Terrain (non amortissable)','lmnp_part_terrain_pct',15,'%')}
+        ${_row('Gros œuvre','lmnp_gros_oeuvre_pct',50,'%','% du bâti amortissable')}
+        ${_row('Toiture','lmnp_toiture_pct',10,'%')}
+        ${_row('Installations techniques','lmnp_installations_pct',15,'%','Élec., plomb., chauffage')}
+        ${_row('Agencements intérieurs','lmnp_agencements_pct',20,'%','Cloisons, revêtements')}
+        <div style="display:flex;justify-content:space-between;padding:4px 0 2px;
+                    border-top:1px solid rgba(0,32,70,0.1);margin-top:2px;">
+          <span style="font-size:0.66rem;font-weight:600;color:var(--on-surface-2);">Total composants</span>
+          <span style="font-size:0.68rem;font-weight:700;font-family:'DM Mono',monospace;
+                       color:${totalOk?'#15803d':'#c0392b'};">
+            ${totalAmort.toFixed(0)}% ${totalOk?'✓':'⚠ doit = 95%'}
+          </span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.08em;
+                    text-transform:uppercase;color:var(--on-surface-3);
+                    padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.08);margin-bottom:2px;">
+          Durées d'amortissement (ans)
+        </div>
+        ${_row('Gros œuvre','lmnp_gros_oeuvre_duree',60,'ans','Fourchette : 50–80 ans')}
+        ${_row('Toiture','lmnp_toiture_duree',25,'ans')}
+        ${_row('Installations techniques','lmnp_installations_duree',20,'ans','15–25 ans')}
+        ${_row('Agencements intérieurs','lmnp_agencements_duree',15,'ans','10–20 ans')}
+        ${_row('Mobilier & équipements','lmnp_mobilier_duree',7,'ans','7–10 ans')}
+      </div>
     </div>
+  `)}
 
-    <!-- ══ LMP ══ -->
-    ${sectionTitle('LMP — Loueur en Meublé Professionnel')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      ${card('LMP','Conditions & Seuils','#15653a',`
-        ${row('Seuil recettes LMP','lmp_seuil_recettes',23000,'Recettes > seuil ET > 50% revenus foyer','€/an')}
-        ${infoRow('Condition 2','> 50% des revenus du foyer fiscal')}
-        ${infoRow('Déficit imputable','Sur revenu global (illimité)')}
-        ${infoRow('PV exo totale si','Recettes < 90k€ + activité ≥ 5 ans')}
-      `)}
-      ${card('LMP','Cotisations sociales','#15653a',`
-        ${row('Cotisations SSI (LMP)','lmp_cotisations_ssi_pct',11.5,'Sécurité Sociale des Indépendants','%')}
-        ${infoRow('Prélèvements sociaux (LMNP)','17,2 % (pour comparaison)')}
-        ${infoRow('Exo PV — plafond recettes','90 000 €/an')}
-        ${row('Exo PV — durée min. activité','lmp_exo_pv_duree_min',5,'','ans')}
-      `)}
-    </div>
+  <!-- ══ LMP ══ -->
+  <div style="margin-top:8px;">
+  ${_sep('LMP — Loueur en Meublé Professionnel')}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+    ${_card('LMP','Conditions & Seuils','#15653a',
+      _row('Seuil recettes LMP','lmp_seuil_recettes',23000,'€/an','Recettes > seuil ET > 50% foyer') +
+      _info('Condition 2','> 50% des revenus du foyer fiscal') +
+      _info('Déficit imputable','Sur revenu global (illimité)') +
+      _info('PV exo totale si','Recettes < 90k€ + activité ≥ 5 ans')
+    )}
+    ${_card('LMP','Cotisations sociales','#15653a',
+      _row('Cotisations SSI (LMP)','lmp_cotisations_ssi_pct',11.5,'%','Sécurité Sociale Indépendants') +
+      _info('Prélèvements sociaux (LMNP)','17,2 % (comparaison)') +
+      _row('Exo PV — durée min. activité','lmp_exo_pv_duree_min',5,'ans')
+    )}
+  </div>
+  </div>
 
-    <!-- ══ Foncier ══ -->
-    ${sectionTitle('Location Nue (Revenus Fonciers)')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      ${card('FONC','Foncier Réel','#944a00',`
-        ${row('Plafond déficit foncier standard','deficit_foncier_plafond',10700,'Imputable sur revenu global','€/an')}
-        ${row('Plafond déficit travaux énergétiques','deficit_foncier_energie_plafond',21400,'Jusqu\'à fin 2025 (doublé)','€/an')}
-        ${row('Report déficit sur rev. fonciers','deficit_foncier_report_ans',10,'Au-delà du plafond global','ans')}
-        ${infoRow('Frais notaire / travaux','Déductibles année 1')}
-      `)}
-      ${card('μFONC','Micro-Foncier','#944a00',`
-        ${row('Abattement forfaitaire','micro_foncier_abat',30,'','%')}
-        ${row('Plafond micro-foncier','micro_foncier_plafond',15000,'Au-delà → régime réel obligatoire','€/an')}
-        ${infoRow('Si dépassement','Bascule automatique foncier réel')}
-        ${infoRow('Charges déductibles micro','Aucune (abattement forfaitaire)')}
-      `)}
-    </div>
+  <!-- ══ Foncier ══ -->
+  ${_sep('Location Nue (Revenus Fonciers)')}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+    ${_card('FONC','Foncier Réel','#944a00',
+      _row('Plafond déficit standard','deficit_foncier_plafond',10700,'€/an','Imputable sur revenu global') +
+      _row('Plafond déficit trav. énergétiques','deficit_foncier_energie_plafond',21400,'€/an','Doublé — jusqu\'à fin 2025') +
+      _row('Report déficit rev. fonciers','deficit_foncier_report_ans',10,'ans') +
+      _info('Frais notaire / travaux','Déductibles année 1')
+    )}
+    ${_card('μFONC','Micro-Foncier','#944a00',
+      _row('Abattement forfaitaire','micro_foncier_abat',30,'%') +
+      _row('Plafond micro-foncier','micro_foncier_plafond',15000,'€/an','Au-delà → réel obligatoire') +
+      _info('Si dépassement','Bascule foncier réel auto.') +
+      _info('Charges déductibles','Aucune (forfait)')
+    )}
+  </div>
 
-    <!-- ══ Société IS ══ -->
-    ${sectionTitle('Société soumise à l\'IS')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      ${card('IS','Barème IS','#1b0074',`
-        ${row('Taux IS réduit','is_taux_reduit',15,'PME — sur premiers bénéfices','%')}
-        ${row('Plafond taux réduit','is_plafond_reduit',42500,'','€')}
-        ${row('Taux IS normal','is_taux_normal',25,'Au-delà du plafond','%')}
-        ${row('Flat tax dividendes (PFU)','taux_flat_tax',30,'Prélèvement Forfaitaire Unique','%')}
-      `)}
-      ${card('IS','Amortissements & PV','#1b0074',`
-        ${infoRow('Terrain','Non amortissable (même règle LMNP)')}
-        ${infoRow('Composants bâti','Mêmes durées que LMNP Réel')}
-        ${row('Durée amort. bâti (standard)','is_duree_amort_immo',30,'Si pas de décomposition par composant','ans')}
-        ${infoRow('PV revente','Calculée sur VNC (prix − amortissements)',true)}
-        ${infoRow('Distribution résultat','Flat tax '+(fv('taux_flat_tax',30))+'% sur dividendes')}
-      `)}
-    </div>
+  <!-- ══ Société IS ══ -->
+  ${_sep('Société soumise à l\'IS')}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    ${_card('IS','Barème IS','#1b0074',
+      _row('Taux IS réduit','is_taux_reduit',15,'%','PME — premiers bénéfices') +
+      _row('Plafond taux réduit','is_plafond_reduit',42500,'€') +
+      _row('Taux IS normal','is_taux_normal',25,'%','Au-delà du plafond') +
+      _row('Flat tax dividendes (PFU)','taux_flat_tax',30,'%')
+    )}
+    ${_card('IS','Amortissements & PV','#1b0074',
+      _info('Terrain','Non amortissable (même règle LMNP)') +
+      _info('Composants bâti','Mêmes durées que LMNP Réel') +
+      _row('Durée amort. bâti (standard)','is_duree_amort_immo',30,'ans','Si pas de décomposition') +
+      _info('PV revente','Calculée sur VNC (prix − amortissements)',true) +
+      _info('Distribution résultat','Flat tax '+(fv('taux_flat_tax',30))+'% sur dividendes')
+    )}
+  </div>
 
   </div>`;
 }
 
-/* ══════════════════════════════════════════════════════
-   RENDER FISCAL PARAMS
-══════════════════════════════════════════════════════ */
 function renderFiscal(p) {
   const f = p.inputs;
-  const fv = (key, def) => f[key] !== undefined ? f[key] : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
+  const fv = (key, def) => f[key] !== undefined ? f[key]
+              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
 
-  const inputStyle = `width:100%;border:1px solid rgba(0,32,70,0.13);border-radius:5px;padding:3px 7px;font-size:0.75rem;text-align:right;font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;outline:none;background:#fafbfd;color:var(--primary);`;
-  const inputFocus = `onfocus="this.style.borderColor='rgba(0,32,70,0.4)';this.style.boxShadow='0 0 0 2px rgba(0,32,70,0.07)'" onblur="this.style.borderColor='rgba(0,32,70,0.13)';this.style.boxShadow='none'"`;
+  // ═══ SHARED MICRO-COMPONENTS (Referentiel + Fiscal) ═══════════════════════
 
-  const row = (label, key, def, hint='', unit='') =>
-    `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,32,70,0.05);">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:0.71rem;color:var(--on-surface-2);">${label}</div>
-        ${hint ? `<div style="font-size:0.6rem;color:var(--on-surface-3);margin-top:1px;">${hint}</div>` : ''}
-      </div>
-      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-        <input type="number" value="${fv(key,def)}" step="any" data-field="${key}" onchange="onInputChange()" style="${inputStyle}width:80px;" ${inputFocus}>
-        ${unit ? `<span style="font-size:0.65rem;color:var(--on-surface-3);white-space:nowrap;">${unit}</span>` : ''}
-      </div>
-    </div>`;
+  const _inp = (key, def, w='64px', step='any') =>
+    `<input type="number" value="${fv(key,def)}" step="${step}"
+      data-field="${key}" onchange="onInputChange()"
+      style="width:${w};border:none;border-radius:4px;padding:2px 6px;
+             font-size:0.72rem;text-align:right;font-family:'DM Mono',monospace;
+             font-variant-numeric:tabular-nums;outline:none;
+             background:rgba(255,255,255,0.55);color:var(--primary);
+             transition:background 0.15s;"
+      onfocus="this.style.background='rgba(255,255,255,0.9)';this.style.boxShadow='0 0 0 2px rgba(0,32,70,0.18)'"
+      onblur="this.style.background='rgba(255,255,255,0.55)';this.style.boxShadow='none'">`;
 
-  const infoRow = (label, val) =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
-      <span style="font-size:0.68rem;color:var(--on-surface-3);">${label}</span>
-      <span style="font-size:0.68rem;font-weight:600;color:var(--primary);white-space:nowrap;font-family:'DM Mono',monospace;">${val}</span>
-    </div>`;
+  // one compact row: label + optional hint + input + unit
+  const _row = (label, key, def, unit='', hint='') =>
+    `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;
+                 border-bottom:1px solid rgba(0,32,70,0.05);">
+       <div style="flex:1;min-width:0;line-height:1.3;">
+         <span style="font-size:0.68rem;color:var(--on-surface-2);">${label}</span>
+         ${hint ? `<span style="font-size:0.58rem;color:var(--on-surface-3);display:block;">${hint}</span>` : ''}
+       </div>
+       ${_inp(key,def)}
+       ${unit ? `<span style="font-size:0.6rem;color:var(--on-surface-3);flex-shrink:0;">${unit}</span>` : ''}
+     </div>`;
 
-  const sectionTitle = (txt) =>
-    `<div style="font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:700;color:var(--on-surface-3);text-transform:uppercase;letter-spacing:0.1em;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(0,32,70,0.1);">${txt}</div>`;
+  // purely informational row (no input)
+  const _info = (label, val, accent=false) =>
+    `<div style="display:flex;align-items:baseline;gap:6px;padding:3px 0;
+                 border-bottom:1px solid rgba(0,32,70,0.04);">
+       <span style="flex:1;font-size:0.66rem;color:var(--on-surface-3);">${label}</span>
+       <span style="font-size:0.66rem;font-weight:600;white-space:nowrap;
+                    font-family:'DM Mono',monospace;
+                    color:${accent?'var(--secondary)':'var(--primary)'};">${val}</span>
+     </div>`;
 
-  const card = (icon, title, body) =>
-    `<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 5px rgba(0,32,70,0.06),0 0 0 1px rgba(0,32,70,0.07);margin-bottom:10px;">
-      <div style="padding:7px 14px;border-bottom:1px solid rgba(0,32,70,0.08);display:flex;align-items:center;gap:7px;">
-        <span style="font-size:0.8rem;">${icon}</span>
-        <span style="font-family:'Inter',sans-serif;font-size:0.71rem;font-weight:700;color:var(--primary);">${title}</span>
-      </div>
-      <div style="padding:8px 14px 6px;">${body}</div>
-    </div>`;
+  // card with colour-gradient header
+  const _card = (badge, title, color, body, cols=1) =>
+    `<div style="background:#fff;border-radius:8px;
+                 box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);
+                 overflow:hidden;">
+       <div style="background:linear-gradient(100deg,${color} 0%,${color}cc 100%);
+                   padding:5px 10px;display:flex;align-items:center;gap:7px;">
+         <span style="background:rgba(255,255,255,0.2);color:#fff;font-size:0.54rem;
+                      font-weight:800;padding:1px 5px;border-radius:3px;
+                      letter-spacing:0.1em;">${badge}</span>
+         <span style="font-family:'Inter',sans-serif;font-size:0.68rem;
+                      font-weight:700;color:#fff;">${title}</span>
+       </div>
+       <div style="padding:6px 10px 4px;
+                   ${cols>1 ? 'display:grid;grid-template-columns:repeat('+cols+',1fr);gap:0 12px;' : ''}">
+         ${body}
+       </div>
+     </div>`;
 
-  // Barème TMI — tableau visuel
-  const tmiRows = [
-    [0, fv('tmi_t1_seuil',11294), fv('tmi_t1_taux',0)],
-    [fv('tmi_t1_seuil',11294)+1, fv('tmi_t2_seuil',28797), fv('tmi_t2_taux',11)],
-    [fv('tmi_t2_seuil',28797)+1, fv('tmi_t3_seuil',82341), fv('tmi_t3_taux',30)],
-    [fv('tmi_t3_seuil',82341)+1, fv('tmi_t4_seuil',177106), fv('tmi_t4_taux',41)],
-    [fv('tmi_t4_seuil',177106)+1, null, fv('tmi_t5_taux',45)],
+  // section separator
+  const _sep = (txt) =>
+    `<div style="font-size:0.56rem;font-weight:800;letter-spacing:0.12em;
+                 text-transform:uppercase;color:var(--on-surface-3);
+                 padding:10px 0 5px;border-bottom:1px solid rgba(0,32,70,0.08);
+                 margin-bottom:6px;">${txt}</div>`;
+
+  // Barème TMI — mini barre visuelle
+  const tmiData = [
+    {label:'0 – '+fv('tmi_t1_seuil',11294).toLocaleString('fr-FR')+' €', taux:fv('tmi_t1_taux',0), w:0, keyT:'tmi_t1_taux', keyS:'tmi_t1_seuil', defS:11294},
+    {label:'→ '+fv('tmi_t2_seuil',28797).toLocaleString('fr-FR')+' €', taux:fv('tmi_t2_taux',11), w:11, keyT:'tmi_t2_taux', keyS:'tmi_t2_seuil', defS:28797},
+    {label:'→ '+fv('tmi_t3_seuil',82341).toLocaleString('fr-FR')+' €', taux:fv('tmi_t3_taux',30), w:30, keyT:'tmi_t3_taux', keyS:'tmi_t3_seuil', defS:82341},
+    {label:'→ '+fv('tmi_t4_seuil',177106).toLocaleString('fr-FR')+' €', taux:fv('tmi_t4_taux',41), w:41, keyT:'tmi_t4_taux', keyS:'tmi_t4_seuil', defS:177106},
+    {label:'> '+fv('tmi_t4_seuil',177106).toLocaleString('fr-FR')+' €', taux:fv('tmi_t5_taux',45), w:45, keyT:'tmi_t5_taux', keyS:null, defS:null},
   ];
-  const tmiBarColors = ['#e8f0fe','#c5d8f6','#92b4ef','#5a88e0','#2563a8'];
-  const tmiTableRows = tmiRows.map((r,i) => {
-    const tranche = r[1] ? `${r[0].toLocaleString('fr-FR')} – ${r[1].toLocaleString('fr-FR')} €` : `> ${r[0].toLocaleString('fr-FR')} €`;
-    const barW = [0,5,30,45,60][i];
-    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.05);">
-      <div style="width:90px;font-size:0.62rem;color:var(--on-surface-3);white-space:nowrap;">${tranche}</div>
-      <div style="flex:1;height:6px;background:rgba(0,32,70,0.06);border-radius:3px;overflow:hidden;">
-        <div style="width:${r[2]}%;height:100%;background:${tmiBarColors[i]};border-radius:3px;transition:width 0.3s;"></div>
+  const tmiColors = ['rgba(0,32,70,0.1)','rgba(0,32,70,0.22)','rgba(0,32,70,0.38)','rgba(0,32,70,0.58)','#002046'];
+  const tmiRows = tmiData.map((d,i) => `
+    <div style="display:flex;align-items:center;gap:5px;padding:2px 0;">
+      <div style="width:82px;font-size:0.6rem;color:var(--on-surface-3);white-space:nowrap;">${d.label}</div>
+      <div style="flex:1;height:5px;background:rgba(0,32,70,0.06);border-radius:2px;overflow:hidden;">
+        <div style="width:${d.w}%;height:100%;background:${tmiColors[i]};border-radius:2px;"></div>
       </div>
-      <div style="width:32px;font-size:0.72rem;font-weight:700;color:var(--primary);font-family:'DM Mono',monospace;text-align:right;">${r[2]}%</div>
-    </div>`;
-  }).join('');
+      ${_inp(d.keyT, d.taux, '40px', '1')}
+      <span style="font-size:0.58rem;color:var(--on-surface-3);">%</span>
+    </div>`).join('');
 
-  // Barème surtaxe PV — tableau visuel
-  const surtaxeData = [
-    ['50 001 – 60 000 €', fv('taxe_pv_taux1',2), 'taxe_pv_taux1', 'taxe_pv_seuil1', fv('taxe_pv_seuil1',50000)],
-    ['60 001 – 100 000 €', fv('taxe_pv_taux1',2), null, null, null],
-    ['100 001 – 150 000 €', fv('taxe_pv_taux2',3), 'taxe_pv_taux2', 'taxe_pv_seuil2', fv('taxe_pv_seuil2',150000)],
-    ['150 001 – 200 000 €', fv('taxe_pv_taux3',4), 'taxe_pv_taux3', 'taxe_pv_seuil3', fv('taxe_pv_seuil3',200000)],
-    ['200 001 – 250 000 €', fv('taxe_pv_taux4',5), 'taxe_pv_taux4', 'taxe_pv_seuil4', fv('taxe_pv_seuil4',250000)],
-    ['> 250 000 €', fv('taxe_pv_taux5',6), 'taxe_pv_taux5', 'taxe_pv_seuil5', fv('taxe_pv_seuil5',260000)],
-  ];
-  const surtaxeRows = surtaxeData.map(([tranche, taux, keyTaux, keySeuil, defSeuil]) =>
-    `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.05);">
-      <div style="flex:1;font-size:0.68rem;color:var(--on-surface-2);">${tranche}</div>
-      ${keyTaux
-        ? `<input type="number" value="${taux}" step="0.5" data-field="${keyTaux}" onchange="onInputChange()" style="${inputStyle}width:50px;" ${inputFocus}>`
-        : `<span style="font-size:0.72rem;font-weight:600;color:var(--primary);font-family:'DM Mono',monospace;width:50px;text-align:right;">${taux}%</span>`
-      }
-      <span style="font-size:0.65rem;color:var(--on-surface-3);">%</span>
-    </div>`
-  ).join('');
+  // Surtaxe PV — tableau compact
+  const surtaxeRows = [
+    ['50k–60k €','taxe_pv_taux1','2','formule dégressive'],
+    ['60k–100k €','taxe_pv_taux1',null,'= 2 %'],
+    ['100k–200k €','taxe_pv_taux2','3',''],
+    ['200k–250k €','taxe_pv_taux3','4',''],
+    ['250k–260k €','taxe_pv_taux4','5',''],
+    ['> 260k €','taxe_pv_taux5','6',''],
+  ].map(([tr, key, def, note]) => `
+    <div style="display:flex;align-items:center;gap:5px;padding:2px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
+      <span style="flex:1;font-size:0.63rem;color:var(--on-surface-2);">${tr}</span>
+      ${note==='= 2 %'
+        ? `<span style="font-size:0.65rem;font-weight:600;color:var(--primary);font-family:'DM Mono',monospace;width:40px;text-align:right;">2</span>`
+        : _inp(key, def, '40px', '0.5')}
+      <span style="font-size:0.58rem;color:var(--on-surface-3);">%</span>
+      ${note && note!=='= 2 %' ? `<span style="font-size:0.57rem;color:var(--on-surface-3);">${note}</span>` : ''}
+    </div>`).join('');
 
   return `
   <!-- Bandeau info -->
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:7px 14px;background:rgba(0,32,70,0.04);border:1px solid rgba(0,32,70,0.1);border-radius:8px;">
-    <span style="font-size:0.75rem;">⚠</span>
-    <div style="flex:1;font-size:0.65rem;color:var(--on-surface-2);line-height:1.4;">Ces paramètres reflètent la législation fiscale applicable. Modifiables par le FO à chaque évolution des lois — toutes les simulations utilisent ces valeurs.</div>
-    <button onclick="saveAsFiscalDefaults()" style="flex-shrink:0;background:var(--primary);color:#fff;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.67rem;font-weight:600;white-space:nowrap;">💾 Enregistrer comme défaut</button>
-    <button onclick="resetFiscalToDefaults()" style="flex-shrink:0;background:none;color:var(--on-surface-3);border:1px solid rgba(0,32,70,0.15);padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.67rem;white-space:nowrap;">↺ Réinitialiser</button>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;
+              padding:6px 12px;background:rgba(0,32,70,0.04);
+              border-radius:7px;border:1px solid rgba(0,32,70,0.09);">
+    <span style="font-size:0.7rem;flex-shrink:0;">⚠</span>
+    <div style="flex:1;font-size:0.63rem;color:var(--on-surface-2);line-height:1.4;">
+      Ces paramètres reflètent la législation fiscale applicable. Modifiables par le FO à chaque LdF — toutes les simulations utilisent ces valeurs.
+    </div>
+    <button onclick="saveAsFiscalDefaults()" style="flex-shrink:0;background:var(--primary);color:#fff;
+      border:none;padding:4px 10px;border-radius:5px;cursor:pointer;
+      font-family:'Inter',sans-serif;font-size:0.63rem;font-weight:600;white-space:nowrap;">
+      💾 Enregistrer défaut
+    </button>
+    <button onclick="resetFiscalToDefaults()" style="flex-shrink:0;background:none;
+      color:var(--on-surface-3);border:1px solid rgba(0,32,70,0.15);
+      padding:4px 9px;border-radius:5px;cursor:pointer;
+      font-family:'Inter',sans-serif;font-size:0.63rem;white-space:nowrap;">
+      ↺ Réinitialiser
+    </button>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
 
-    <!-- ══ COLONNE GAUCHE ══ -->
+    <!-- ── COL 1 ── -->
     <div>
-      ${sectionTitle('Taux & Prélèvements')}
-
-      ${card('🏢','Impôt sur les Sociétés (IS)',
-        row('Taux IS réduit','is_taux_reduit',15,'PME — sur premiers bénéfices','%') +
-        row('Plafond taux réduit','is_plafond_reduit',42500,'Actuellement 42 500 €','€') +
-        row('Taux IS normal','is_taux_normal',25,'Au-delà du plafond','%') +
-        row('Flat tax dividendes (PFU)','taux_flat_tax',30,'Prélèvement Forfaitaire Unique','%')
+      ${_sep('IS & Revenus locatifs')}
+      ${_card('IS','Impôt sur les Sociétés','#1b0074',
+        _row('Taux réduit','is_taux_reduit',15,'%','PME — premiers bénéfices') +
+        _row('Plafond taux réduit','is_plafond_reduit',42500,'€') +
+        _row('Taux normal','is_taux_normal',25,'%','Au-delà du plafond') +
+        _row('Flat tax dividendes (PFU)','taux_flat_tax',30,'%')
       )}
-
-      ${card('📋','Revenus locatifs (IR)',
-        row('Prélèvements sociaux','taux_ps',17.2,'Sur revenus fonciers et BIC','%') +
-        row('Abattement micro-BIC','micro_bic_abat',50,'Location meublée longue durée','%') +
-        row('Abattement micro-foncier','micro_foncier_abat',30,'Location nue','%') +
-        row('Plafond micro-foncier','micro_foncier_plafond',15000,'','€/an') +
-        row('Seuil recettes LMP','lmp_seuil_recettes',23000,'Condition 1 bascule LMP','€/an')
+      <div style="margin-top:8px;">
+      ${_card('📋','Revenus locatifs (IR)','#1a4f8a',
+        _row('Prélèvements sociaux','taux_ps',17.2,'%','Revenus fonciers et BIC') +
+        _row('Abattement micro-BIC','micro_bic_abat',50,'%','Location meublée longue durée') +
+        _row('Abattement micro-foncier','micro_foncier_abat',30,'%','Location nue') +
+        _row('Plafond micro-foncier','micro_foncier_plafond',15000,'€/an') +
+        _row('Seuil recettes LMP','lmp_seuil_recettes',23000,'€/an','Condition 1 bascule LMP')
       )}
-
-      ${sectionTitle('Barème TMI — référentiel 2025')}
-      <div style="background:#fff;border-radius:10px;box-shadow:0 1px 5px rgba(0,32,70,0.06),0 0 0 1px rgba(0,32,70,0.07);padding:10px 14px 8px;">
-        <div style="font-size:0.62rem;color:var(--on-surface-3);margin-bottom:8px;">Barème IR — saisie TMI par projet dans Paramètres</div>
-        <div style="display:flex;gap:6px;font-size:0.58rem;color:var(--on-surface-3);margin-bottom:6px;">
-          <div style="width:90px;">Tranche</div>
-          <div style="flex:1;">Visualisation</div>
-          <div style="width:32px;text-align:right;">Taux</div>
-        </div>
-        ${tmiTableRows}
-        <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          ${row('Seuil T1→T2 (11%)','tmi_t1_seuil',11294,'','€')}
-          ${row('Seuil T2→T3 (30%)','tmi_t2_seuil',28797,'','€')}
-          ${row('Seuil T3→T4 (41%)','tmi_t3_seuil',82341,'','€')}
-          ${row('Seuil T4→T5 (45%)','tmi_t4_seuil',177106,'','€')}
-        </div>
       </div>
     </div>
 
-    <!-- ══ COLONNE DROITE ══ -->
+    <!-- ── COL 2 ── -->
     <div>
-      ${sectionTitle('Plus-Values Immobilières')}
-
-      ${card('📈','Taux & Forfaits PV',
-        row('Taux IR sur PV','taux_ir_pv',19,'Taux fixe — actuellement 19%','%') +
-        row('Taux PS sur PV','taux_ps_pv',17.2,'Actuellement 17,2%','%') +
-        `<div style="height:4px;"></div>` +
-        row('Forfait frais d\'acquisition','pv_forfait_frais_acquisition',7.5,'Si pas de montant réel justifié','%') +
-        row('Forfait travaux (si > 5 ans)','pv_forfait_travaux',15,'Alternative aux travaux réels','%') +
-        row('Exo si cession ≤','pv_exo_cession_seuil',15000,'Exonération totale automatique','€')
+      ${_sep('Plus-Values — Taux & Forfaits')}
+      ${_card('PV','Taux & exonérations','#002046',
+        _row('Taux IR sur PV','taux_ir_pv',19,'%','Taux fixe') +
+        _row('Taux PS sur PV','taux_ps_pv',17.2,'%') +
+        _row('Forfait frais acquisition','pv_forfait_frais_acquisition',7.5,'%','Si pas de montant réel') +
+        _row('Forfait travaux (si > 5 ans)','pv_forfait_travaux',15,'%','Alternative aux travaux réels') +
+        _row('Exo si cession ≤','pv_exo_cession_seuil',15000,'€','Exo totale automatique') +
+        _info('Exo résidence principale','Totale, sans condition')
       )}
-
-      ${card('⏱','Abattements IR — durée de détention',
-        infoRow('Ans 1–5','0 %') +
-        row('Abattement annuel (ans 6–21)','abat_ir_debut',6,'','%/an') +
-        row('Abattement an 22','abat_ir_fin',4,'Atteint exonération IR complète','%') +
-        infoRow('Exonération IR complète','An 22')
+      <div style="margin-top:8px;">
+      ${_card('⏱','Abattements IR','#002046',
+        _info('Ans 1–5','0 %') +
+        _row('Abattement annuel (ans 6–21)','abat_ir_debut',6,'%/an') +
+        _row('Abattement an 22','abat_ir_fin',4,'%','→ exonération IR complète') +
+        _info('Exonération IR complète','An 22')
       )}
-
-      ${card('⏱','Abattements PS — durée de détention',
-        infoRow('Ans 1–5','0 %') +
-        row('Abattement annuel (ans 6–21)','abat_ps_debut',1.65,'','%/an') +
-        row('Abattement an 22','abat_ps_fin',1.6,'','%') +
-        row('Abattement annuel (ans 23–30)','abat_ps_fin2',9,'','%/an') +
-        infoRow('Exonération PS complète','An 30')
+      </div>
+      <div style="margin-top:8px;">
+      ${_card('⏱','Abattements PS','#002046',
+        _info('Ans 1–5','0 %') +
+        _row('Abattement annuel (ans 6–21)','abat_ps_debut',1.65,'%/an') +
+        _row('Abattement an 22','abat_ps_fin',1.6,'%') +
+        _row('Abattement annuel (ans 23–30)','abat_ps_fin2',9,'%/an') +
+        _info('Exonération PS complète','An 30')
       )}
+      </div>
+    </div>
 
-      ${sectionTitle('Surtaxe sur hautes plus-values')}
-      <div style="background:#fff;border-radius:10px;box-shadow:0 1px 5px rgba(0,32,70,0.06),0 0 0 1px rgba(0,32,70,0.07);padding:10px 14px 8px;">
-        <div style="font-size:0.62rem;color:var(--on-surface-3);margin-bottom:8px;">Art. 1609 nonies G CGI — applicable si PV nette imposable > 50 000 € (par cédant)</div>
-        <div style="display:flex;gap:6px;font-size:0.58rem;color:var(--on-surface-3);margin-bottom:4px;">
-          <div style="flex:1;">Tranche de PV nette</div>
-          <div style="width:50px;text-align:right;">Taux</div>
-          <div style="width:16px;"></div>
+    <!-- ── COL 3 ── -->
+    <div>
+      ${_sep('Barème TMI — référentiel 2025')}
+      <div style="background:#fff;border-radius:8px;
+                  box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);
+                  padding:8px 10px 6px;margin-bottom:8px;">
+        <div style="font-size:0.6rem;color:var(--on-surface-3);margin-bottom:6px;line-height:1.4;">
+          Informatif — la TMI est saisie <strong>par projet</strong> dans Paramètres
+        </div>
+        ${tmiRows}
+        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:0 8px;">
+          ${_row('Seuil T1→T2','tmi_t1_seuil',11294,'€')}
+          ${_row('Seuil T2→T3','tmi_t2_seuil',28797,'€')}
+          ${_row('Seuil T3→T4','tmi_t3_seuil',82341,'€')}
+          ${_row('Seuil T4→T5','tmi_t4_seuil',177106,'€')}
+        </div>
+      </div>
+
+      ${_sep('Surtaxe hautes plus-values')}
+      <div style="background:#fff;border-radius:8px;
+                  box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);
+                  padding:8px 10px 6px;">
+        <div style="font-size:0.6rem;color:var(--on-surface-3);margin-bottom:5px;">
+          Art. 1609 nonies G CGI — PV nette imposable > 50 000 € (par cédant)
         </div>
         ${surtaxeRows}
-        <div style="margin-top:8px;font-size:0.6rem;color:var(--on-surface-3);line-height:1.4;">Note : la tranche 50k–60k€ applique une formule dégressive pour éviter l'effet de seuil. Les autres tranches s'appliquent sur la totalité de la PV nette.</div>
+        <div style="margin-top:6px;font-size:0.58rem;color:var(--on-surface-3);line-height:1.35;">
+          Note : la tranche 50k–60k€ applique une formule dégressive pour éviter l'effet de seuil.
+        </div>
+        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:0 8px;">
+          ${_row('Seuil s2 (100k)','taxe_pv_seuil2',150000,'€')}
+          ${_row('Seuil s3 (200k)','taxe_pv_seuil3',200000,'€')}
+          ${_row('Seuil s4 (250k)','taxe_pv_seuil4',250000,'€')}
+          ${_row('Seuil s5 (260k)','taxe_pv_seuil5',260000,'€')}
+        </div>
       </div>
     </div>
 
   </div>`;
 }
+
 /* ══════════════════════════════════════════════════════
    RENDER INPUTS
 ══════════════════════════════════════════════════════ */
