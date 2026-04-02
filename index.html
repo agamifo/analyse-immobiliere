@@ -3097,13 +3097,14 @@ function renderRapport(p) {
   </div>
 
   <!-- Data sections stockées en JSON -->
-  <!-- Zone d'impression : injectée par printRapport(), cachée en mode normal -->
+  <!-- Zone d'impression -->
   <div id="printAllSections" style="display:none;"></div>
 
   <div id="rapportSectionsData" style="display:none;"
-    data-sections='${JSON.stringify(Object.fromEntries(sectionKeys.map(k=>[k,sections[k]])))}'
-    data-titles='${JSON.stringify(sectionTitles)}'>
-  </div>`;
+    data-keys='${JSON.stringify(sectionKeys)}'
+    data-titles='${JSON.stringify(sectionTitles).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}'>
+  </div>
+  ${sectionKeys.map(k => `<template id="tpl-${k}">${sections[k]}</template>`).join('')}`;
 }
 
 
@@ -4063,14 +4064,18 @@ function initChartsForTab(tab, p) {
         const dataEl = document.getElementById('rapportSectionsData');
         if (!dataEl) return;
         try {
-          const sections = JSON.parse(dataEl.dataset.sections || '{}');
-          const titles   = JSON.parse(dataEl.dataset.titles   || '{}');
-          const content  = sections[sectionId];
-          const meta     = titles[sectionId] || ['','',''];
-          if (!content) return;
+          // Sections stockées dans <template> pour éviter les problèmes d'échappement HTML
+          const tpl = document.getElementById('tpl-' + sectionId);
+          if (!tpl) { console.warn('template not found:', sectionId); return; }
+          const content = tpl.innerHTML;
+          const sectionKeys = JSON.parse(dataEl.dataset.keys || '[]');
+          // titles stocké avec entités HTML → décoder
+          const titlesRaw = dataEl.getAttribute('data-titles')
+            .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+          const titles = JSON.parse(titlesRaw);
+          const meta = titles[sectionId] || ['','',''];
 
           // Update nav buttons
-          const sectionKeys = Object.keys(titles);
           sectionKeys.forEach(k => {
             const btn = document.getElementById('nav-'+k);
             if (!btn) return;
@@ -4326,16 +4331,16 @@ function printRapport() {
   const dataEl = document.getElementById('rapportSectionsData');
   if (!dataEl) return;
 
-  let sections, titles;
+  let titles, sectionKeys;
   try {
-    sections = JSON.parse(dataEl.dataset.sections || '{}');
-    titles   = JSON.parse(dataEl.dataset.titles   || '{}');
+    sectionKeys = JSON.parse(dataEl.dataset.keys || '[]');
+    const titlesRaw = dataEl.getAttribute('data-titles')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    titles = JSON.parse(titlesRaw);
   } catch(e) {
     console.error('printRapport parse error:', e);
     return;
   }
-
-  const sectionKeys = Object.keys(titles);
   const today = new Date().toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'});
   const projectName = document.getElementById('topbarName')?.textContent || '';
 
@@ -4353,7 +4358,8 @@ function printRapport() {
   // Construire le HTML de toutes les sections
   const allHTML = sectionKeys.map((key, idx) => {
     const meta = titles[key] || ['','',''];
-    const body = sections[key] || '';
+    const tpl = document.getElementById('tpl-' + key);
+    const body = tpl ? tpl.innerHTML : '';
     return `
       <div class="print-section">
         ${FOOTER_HTML}
