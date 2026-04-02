@@ -2554,7 +2554,7 @@ function renderInputs(p) {
   <div style="background:#fff;border-radius:var(--radius2);padding:12px 14px 10px;margin-bottom:14px;
               box-shadow:0 1px 6px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
     <div class="form-card-title" style="margin-bottom:10px;"><span class="icon">📋</span> Client & Description du bien</div>
-    <div style="display:grid;grid-template-columns:130px 160px 1fr 220px 2fr;gap:10px 14px;align-items:start;">
+    <div style="display:grid;grid-template-columns:130px 160px 2fr 1.5fr 1fr;gap:10px 14px;align-items:start;">
 
       <!-- Bloc client -->
       <div>
@@ -2620,7 +2620,7 @@ function renderInputs(p) {
             <input type="number" data-field="bien_etage" value="${i.bien_etage||''}" onchange="onInputChange()" placeholder="3">
           </div>
           <div class="field" style="margin-bottom:0;">
-            <label>Année construction</label>
+            <label>Année constr.</label>
             <input type="number" data-field="bien_annee_construction" value="${i.bien_annee_construction||''}" onchange="onInputChange()" placeholder="1890">
           </div>
         </div>
