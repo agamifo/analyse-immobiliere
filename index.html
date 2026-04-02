@@ -1340,14 +1340,24 @@ function renderProjectList() {
   }).join('');
 }
 
-function selectProject(id) {
+async function selectProject(id) {
+  // 1. Sauvegarder le projet ACTUEL avant de changer (si on est en saisie)
+  if (state.activeId && state.activeId !== id && state.mode === 'saisie') {
+    await persistState();
+  }
+  // 2. Changer de projet
   state.activeId = id;
   renderProjectList();
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('projectView').style.display = 'flex';
   document.getElementById('topbarName').textContent = state.projects[id].name;
-  // Show appropriate default tab for current mode
-  setMode(state.mode, true);
+  // 3. Recharger depuis Supabase puis afficher
+  if (state.mode === 'saisie') {
+    await reloadActiveProject();
+    showTab('inputs');
+  } else {
+    showTab('synthese');
+  }
 }
 
 function showEmpty() {
