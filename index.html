@@ -2482,8 +2482,8 @@ function renderInputs(p) {
       <div class="field"><label>Durée meubles (ans)</label><input type="number" data-field="duree_amort_meubles" value="${i.duree_amort_meubles}" onchange="onInputChange()"></div>
       <div class="field"><label>Réintégration amort. à la revente</label>
         <select data-field="lmnp_reintegration_amort" data-type="bool" onchange="onInputChange()">
-          <option value="true" \${i.lmnp_reintegration_amort!==false?'selected':''}>Oui — LF 2025</option>
-          <option value="false" \${i.lmnp_reintegration_amort===false?'selected':''}>Non — Ancien régime</option>
+          <option value="true" ${i.lmnp_reintegration_amort!==false?'selected':''}>Oui — LF 2025</option>
+          <option value="false" ${i.lmnp_reintegration_amort===false?'selected':''}>Non — Ancien régime</option>
         </select>
         <div class="field-hint">Amort. cumulés réintégrés dans la PV LMNP</div>
       </div>
@@ -2494,18 +2494,18 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">€</span> Exploitation</div>
       <div class="field"><label>Type de location</label>
         <select data-field="type_location" onchange="onInputChange()">
-          <option value="meuble" \${i.type_location==='meuble'?'selected':''}>Meublée (LMNP/LMP)</option>
-          <option value="nu" \${i.type_location==='nu'?'selected':''}>Nue</option>
+          <option value="meuble" ${i.type_location==='meuble'?'selected':''}>Meublée (LMNP/LMP)</option>
+          <option value="nu" ${i.type_location==='nu'?'selected':''}>Nue</option>
         </select>
       </div>
-      <div class="field"><label>Loyer mensuel (€)</label><input type="number" data-field="montant_loyer" value="\${i.montant_loyer}" onchange="calcRecettes()"></div>
-      <div class="field"><label>Recettes annuelles (€)</label><input type="number" data-field="recettes_annuelles" id="recettes_annuelles_field" value="\${(parseFloat(i.montant_loyer)||0)*12||i.recettes_annuelles}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly></div>
-      <div class="field"><label>Assurance (€/an)</label><input type="number" data-field="assurance" value="\${i.assurance}" onchange="onInputChange()"></div>
-      <div class="field"><label>Copropriété (€/an)</label><input type="number" data-field="copropriete" value="\${i.copropriete}" onchange="onInputChange()"></div>
-      <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="\${i.taxe_fonciere}" onchange="onInputChange()"></div>
-      <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="\${i.honoraires_gestion}" onchange="onInputChange()"></div>
-      <div class="field"><label>Comptable (€/an)</label><input type="number" data-field="comptable" value="\${i.comptable}" onchange="onInputChange()"></div>
-      <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="\${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
+      <div class="field"><label>Loyer mensuel (€)</label><input type="number" data-field="montant_loyer" value="${i.montant_loyer}" onchange="calcRecettes()"></div>
+      <div class="field"><label>Recettes annuelles (€)</label><input type="number" data-field="recettes_annuelles" id="recettes_annuelles_field" value="${(parseFloat(i.montant_loyer)||0)*12||i.recettes_annuelles}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly></div>
+      <div class="field"><label>Assurance (€/an)</label><input type="number" data-field="assurance" value="${i.assurance}" onchange="onInputChange()"></div>
+      <div class="field"><label>Copropriété (€/an)</label><input type="number" data-field="copropriete" value="${i.copropriete}" onchange="onInputChange()"></div>
+      <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="${i.taxe_fonciere}" onchange="onInputChange()"></div>
+      <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="${i.honoraires_gestion}" onchange="onInputChange()"></div>
+      <div class="field"><label>Comptable (€/an)</label><input type="number" data-field="comptable" value="${i.comptable}" onchange="onInputChange()"></div>
+      <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
     </div>
 
     <!-- Card: Fiscalité -->
@@ -2513,25 +2513,25 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">⚖</span> Fiscalité</div>
       <div class="field"><label>TMI</label>
         <select data-field="tmi" onchange="onInputChange()">
-          <option value="0" \${parseFloat(i.tmi)===0?'selected':''}>0%</option>
-          <option value="11" \${parseFloat(i.tmi)===11?'selected':''}>11%</option>
-          <option value="30" \${parseFloat(i.tmi)===30?'selected':''}>30%</option>
-          <option value="41" \${parseFloat(i.tmi)===41?'selected':''}>41%</option>
-          <option value="45" \${parseFloat(i.tmi)===45?'selected':''}>45%</option>
+          <option value="0" ${parseFloat(i.tmi)===0?'selected':''}>0%</option>
+          <option value="11" ${parseFloat(i.tmi)===11?'selected':''}>11%</option>
+          <option value="30" ${parseFloat(i.tmi)===30?'selected':''}>30%</option>
+          <option value="41" ${parseFloat(i.tmi)===41?'selected':''}>41%</option>
+          <option value="45" ${parseFloat(i.tmi)===45?'selected':''}>45%</option>
         </select>
       </div>
       <div class="field"><label>Déclaration conjointe</label>
         <select data-field="declaration_conjoint" data-type="bool" onchange="onInputChange()">
-          <option value="true" \${i.declaration_conjoint?'selected':''}>Oui</option>
-          <option value="false" \${!i.declaration_conjoint?'selected':''}>Non</option>
+          <option value="true" ${i.declaration_conjoint?'selected':''}>Oui</option>
+          <option value="false" ${!i.declaration_conjoint?'selected':''}>Non</option>
         </select>
       </div>
-      <div class="field"><label>Revenu fiscal réf. (€)</label><input type="number" data-field="revenu_fiscal_ref" value="\${i.revenu_fiscal_ref}" onchange="onInputChange()"><div class="field-hint">Détection LMP auto</div></div>
+      <div class="field"><label>Revenu fiscal réf. (€)</label><input type="number" data-field="revenu_fiscal_ref" value="${i.revenu_fiscal_ref}" onchange="onInputChange()"><div class="field-hint">Détection LMP auto</div></div>
       <div class="field"><label>CEHR (%)</label>
         <select data-field="cehr_taux" onchange="onInputChange()">
-          <option value="0" \${parseFloat(i.cehr_taux)===0?'selected':''}>0% — Non assujetti</option>
-          <option value="3" \${parseFloat(i.cehr_taux)===3?'selected':''}>3% — RFR 250k–500k€</option>
-          <option value="4" \${parseFloat(i.cehr_taux)===4?'selected':''}>4% — RFR > 500k€</option>
+          <option value="0" ${parseFloat(i.cehr_taux)===0?'selected':''}>0% — Non assujetti</option>
+          <option value="3" ${parseFloat(i.cehr_taux)===3?'selected':''}>3% — RFR 250k–500k€</option>
+          <option value="4" ${parseFloat(i.cehr_taux)===4?'selected':''}>4% — RFR > 500k€</option>
         </select>
         <div class="field-hint">Contribution exceptionnelle hauts revenus</div>
       </div>
@@ -2540,8 +2540,8 @@ function renderInputs(p) {
     <!-- Card: IFI -->
     <div class="form-card" style="min-width:150px;flex:1;">
       <div class="form-card-title"><span class="icon">🏛</span> IFI</div>
-      <div class="field"><label>Base IFI pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="\${i.ifi_base_pre}" onchange="onInputChange()"></div>
-      <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="\${i.ifi_ir_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Base IFI pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="${i.ifi_base_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="${i.ifi_ir_pre}" onchange="onInputChange()"></div>
     </div>
 
   </div>
