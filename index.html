@@ -1624,67 +1624,67 @@ function getAnnualLoan(rows, annee_debut, year) {
 }
 
 function calcAmortissements(inp) {
-  // ── Plan d'amortissement par composant (référentiel LMNP) ──────────────
-  // Si les durées par composant sont disponibles dans le référentiel, on les
-  // utilise. Sinon fallback sur les champs legacy du projet (duree_amort_immo).
   const _n = (v, d) => (parseFloat(v) > 0 ? parseFloat(v) : d);
 
-  const prix  = _n(inp.prix_acquisition, 0);
-  const frais = _n(inp.frais_notaire, 0);
-  const travaux = _n(inp.travaux, 0);
-  const meubles = _n(inp.meubles, 0);
+  const prix    = parseFloat(inp.prix_acquisition) || 0;
+  const frais   = parseFloat(inp.frais_notaire)    || 0;
+  const travaux = parseFloat(inp.travaux)           || 0;
+  const meubles = parseFloat(inp.meubles)           || 0;
 
-  // Part terrain (depuis référentiel lmnp_part_terrain_pct, sinon champ projet part_terrain)
-  const pct_terrain = _n(inp.lmnp_part_terrain_pct, _n(inp.part_terrain, 15));
-  const base_bati   = (prix + frais) * (1 - pct_terrain / 100); // bâti amortissable
+  // Part terrain : champ projet prioritaire, puis référentiel (défaut 30% comme Gorrest)
+  const pct_terrain = _n(inp.part_terrain, _n(inp.lmnp_part_terrain_pct, 30));
+  // Base bâti amortissable = (prix + frais) - (prix × terrain%)
+  // Gorrest : le terrain s'applique sur le prix d'acquisition uniquement,
+  // les frais de notaire sont intégralement amortissables
+  const base_bati = (prix + frais) - (prix * pct_terrain / 100);
 
-  // Composants — % du bâti amortissable (depuis référentiel)
-  const pct_go   = _n(inp.lmnp_gros_oeuvre_pct,    50);
-  const pct_toit = _n(inp.lmnp_toiture_pct,         10);
-  const pct_inst = _n(inp.lmnp_installations_pct,   15);
-  const pct_agen = _n(inp.lmnp_agencements_pct,     20);
-  // NB : total = 95% du bâti, les 5% restants sont non amortis (ex: fondations)
+  // ── Priorité : duree_amort_immo saisi dans le projet (mode Gorrest) ──
+  // Si le FO a saisi une durée → modèle simple (une durée unique, comme dans le tableur)
+  // Si duree_amort_immo = 0 → mode composants du référentiel LMNP
+  const d_immo_projet = parseFloat(inp.duree_amort_immo);
+  const useSimple = d_immo_projet > 0;
 
-  // Durées (depuis référentiel, sinon fallback legacy)
-  const d_go   = _n(inp.lmnp_gros_oeuvre_duree,    _n(inp.duree_amort_immo, 40));
-  const d_toit = _n(inp.lmnp_toiture_duree,         25);
-  const d_inst = _n(inp.lmnp_installations_duree,   20);
-  const d_agen = _n(inp.lmnp_agencements_duree,     15);
-  const d_meub = _n(inp.lmnp_mobilier_duree,        _n(inp.duree_amort_meubles, 7));
-  const d_trav = _n(inp.duree_amort_travaux,        20);
+  let immo_annuel, duree_immo;
+  let composants = null;
 
-  // Annuités par composant
-  const go_annuel   = base_bati * (pct_go   / 100) / d_go;
-  const toit_annuel = base_bati * (pct_toit / 100) / d_toit;
-  const inst_annuel = base_bati * (pct_inst / 100) / d_inst;
-  const agen_annuel = base_bati * (pct_agen / 100) / d_agen;
-  const immo_annuel = go_annuel + toit_annuel + inst_annuel + agen_annuel;
+  if (useSimple) {
+    // Modèle simple Gorrest : base_bati / durée unique
+    duree_immo  = d_immo_projet;
+    immo_annuel = base_bati / duree_immo;
+  } else {
+    // Modèle composants (référentiel LMNP) — si durée projet non renseignée
+    const d_go   = _n(inp.lmnp_gros_oeuvre_duree,   60);
+    const d_toit = _n(inp.lmnp_toiture_duree,        25);
+    const d_inst = _n(inp.lmnp_installations_duree,  20);
+    const d_agen = _n(inp.lmnp_agencements_duree,    15);
+    const pct_go   = _n(inp.lmnp_gros_oeuvre_pct,   50);
+    const pct_toit = _n(inp.lmnp_toiture_pct,        10);
+    const pct_inst = _n(inp.lmnp_installations_pct,  15);
+    const pct_agen = _n(inp.lmnp_agencements_pct,    20);
+    const go_a   = base_bati * pct_go   / 100 / d_go;
+    const toit_a = base_bati * pct_toit / 100 / d_toit;
+    const inst_a = base_bati * pct_inst / 100 / d_inst;
+    const agen_a = base_bati * pct_agen / 100 / d_agen;
+    immo_annuel = go_a + toit_a + inst_a + agen_a;
+    duree_immo  = d_go;
+    composants  = {
+      go:   { base: base_bati * pct_go   / 100, annuel: go_a,   duree: d_go   },
+      toit: { base: base_bati * pct_toit / 100, annuel: toit_a, duree: d_toit },
+      inst: { base: base_bati * pct_inst / 100, annuel: inst_a, duree: d_inst },
+      agen: { base: base_bati * pct_agen / 100, annuel: agen_a, duree: d_agen },
+    };
+  }
 
+  const d_trav = _n(inp.duree_amort_travaux, 20);
+  const d_meub = _n(inp.duree_amort_meubles, _n(inp.lmnp_mobilier_duree, 5));
   const travaux_annuel = travaux > 0 ? travaux / d_trav : 0;
   const meubles_annuel = meubles > 0 ? meubles / d_meub : 0;
 
-  // Durée effective immo = durée du composant le plus long (gros œuvre)
-  const duree_immo = d_go;
-
   return {
-    // Totaux (rétrocompatibles avec le reste du code)
-    immo_annuel,
-    travaux_annuel,
-    meubles_annuel,
-    duree_immo,
-    duree_travaux: d_trav,
-    duree_meubles: d_meub,
-    // Détail par composant (pour affichage dans renderPret / synthese)
-    composants: {
-      go:   { base: base_bati * pct_go   / 100, annuel: go_annuel,   duree: d_go   },
-      toit: { base: base_bati * pct_toit / 100, annuel: toit_annuel, duree: d_toit },
-      inst: { base: base_bati * pct_inst / 100, annuel: inst_annuel, duree: d_inst },
-      agen: { base: base_bati * pct_agen / 100, annuel: agen_annuel, duree: d_agen },
-      trav: { base: travaux,                    annuel: travaux_annuel, duree: d_trav },
-      meub: { base: meubles,                    annuel: meubles_annuel, duree: d_meub },
-    },
-    pct_terrain,
-    base_bati,
+    immo_annuel, travaux_annuel, meubles_annuel,
+    duree_immo, duree_travaux: d_trav, duree_meubles: d_meub,
+    composants, pct_terrain, base_bati,
+    mode: useSimple ? 'simple' : 'composants',
   };
 }
 
@@ -1881,7 +1881,8 @@ function calcYearsFoncier(inp) {
     const year = _n(inp.annee_debut, 2024) + y;
     const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
     const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
-    // Foncier : frais acquisition déductibles année 1 (traitement Gorrest)
+    // Foncier réel an 1 : frais d'acquisition déductibles (traitement GORREST)
+    // GORREST: charges LN an 1 = charges courantes + frais notaire (les travaux sont en LMNP uniquement)
     const extra_y1 = y === 0 ? _n(inp.frais_notaire) : 0;
     const revenu_foncier = _n(inp.recettes_annuelles) - charges - la.interets - extra_y1;
 
@@ -1908,7 +1909,8 @@ function calcYearsFoncier(inp) {
     }
     const treso = _n(inp.recettes_annuelles) - charges - la.annuites - Math.max(0, impot);
     years.push({
-      year, recettes: _n(inp.recettes_annuelles), charges, frais_acq_deduits: extra_y1, interets: la.interets,
+      year, recettes: _n(inp.recettes_annuelles), charges,
+      frais_acq_deduits: extra_y1, interets: la.interets,
       revenu_foncier, deficit_reportable, revenu_net, ir, ps, impot,
       annuites: la.annuites, treso, effort: treso < 0 ? treso : 0, crd: la.crd
     });
@@ -3286,10 +3288,15 @@ function calcPV(inp) {
     : annees_detention >= 6
       ? Math.min(1, (annees_detention - 5) * _abat_ir_taux + (annees_detention >= 22 ? _abat_ir_fin - _abat_ir_taux : 0))
       : 0;
-  // PS : 0% ans 1-5, 1,65%/an ans 6-21, 1,60% an 22, 9%/an ans 23-30, exo à 30 ans
-  const _ps_tranche1 = Math.min(Math.max(0, annees_detention - 5), 16) * _abat_ps_taux;
-  const _ps_tranche2 = annees_detention >= 22 ? _abat_ps_fin : 0;
-  const _ps_tranche3 = annees_detention >= 23 ? Math.min(annees_detention - 22, 8) * _abat_ps_fin2 : 0;
+  // PS : années RÉVOLUES entières au-delà de la 5e (règle GORREST / CGI)
+  // Pour N ans de détention : nb années PS = max(0, floor(N) - 6) pour tranche 1
+  // Exemple 11 ans : (11 - 6) = 5 ans × 1,65% = 8,25%
+  // IR : on compte à partir de la 6e année (N - 5), PS : à partir de la 7e (N - 6)
+  const _ad_int = Math.floor(annees_detention); // années entières révolues
+  const _ps_tranche1 = _ad_int >= 6
+    ? Math.min(Math.max(0, _ad_int - 6), 15) * _abat_ps_taux : 0;
+  const _ps_tranche2 = _ad_int >= 22 ? _abat_ps_fin : 0;
+  const _ps_tranche3 = _ad_int >= 23 ? Math.min(_ad_int - 22, 8) * _abat_ps_fin2 : 0;
   const abat_ps = annees_detention >= _abat_ps_exo ? 1.0
     : Math.min(1, _ps_tranche1 + _ps_tranche2 + _ps_tranche3);
 
@@ -3329,11 +3336,15 @@ function calcPV(inp) {
   const travaux_reel = parseFloat(inp.travaux) || 0;
   const annee_detention_int = Math.floor(annees_detention);
   // Forfait frais si aucun montant réel saisi
+  // GORREST : forfait frais = 7.5% du prix d'acquisition SEUL
   const frais_deductibles = frais_reel > 0 ? frais_reel
     : (parseFloat(inp.prix_acquisition) || 0) * _forfait_frais;
-  // Forfait travaux si > 5 ans et aucun montant réel, ou si montant réel disponible
-  const travaux_deductibles = travaux_reel > 0 ? travaux_reel
-    : (annee_detention_int >= 5 ? (parseFloat(inp.prix_acquisition) || 0) * _forfait_trav : 0);
+  // NB: si frais réels saisis (ex: 44925), on les utilise directement
+  // Forfait travaux (GORREST) : max(travaux réels, 15% du prix d'acquisition) si > 5 ans
+  // Le forfait se calcule sur le PRIX D'ACQUISITION uniquement (hors frais)
+  const forfait_trav_montant = annee_detention_int >= 5
+    ? (parseFloat(inp.prix_acquisition) || 0) * _forfait_trav : 0;
+  const travaux_deductibles = Math.max(travaux_reel, forfait_trav_montant);
 
   // ── Exonération si prix cession ≤ seuil ────────────────────────────────
   const _exo_seuil = parseFloat(inp.pv_exo_cession_seuil) || 15000;
