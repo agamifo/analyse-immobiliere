@@ -4382,11 +4382,28 @@ function printRapport() {
   if (!printDiv) return;
   printDiv.innerHTML = allHTML;
 
+  // Nom de fichier PDF = YYMMDD_nom-du-projet
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(2);
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  const slug = projectName.toLowerCase()
+    .replace(/[àáâã]/g,'a').replace(/[éèêë]/g,'e').replace(/[îï]/g,'i')
+    .replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace(/[ç]/g,'c')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const filename = `${yy}${mm}${dd}_${slug || 'rapport'}`;
+
+  const prevTitle = document.title;
+  document.title = filename;
+
   // Lancer l'impression
   window.print();
 
-  // Nettoyer après impression
-  setTimeout(() => { printDiv.innerHTML = ''; }, 2000);
+  // Restaurer le titre + nettoyer
+  setTimeout(() => {
+    document.title = prevTitle;
+    printDiv.innerHTML = '';
+  }, 2000);
 }
 
 // setTimeout 0 : sort du contexte auth pour débloquer les requêtes fetch Supabase
