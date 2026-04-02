@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agami — Analyse Investissement Immobilier</title>
-
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
@@ -25,7 +24,6 @@
     --navy-dim2: rgba(27,58,107,0.06);
     --accent: #4d9ab5;
     --accent-dim: rgba(77,154,181,0.15);
-    --accent-light: #6bb5cc;
     --red: #b02a1e;
     --red-dim: rgba(176,42,30,0.10);
     --green: #0f6338;
@@ -34,7 +32,6 @@
     --blue-dim: rgba(26,79,138,0.10);
     --orange: #8f4010;
     --orange-dim: rgba(143,64,16,0.10);
-    --gold: #b45309;
     --radius: 6px;
     --radius2: 10px;
   }
@@ -99,7 +96,7 @@
     background: #ffffff;
   }
   .logo {
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Serif Display', serif;
     font-size: 1.35rem;
     letter-spacing: 0.01em;
     color: #ffffff;
@@ -114,7 +111,7 @@
   }
   .sidebar-section { padding: 14px 16px 6px; }
   .sidebar-label {
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Serif Display', serif;
     font-size: 0.85rem;
     color: var(--navy);
     font-weight: normal;
@@ -239,7 +236,7 @@
     flex-shrink: 0;
     min-height: 52px; max-height: 52px;
   }
-  .topbar-project { font-family: 'Instrument Sans', sans-serif; font-size: 1.1rem; color: #ffffff; }
+  .topbar-project { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: #ffffff; }
   .topbar-mode-badge {
     font-family: 'DM Mono', monospace;
     font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
@@ -306,12 +303,12 @@
   /* ── COMPACT FORM ── */
   .form-grid-compact { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .form-card { background: #ffffff; border: 1px solid var(--border); border-top: 2px solid var(--navy); border-radius: var(--radius2); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .form-card { background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius2); padding: 10px 12px; box-shadow: 0 1px 4px rgba(27,58,107,0.07); }
   .field { margin-bottom: 8px; }
   .field:last-child { margin-bottom: 0; }
-  .field label { display: block; font-size: 0.7rem; color: var(--text2); margin-bottom: 4px; font-family: 'DM Mono', monospace; letter-spacing: 0.04em; }
-  .field input, .field select { width: 100%; background: #ffffff; border: 1px solid var(--border2); border-radius: var(--radius); padding: 6px 9px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.82rem; transition: border-color 0.15s, box-shadow 0.15s; outline: none; }
-  .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37,99,168,0.12); }
+  .field label { display: block; font-size: 0.68rem; color: var(--text2); margin-bottom: 3px; font-family: 'DM Mono', monospace; letter-spacing: 0.03em; }
+  .field input, .field select { width: 100%; background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 4px 7px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.75rem; transition: border-color 0.15s, box-shadow 0.15s; outline: none; }
+  .field input:focus, .field select:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(27,58,107,0.08); }
   .field-row { display: flex; gap: 8px; }
   .field-row .field { flex: 1; }
   .field-hint { font-size: 0.62rem; color: var(--text3); margin-top: 2px; font-family: 'DM Mono', monospace; }
@@ -327,13 +324,13 @@
     box-shadow: 0 1px 4px rgba(27,58,107,0.07);
   }
   .form-card-title {
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Serif Display', serif;
     font-size: 0.9rem;
     color: var(--navy);
     margin-bottom: 14px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 8px;
   }
   .form-card-title .icon { font-size: 0.85rem; }
   .field { margin-bottom: 12px; }
@@ -368,9 +365,31 @@
   .field-row .field { flex: 1; }
   .field-hint { font-size: 0.65rem; color: var(--text3); margin-top: 3px; font-family: 'DM Mono', monospace; }
 
+  /* ── PCT / EURO CHIP TOGGLE ── */
+  .field-with-toggle { display: flex; gap: 5px; align-items: center; }
+  .field-with-toggle input { flex: 1; min-width: 0; }
+  .chip-group { display: flex; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
+  .chip-btn {
+    padding: 0 7px; height: 32px; line-height: 32px;
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 600;
+    background: #fff; color: var(--text3); border: none; cursor: pointer;
+    transition: background 0.13s, color 0.13s;
+  }
+  .chip-btn + .chip-btn { border-left: 1px solid var(--border); }
+  .chip-btn.active { background: var(--navy); color: #fff; }
+  .computed-hint { font-size: 0.62rem; color: var(--text3); margin-top: 2px; font-family: 'DM Mono', monospace; text-align: right; }
+
+  /* ── ASSURANCE DÉCÈS INLINE ── */
+  .assurance-deces-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+  .assurance-deces-row .field { margin-bottom: 0; }
+  .assurance-deces-input { flex: 0 0 80px; }
+  .assurance-deces-meta { flex: 1; }
+  .assurance-deces-meta .ads-label { font-size: 0.62rem; color: var(--text3); font-family: 'DM Mono', monospace; letter-spacing: 0.03em; }
+  .assurance-deces-meta .ads-computed { font-size: 0.65rem; color: var(--text2); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
   /* ── SECTION TITLE ── */
   .section-title {
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Serif Display', serif;
     font-size: 1.05rem;
     color: var(--navy); margin-bottom: 10px; margin-top: 24px;
     padding-bottom: 6px;
@@ -410,7 +429,7 @@
     box-shadow: 0 1px 4px rgba(27,58,107,0.07);
   }
   .kpi-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
-  .kpi-value { font-family: 'Instrument Sans', sans-serif; font-size: 1.4rem; color: var(--text); }
+  .kpi-value { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--text); }
   .kpi-sub { font-size: 0.68rem; color: var(--text3); margin-top: 2px; font-family: 'DM Mono', monospace; }
   .kpi-value.positive { color: var(--green); }
   .kpi-value.negative { color: var(--red); }
@@ -440,7 +459,7 @@
     box-shadow: 0 1px 4px rgba(27,58,107,0.07);
   }
   .chart-title {
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Serif Display', serif;
     font-size: 0.88rem; color: var(--text2);
     margin-bottom: 14px;
   }
@@ -458,7 +477,7 @@
   .cf-table-header {
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Serif Display', serif;
     font-size: 0.88rem; color: var(--text2);
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -493,7 +512,7 @@
     box-shadow: 0 1px 4px rgba(27,58,107,0.07);
   }
   .loan-stat-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
-  .loan-stat-value { font-family: 'Instrument Sans', sans-serif; font-size: 1.1rem; }
+  .loan-stat-value { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
 
   /* ── PV TAB ── */
   .pv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -504,7 +523,7 @@
     padding: 16px;
     box-shadow: 0 1px 4px rgba(27,58,107,0.07);
   }
-  .pv-card-title { font-family: 'Instrument Sans', sans-serif; font-size: 0.85rem; color: var(--text2); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .pv-card-title { font-family: 'DM Serif Display', serif; font-size: 0.85rem; color: var(--text2); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
   .pv-line { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(27,58,107,0.07); font-size: 0.72rem; font-family: 'DM Mono', monospace; }
   .pv-line-label { color: var(--text3); }
   .pv-line-val { color: var(--text); font-weight: 500; }
@@ -527,7 +546,7 @@
     text-align: center;
   }
   .empty-icon { font-size: 2.5rem; opacity: 0.3; }
-  .empty-title { font-family: 'Instrument Sans', sans-serif; font-size: 1.2rem; color: var(--text2); }
+  .empty-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text2); }
   .empty-sub { font-size: 0.8rem; max-width: 280px; line-height: 1.6; }
 
   /* ── NOTIFICATION ── */
@@ -563,7 +582,7 @@
     transform: translateY(10px); transition: transform 0.2s;
   }
   .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-title { font-family: 'Instrument Sans', sans-serif; font-size: 1.1rem; margin-bottom: 16px; }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 16px; }
   .modal-input {
     width: 100%;
     background: var(--surface2);
@@ -615,7 +634,7 @@
     font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 12px;
   }
   .poche-amount {
-    font-family: 'Instrument Sans', sans-serif; font-size: 1.9rem;
+    font-family: 'DM Serif Display', serif; font-size: 1.9rem;
     color: #ffffff; line-height: 1; margin-bottom: 6px;
   }
   .poche-amount.negative { color: rgba(255,200,200,1); }
@@ -647,7 +666,7 @@
     margin-bottom: 16px;
     box-shadow: 0 1px 4px rgba(27,58,107,0.07);
   }
-  .compare-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-family: 'Instrument Sans', sans-serif; font-size: 0.88rem; color: var(--text2); }
+  .compare-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-family: 'DM Serif Display', serif; font-size: 0.88rem; color: var(--text2); }
   .compare-table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 0.73rem; }
   .compare-table th { background: var(--surface2); padding: 9px 14px; text-align: center; color: var(--text3); font-weight: 600; border-bottom: 1px solid var(--border); }
   .compare-table th:first-child { text-align: left; width: 35%; }
@@ -706,7 +725,7 @@
     color: rgba(255,255,255,0.55); margin-bottom: 2px;
   }
   .poche-mini-kpi-val {
-    font-family: 'Instrument Sans', sans-serif; font-size: 0.88rem; color: #fff;
+    font-family: 'DM Serif Display', serif; font-size: 0.88rem; color: #fff;
   }
 
   /* ── MICRO REGIME CARDS ── */
@@ -719,7 +738,7 @@
     box-shadow: 0 1px 4px rgba(27,58,107,0.07);
   }
   .micro-regime-title {
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Serif Display', serif;
     font-size: 0.88rem; color: var(--navy);
     margin-bottom: 12px; padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
@@ -770,7 +789,7 @@
     font-weight: 500; font-family: 'Instrument Sans', sans-serif;
   }
   .pv-mini-net {
-    font-family: 'Instrument Sans', sans-serif; font-size: 1.3rem;
+    font-family: 'DM Serif Display', serif; font-size: 1.3rem;
     margin-bottom: 6px;
   }
   .pv-mini-detail {
@@ -785,15 +804,15 @@
 <div id="loginScreen" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:9999; flex-direction:column; align-items:center; justify-content:center; gap:0;">
   <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:40px 44px; max-width:380px; width:90%; box-shadow:0 8px 32px rgba(27,58,107,0.10);">
     <div style="margin-bottom:24px; text-align:center;">
-      <div style="font-family:serif; font-size:1.6rem; color:var(--navy); letter-spacing:0.01em;">Agami</div>
-      <div style="font-family:inherit; font-size:0.62rem; color:var(--accent); letter-spacing:0.12em; text-transform:uppercase; margin-top:2px;">Analyse Immobilière</div>
+      <div style="font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--navy); letter-spacing:0.01em;">Agami</div>
+      <div style="font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--accent); letter-spacing:0.12em; text-transform:uppercase; margin-top:2px;">Analyse Immobilière</div>
     </div>
     <div style="font-size:0.8rem; color:var(--text2); margin-bottom:18px; text-align:center; line-height:1.5;">Entre ton email Agami pour recevoir<br>un lien de connexion sécurisé.</div>
     <input id="loginEmail" type="email" placeholder="prenom.nom@agami.fr"
-      style="width:100%; padding:10px 12px; border:1px solid var(--border2); border-radius:var(--radius); font-family:inherit; font-size:0.85rem; background:var(--surface2); color:var(--text); margin-bottom:12px; outline:none;"
+      style="width:100%; padding:10px 12px; border:1px solid var(--border2); border-radius:var(--radius); font-family:'Instrument Sans',sans-serif; font-size:0.85rem; background:var(--surface2); color:var(--text); margin-bottom:12px; outline:none;"
       onkeydown="if(event.key==='Enter')sendMagicLink()">
     <button id="loginBtn" onclick="sendMagicLink()"
-      style="width:100%; padding:10px; background:var(--navy); color:#fff; border:none; border-radius:var(--radius); font-family:inherit; font-weight:700; font-size:0.85rem; cursor:pointer; transition:background 0.15s;"
+      style="width:100%; padding:10px; background:var(--navy); color:#fff; border:none; border-radius:var(--radius); font-family:'Instrument Sans',sans-serif; font-weight:700; font-size:0.85rem; cursor:pointer; transition:background 0.15s;"
       onmouseover="this.style.background='var(--navy2)'" onmouseout="this.style.background='var(--navy)'">
       Envoyer le lien de connexion
     </button>
@@ -830,7 +849,7 @@
       <div style="min-height:1px;flex:1;"></div>
       <!-- Bouton déconnexion -->
       <div style="padding:10px 12px;border-top:1px solid rgba(255,255,255,0.08);">
-        <button onclick="signOut()" style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);color:rgba(255,255,255,0.6);font-family:inherit;font-size:0.72rem;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        <button onclick="signOut()" style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);color:rgba(255,255,255,0.6);font-family:'Instrument Sans',sans-serif;font-size:0.72rem;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
           ⎋ Se déconnecter
         </button>
       </div>
@@ -863,7 +882,6 @@
       <!-- Tabs -->
       <div class="tabs" id="tabsBar">
         <button class="tab active" onclick="showTab('inputs')" id="tab-inputs">Paramètres</button>
-        <button class="tab" onclick="showTab('referentiel')" id="tab-referentiel">Référentiel fiscal</button>
         <button class="tab" onclick="showTab('fiscal')" id="tab-fiscal">Paramètres fiscaux</button>
         <button class="tab" onclick="showTab('synthese')" id="tab-synthese" style="display:none">Synthèse</button>
         <button class="tab" onclick="showTab('cashflow')" id="tab-cashflow" style="display:none">Cash Flow</button>
@@ -916,18 +934,10 @@
 /* ══════════════════════════════════════════════════════
    SUPABASE CONFIG
 ══════════════════════════════════════════════════════ */
-const SUPABASE_URL = 'https://tvzlzfnffwdqjmfmpqrr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2emx6Zm5mZndkcWptZm1wcXJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDcyMDcsImV4cCI6MjA5MDYyMzIwN30.RET4DIwlYjZRVoWfKb3WYCwPvIzyHjdeBG-OF2c3Q9Q';
+const SUPABASE_URL = 'https://zzkzlxbdladmrrughzri.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6a3pseGJkbGFkbXJydWdoenJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjQ3MDcsImV4cCI6MjA4OTk0MDcwN30.Rp2zx2X_g0G-FlX9prg_MK3D7ivE7CECChg9aa2jpY0';
 const { createClient } = supabase;
-const supaClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    storage: window.localStorage,
-    persistSession: true,
-    detectSessionInUrl: true,
-    autoRefreshToken: true,
-    flowType: 'pkce'
-  }
-});
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 
@@ -938,7 +948,7 @@ const FISCAL_DEFAULTS = {
   is_taux_reduit: 15, is_plafond_reduit: 42500, is_taux_normal: 25,
   taux_flat_tax: 30, taux_ps: 17.2, micro_bic_abat: 50,
   micro_foncier_abat: 30, micro_foncier_plafond: 15000, lmp_seuil_recettes: 23000,
-  taux_ir_pv: 19, taux_ps_pv: 17.2, deficit_foncier_plafond: 10700,
+  taux_ir_pv: 19, taux_ps_pv: 17.2,
   abat_ir_debut: 6, abat_ir_debut_annee: 6, abat_ir_debut_jusqu: 21,
   abat_ir_fin: 4, abat_ir_fin_annee: 22, abat_exo_ir_annee: 22,
   abat_ps_debut: 1.65, abat_ps_debut_annee: 6, abat_ps_debut_jusqu: 21,
@@ -960,12 +970,12 @@ function loadFiscalDefaults() {
 async function saveFiscalDefaults(vals) {
   _fiscalDefaultsCache = vals;
   if (!currentUser) return;
-  await supaClient.from('fiscal_defaults').upsert({ user_id: currentUser.id, data: vals, updated_at: new Date().toISOString() });
+  await sb.from('fiscal_defaults').upsert({ user_id: currentUser.id, data: vals, updated_at: new Date().toISOString() });
 }
 
 async function loadFiscalDefaultsFromDB() {
   if (!currentUser) return;
-  const { data } = await supaClient.from('fiscal_defaults').select('data').eq('user_id', currentUser.id).single();
+  const { data } = await sb.from('fiscal_defaults').select('data').eq('user_id', currentUser.id).single();
   if (data?.data) _fiscalDefaultsCache = data.data;
 }
 
@@ -979,8 +989,10 @@ function defaultProject(name, prefill = false) {
     name,
     inputs: {
       prix_acquisition: prefill ? 600000 : '',
-      frais_notaire: prefill ? 45000 : '',
+      frais_notaire: prefill ? 7.5 : '',
+      frais_notaire_mode: 'pct',
       frais_agence: prefill ? 0 : '',
+      frais_agence_mode: 'pct',
       travaux: prefill ? 20000 : '',
       meubles: prefill ? 10000 : '',
       type_location: 'meuble',
@@ -994,6 +1006,8 @@ function defaultProject(name, prefill = false) {
       honoraires_gestion: prefill ? 0 : '',
       comptable: prefill ? 300 : '',
       montant_emprunt: prefill ? 400000 : '',
+      emprunt_mode: 'euro',
+      assurance_deces: prefill ? 2 : '',
       duree_pret: prefill ? 20 : 20,
       taux_pret: prefill ? 1.2 : '',
       tmi: 30,
@@ -1017,14 +1031,6 @@ function defaultProject(name, prefill = false) {
       ifi_revenus_n1: prefill ? 0 : '',
       ifi_ir_pre: prefill ? 0 : '',
       revenu_fiscal_ref: prefill ? 168000 : '',  // pour détection LMP
-      // ── Nouveaux champs UX ──
-      frais_notaire_mode: 'pct',   // 'pct' ou 'eur'
-      frais_notaire_pct: prefill ? 7.5 : 7.5,
-      frais_agence_mode: 'eur',    // 'pct' ou 'eur'
-      frais_agence_pct: prefill ? 0 : 0,
-      emprunt_mode: 'eur',         // 'pct' ou 'eur'
-      emprunt_pct: prefill ? 70 : 70,
-      assurance_deces_pct: prefill ? 0.3 : 0.3,  // % du capital emprunté/an
       // ── Paramètres fiscaux — chargés depuis les défauts globaux ──
       ...loadFiscalDefaults(),
     }
@@ -1034,7 +1040,7 @@ function defaultProject(name, prefill = false) {
 async function loadState() {
   if (!currentUser) { console.warn('loadState: pas de currentUser'); return; }
   console.log('loadState: chargement pour', currentUser.email, '| id:', currentUser.id);
-  const { data, error } = await supaClient.from('projects').select('id, name, data').eq('user_id', currentUser.id).order('created_at');
+  const { data, error } = await sb.from('projects').select('id, name, data').eq('user_id', currentUser.id).order('created_at');
   if (error) {
     console.error('loadState error:', error);
     notify('Erreur chargement projets: ' + error.message);
@@ -1054,7 +1060,7 @@ async function persistState() {
   // Vérifier si l'id est un UUID valide (format Supabase) ou un timestamp legacy
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.id);
   if (isUUID) {
-    const { error } = await supaClient.from('projects').update({
+    const { error } = await sb.from('projects').update({
       name: p.name,
       data: p.inputs,
       updated_at: new Date().toISOString()
@@ -1062,7 +1068,7 @@ async function persistState() {
     if (error) { console.error('persistState update error:', error); return; }
   } else {
     // Id legacy (timestamp) — insérer proprement et mettre à jour l'id local
-    const { data, error } = await supaClient.from('projects').insert({
+    const { data, error } = await sb.from('projects').insert({
       user_id: currentUser.id,
       name: p.name,
       data: p.inputs
@@ -1093,7 +1099,7 @@ async function confirmNewProject() {
   const p = defaultProject(name);
   closeModal();
   // Insérer dans Supabase d'abord pour obtenir l'id serveur
-  const { data, error } = await supaClient.from('projects').insert({
+  const { data, error } = await sb.from('projects').insert({
     user_id: currentUser.id,
     name: p.name,
     data: p.inputs
@@ -1106,7 +1112,7 @@ async function confirmNewProject() {
   notify('Projet créé ✓');
 }
 async function deleteProject(id) {
-  await supaClient.from('projects').delete().eq('id', id).eq('user_id', currentUser.id);
+  await sb.from('projects').delete().eq('id', id).eq('user_id', currentUser.id);
   delete state.projects[id];
   if (state.activeId === id) { state.activeId = null; showEmpty(); }
   renderProjectList();
@@ -1126,8 +1132,8 @@ function toggleCollapse(id) {
 
 function toggleSidebar() {
   const sbEl = document.querySelector('.sidebar');
-  sbEl.classList.toggle('collapsed');
-  const collapsed = sbEl.classList.contains('collapsed');
+  sb.classList.toggle('collapsed');
+  const collapsed = sb.classList.contains('collapsed');
   const floatBtn = document.getElementById('sidebarToggleFloat');
   if (floatBtn) floatBtn.style.display = collapsed ? 'flex' : 'none';
 }
@@ -1162,7 +1168,7 @@ async function ctxDuplicateProject() {
   closeCtxMenu();
   if (!id || !state.projects[id]) return;
   const src = state.projects[id];
-  const { data, error } = await supaClient.from('projects').insert({
+  const { data, error } = await sb.from('projects').insert({
     user_id: currentUser.id,
     name: src.name + ' (copie)',
     data: src.inputs
@@ -1189,7 +1195,7 @@ async function confirmRename() {
   const name = document.getElementById('renameModalInput').value.trim();
   if (!name || !renameTargetId) { closeRenameModal(); return; }
   state.projects[renameTargetId].name = name;
-  await supaClient.from('projects').update({ name, updated_at: new Date().toISOString() }).eq('id', renameTargetId).eq('user_id', currentUser.id);
+  await sb.from('projects').update({ name, updated_at: new Date().toISOString() }).eq('id', renameTargetId).eq('user_id', currentUser.id);
   if (renameTargetId === state.activeId) document.getElementById('topbarName').textContent = name;
   renderProjectList();
   closeRenameModal();
@@ -1272,7 +1278,6 @@ function showTab(tab) {
   if (!p) return;
   const content = document.getElementById('tabContent');
   if (tab === 'inputs') content.innerHTML = renderInputs(p);
-  else if (tab === 'referentiel') content.innerHTML = renderReferentiel(p);
   else if (tab === 'fiscal') content.innerHTML = renderFiscal(p);
   else if (tab === 'synthese') {
     try { content.innerHTML = renderSynthese(p); }
@@ -1306,6 +1311,23 @@ function collectInputs() {
     p.inputs[k] = v;
   });
 }
+function toggleMode(field, mode) {
+  const p = state.projects[state.activeId];
+  if (!p) return;
+  collectInputs(); // save any in-progress values before re-rendering
+  p.inputs[field + '_mode'] = mode;
+  const container = document.getElementById('tabContent');
+  if (container) container.innerHTML = renderInputs(p);
+}
+
+function computedPctEuro(value, mode, base, label) {
+  const v = parseFloat(value) || 0;
+  const b = parseFloat(base) || 0;
+  if (!v) return '';
+  if (mode === 'pct') return '≈' + Math.round(b * v / 100).toLocaleString('fr-FR') + '\u202f€';
+  return '≈' + (b ? (v / b * 100).toFixed(1) + '%' : '') ;
+}
+
 function onInputChange() {
   collectInputs();
   if (state.activeTab !== 'inputs') { destroyCharts(); const p = state.projects[state.activeId]; showTab(state.activeTab); }
@@ -1319,6 +1341,24 @@ function notify(msg) {
   n.textContent = msg;
   n.classList.add('show');
   setTimeout(() => n.classList.remove('show'), 2000);
+}
+
+/* ══════════════════════════════════════════════════════
+   RESOLVE INPUTS — converts pct-mode fields to absolute €
+══════════════════════════════════════════════════════ */
+function resolveInputs(inp) {
+  const r = Object.assign({}, inp);
+  const prix = parseFloat(r.prix_acquisition) || 0;
+  if ((r.frais_notaire_mode || 'pct') === 'pct') {
+    r.frais_notaire = Math.round(prix * (parseFloat(r.frais_notaire) || 0) / 100);
+  }
+  if ((r.frais_agence_mode || 'pct') === 'pct') {
+    r.frais_agence = Math.round(prix * (parseFloat(r.frais_agence) || 0) / 100);
+  }
+  if ((r.emprunt_mode || 'euro') === 'pct') {
+    r.montant_emprunt = Math.round(prix * (parseFloat(r.montant_emprunt) || 0) / 100);
+  }
+  return r;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1386,13 +1426,13 @@ function calcMicroBIC(inp) {
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const montant_imposable = recettes * (1 - abat);
   const impot_annuel = montant_imposable * (tmi + tps);
-  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
-  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
+  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
   const years = [];
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
-    const year = getAnneeDebut(inp) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { annuites:0, crd:0 };
+    const year = _n(inp.annee_debut, 2024) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { annuites:0, crd:0 };
     const treso = recettes - charges_base - la.annuites - impot_annuel;
     years.push({ year, recettes, impot: impot_annuel, annuites: la.annuites, treso, crd: la.crd });
   }
@@ -1411,13 +1451,13 @@ function calcMicroFoncier(inp) {
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const montant_imposable = recettes * (1 - abat);
   const impot_annuel = montant_imposable * (tmi + tps);
-  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
-  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
+  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
   const years = [];
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
-    const year = getAnneeDebut(inp) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { annuites:0, crd:0 };
+    const year = _n(inp.annee_debut, 2024) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { annuites:0, crd:0 };
     const treso = recettes - charges_base - la.annuites - impot_annuel;
     years.push({ year, recettes, impot: impot_annuel, annuites: la.annuites, treso, crd: la.crd });
   }
@@ -1438,17 +1478,17 @@ function calcYearsLMP(inp) {
   // LMP : comme LMNP mais déficits imputables sur revenu global SANS plafond
   // + exonération PV après 5 ans d'activité si recettes < 90k€
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const years = [];
   let cumul_deficit = 0;
-  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
 
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
-    const year = getAnneeDebut(inp) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { interets:0, capital:0, annuites:0, crd:0 };
+    const year = _n(inp.annee_debut, 2024) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets:0, capital:0, annuites:0, crd:0 };
     const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
     const total_charges = charges + la.interets;
     const amort_immo = y < amort.duree_immo ? amort.immo_annuel : 0;
@@ -1478,20 +1518,20 @@ function calcYearsLMP(inp) {
 
 function calcYearsLMNP(inp) {
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps, 17.2) / 100;
   const meubles_val = _n(inp.meubles);
   const years = [];
   let cumul_amort_differe = 0;
-  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const duree = _n(inp.duree_analyse, 20);
 
   for (let y = 0; y < duree; y++) {
-    const year = getAnneeDebut(inp) + y;
+    const year = _n(inp.annee_debut, 2024) + y;
     const la = year < annee_fin_pret
-      ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year)
+      ? getAnnualLoan(loan.rows, _n(inp.annee_debut, 2024), year)
       : { interets: 0, capital: 0, annuites: 0, crd: 0 };
 
     // Gorrest: mobiliers si pas d'amortissement = valeur meubles en année 1 seulement
@@ -1548,19 +1588,19 @@ function calcYearsLMNP(inp) {
 
 function calcYearsFoncier(inp) {
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps, 17.2) / 100;
-  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const years = [];
   let deficit_reportable = 0;
 
   for (let y = 0; y < (_n(inp.duree_analyse, 20)); y++) {
-    const year = getAnneeDebut(inp) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
+    const year = _n(inp.annee_debut, 2024) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
     const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
     // Foncier : frais acquisition déductibles année 1 (traitement Gorrest)
-    const extra_y1 = y === 0 ? getFraisNotaire(inp) : 0;
+    const extra_y1 = y === 0 ? _n(inp.frais_notaire) : 0;
     const revenu_foncier = _n(inp.recettes_annuelles) - charges - la.interets - extra_y1;
 
     let revenu_net = 0, impot = 0, ir = 0, ps = 0;
@@ -1593,9 +1633,9 @@ function calcYearsFoncier(inp) {
 
 function calcYearsIS(inp) {
   const _n = (v, d=0) => parseFloat(v)||d;
-  const loan = calcLoanSchedule(getMontantEmprunt(inp), _n(inp.taux_pret), _n(inp.duree_pret,20));
+  const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
-  const annee_fin_pret = getAnneeDebut(inp) + _n(inp.duree_pret, 20);
+  const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const is_reduit = _n(inp.is_taux_reduit, 15) / 100;
   const is_plafond = _n(inp.is_plafond_reduit, 42500);
   const is_normal = _n(inp.is_taux_normal, 25) / 100;
@@ -1603,10 +1643,10 @@ function calcYearsIS(inp) {
   let deficit_reportable = 0;
 
   for (let y = 0; y < _n(inp.duree_analyse, 20); y++) {
-    const year = getAnneeDebut(inp) + y;
-    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, getAnneeDebut(inp), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
+    const year = _n(inp.annee_debut, 2024) + y;
+    const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
     // IS: frais acquisition déductibles année 1 (via provisions ou charges)
-    const frais_acq_y1 = y === 0 ? getFraisNotaire(inp) + _n(inp.frais_agence) : 0;
+    const frais_acq_y1 = y === 0 ? _n(inp.frais_notaire) + _n(inp.frais_agence) : 0;
     const charges_courantes = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable) + _n(inp.remuneration_gerant);
     const amort_immo = y < amort.duree_immo ? amort.immo_annuel : 0;
     const amort_trav = y < amort.duree_travaux ? amort.travaux_annuel : 0;
@@ -1664,13 +1704,13 @@ function renderFiscal(p) {
 
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:6px 12px;background:var(--navy-dim);border:1px solid var(--accent);border-radius:var(--radius);">
-    <div style="flex:1;font-family:inherit;font-size:0.65rem;color:var(--navy);line-height:1.4;">
+    <div style="flex:1;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--navy);line-height:1.4;">
       ⚠ Ces paramètres reflètent la législation fiscale applicable. Modifiables par le FO à chaque évolution des lois — toutes les simulations utilisent ces valeurs.
     </div>
-    <button onclick="saveAsFiscalDefaults()" style="flex-shrink:0;background:var(--navy);color:#fff;border:none;padding:5px 12px;border-radius:var(--radius);cursor:pointer;font-family:inherit;font-size:0.68rem;font-weight:600;white-space:nowrap;">
+    <button onclick="saveAsFiscalDefaults()" style="flex-shrink:0;background:var(--navy);color:#fff;border:none;padding:5px 12px;border-radius:var(--radius);cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:0.68rem;font-weight:600;white-space:nowrap;">
       💾 Enregistrer comme valeurs par défaut
     </button>
-    <button onclick="resetFiscalToDefaults()" style="flex-shrink:0;background:none;color:var(--text3);border:1px solid var(--border2);padding:5px 10px;border-radius:var(--radius);cursor:pointer;font-family:inherit;font-size:0.68rem;white-space:nowrap;">
+    <button onclick="resetFiscalToDefaults()" style="flex-shrink:0;background:none;color:var(--text3);border:1px solid var(--border2);padding:5px 10px;border-radius:var(--radius);cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:0.68rem;white-space:nowrap;">
       ↺ Réinitialiser
     </button>
   </div>
@@ -1704,7 +1744,7 @@ function renderFiscal(p) {
         ${fld('Taux IR PV (%)', 'taux_ir_pv', '0.5', 'Taux fixe IR sur plus-value — actuellement 19%')}
         ${fld('Taux PS sur PV (%)', 'taux_ps_pv', '0.1', 'Actuellement 17,2%')}
         <div class="divider"></div>
-        <div style="font-family:inherit;font-size:0.65rem;color:var(--text3);margin-bottom:10px;">Abattement IR — par année de détention</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text3);margin-bottom:10px;">Abattement IR — par année de détention</div>
         <div class="field-row">
           ${fld('Taux/an (6-21e an)', 'abat_ir_debut', '0.5', '')}
           ${fld('Taux/an (22e an)', 'abat_ir_fin', '0.5', '')}
@@ -1714,7 +1754,7 @@ function renderFiscal(p) {
           <div class="field"><label>Exonération complète (année)</label><input type="number" data-field="abat_exo_ir_annee" value="${f.abat_exo_ir_annee}" onchange="onInputChange()"></div>
         </div>
         <div class="divider"></div>
-        <div style="font-family:inherit;font-size:0.65rem;color:var(--text3);margin-bottom:10px;">Abattement PS — par année de détention</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text3);margin-bottom:10px;">Abattement PS — par année de détention</div>
         <div class="field-row">
           ${fld('Taux/an (6-21e)', 'abat_ps_debut', '0.05', '')}
           ${fld('Taux/an (22e)', 'abat_ps_fin', '0.05', '')}
@@ -1728,7 +1768,7 @@ function renderFiscal(p) {
       <div class="section-title" style="margin-top:16px">Taxe sur Hautes Plus-Values</div>
       <div class="form-card">
         <div class="form-card-title">⚡ Taxe complémentaire (art. 1609 nonies G CGI)</div>
-        <div style="font-family:inherit;font-size:0.65rem;color:var(--text3);margin-bottom:10px;">Applicable sur PV > 50 000 € (seuil par cédant)</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text3);margin-bottom:10px;">Applicable sur PV > 50 000 € (seuil par cédant)</div>
         <div class="field-row">
           <div class="field"><label>Seuil 1 (€)</label><input type="number" data-field="taxe_pv_seuil1" value="${f.taxe_pv_seuil1}" onchange="onInputChange()"></div>
           <div class="field"><label>Taux 1 (%)</label><input type="number" step="0.5" data-field="taxe_pv_taux1" value="${f.taxe_pv_taux1}" onchange="onInputChange()"></div>
@@ -1757,140 +1797,90 @@ function renderFiscal(p) {
 /* ══════════════════════════════════════════════════════
    RENDER INPUTS
 ══════════════════════════════════════════════════════ */
-function calcEmpruntFromMode(i) {
-  if (i.emprunt_mode === 'pct') {
-    return Math.round((parseFloat(i.emprunt_pct)||70) / 100 * (parseFloat(i.prix_acquisition)||0));
-  }
-  return parseFloat(i.montant_emprunt)||0;
-}
-
-function calcNotaireFromMode(i) {
-  if (i.frais_notaire_mode === 'pct') {
-    return Math.round((parseFloat(i.frais_notaire_pct)||7.5) / 100 * (parseFloat(i.prix_acquisition)||0));
-  }
-  return parseFloat(i.frais_notaire)||0;
-}
-
-function calcAgenceFromMode(i) {
-  if (i.frais_agence_mode === 'pct') {
-    return Math.round((parseFloat(i.frais_agence_pct)||0) / 100 * (parseFloat(i.prix_acquisition)||0));
-  }
-  return parseFloat(i.frais_agence)||0;
-}
-
-function onModeToggle(field, mode) {
-  const p = state.projects[state.activeId];
-  if (!p) return;
-  // Save all current input values before re-rendering
-  document.querySelectorAll('[data-field]').forEach(el => {
-    const f = el.dataset.field;
-    const t = el.dataset.type;
-    if (f && p.inputs) {
-      if (t === 'bool') p.inputs[f] = el.value === 'true';
-      else if (el.type === 'number') p.inputs[f] = parseFloat(el.value)||0;
-      else p.inputs[f] = el.value;
-    }
-  });
-  p.inputs[field] = mode;
-  renderCurrentTab();
-  persistState();
-}
-
-function renderCurrentTab() {
-  const p = state.projects[state.activeId];
-  if (!p) return;
-  const el = document.getElementById('tabContent');
-  if (!el) return;
-  const tab = state.activeTab || 'inputs';
-  if (tab === 'inputs') el.innerHTML = renderInputs(p);
-  else if (tab === 'referentiel') el.innerHTML = renderReferentiel(p);
-  else if (tab === 'fiscal') el.innerHTML = renderFiscal(p);
-}
-
-function fieldPctEur(dataFieldEur, valEur, dataFieldPct, valPct, computedEur, mode) {
-  if (mode === 'eur') {
-    return '<input type="number" data-field="' + dataFieldEur + '" value="' + (valEur||'') + '" onchange="onInputChange()" onkeyup="onInputChange()">';
-  }
-  const fmt = new Intl.NumberFormat('fr-FR').format(Math.round(computedEur||0));
-  return '<div style="display:flex;gap:8px;align-items:center;">' +
-    '<input type="number" data-field="' + dataFieldPct + '" value="' + (valPct||'') + '" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()" style="flex:1;min-width:60px;">' +
-    '<span style="font-size:0.74rem;color:var(--text3);white-space:nowrap;">≈ ' + fmt + ' €</span>' +
-    '</div>';
-}
-
-function pctEurSwitch(fieldName, mode) {
-  const active = 'display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:3px;border:none;cursor:pointer;font-size:0.7rem;font-weight:700;background:var(--navy);color:#fff;font-family:inherit;';
-  const inactive = 'display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:3px;border:1px solid var(--border2);cursor:pointer;font-size:0.7rem;font-weight:600;background:transparent;color:var(--text3);font-family:inherit;';
-  return '<span style="display:inline-flex;gap:2px;background:var(--surface2);border-radius:4px;padding:2px;">' +
-    '<button onclick="onModeToggle(\'' + fieldName + '_mode\',\'pct\')" style="' + (mode!=='eur' ? active : inactive) + '">%</button>' +
-    '<button onclick="onModeToggle(\'' + fieldName + '_mode\',\'eur\')" style="' + (mode==='eur' ? active : inactive) + '">€</button>' +
-    '</span>';
-}
-
 function renderInputs(p) {
   const i = p.inputs;
-  const anneeDebut = i.date_acquisition ? new Date(i.date_acquisition).getFullYear() : new Date().getFullYear();
-  const anneeCession = anneeDebut + (parseInt(i.duree_analyse)||20);
-  const empruntEur = calcEmpruntFromMode(i);
-  const notaireEur = calcNotaireFromMode(i);
-  const agenceEur = calcAgenceFromMode(i);
-  const assuranceDeces = Math.round((parseFloat(i.assurance_deces_pct)||0) / 100 * empruntEur);
-
   return `
   <div style="display:flex;gap:14px;padding-bottom:16px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto;">
 
     <!-- Card: Le Bien -->
-    <div class="form-card" style="min-width:185px;flex:1;">
+    <div class="form-card" style="min-width:180px;flex:1;">
       <div class="form-card-title"><span class="icon">⌂</span> Le Bien</div>
-      <div class="field"><label>Prix acquisition (€)</label>
-        <input type="number" data-field="prix_acquisition" value="${i.prix_acquisition}" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()">
-      </div>
-      <div class="field"><label>Date d'acquisition</label>
-        <input type="date" data-field="date_acquisition" value="${i.date_acquisition||''}" onchange="onInputChange();renderCurrentTab()" style="font-family:inherit;font-size:0.8rem;">
-      </div>
-
       <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-          <span>Frais de notaire</span>
-          ${pctEurSwitch('frais_notaire', i.frais_notaire_mode)}
-        </label>
-        ${fieldPctEur('frais_notaire', i.frais_notaire, 'frais_notaire_pct', i.frais_notaire_pct, notaireEur, i.frais_notaire_mode)}
+        <label>Prix acquisition (€)</label>
+        <input type="number" data-field="prix_acquisition" value="${i.prix_acquisition}" onblur="onInputChange()">
       </div>
-
       <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-          <span>Frais d'agence</span>
-          ${pctEurSwitch('frais_agence', i.frais_agence_mode)}
-        </label>
-        ${fieldPctEur('frais_agence', i.frais_agence, 'frais_agence_pct', i.frais_agence_pct, agenceEur, i.frais_agence_mode)}
+        <label>Date d'acquisition</label>
+        <input type="date" data-field="date_acquisition" value="${i.date_acquisition||''}" onchange="onInputChange()" style="font-family:'Instrument Sans',sans-serif;font-size:0.8rem;">
       </div>
-
-      <div class="field"><label>Travaux (€)</label><input type="number" data-field="travaux" value="${i.travaux}" onchange="onInputChange()"></div>
-      <div class="field"><label>Meubles (€)</label><input type="number" data-field="meubles" value="${i.meubles}" onchange="onInputChange()"></div>
+      <div class="field">
+        <label>Frais de notaire</label>
+        <div class="field-with-toggle">
+          <input type="number" data-field="frais_notaire" value="${i.frais_notaire}" onblur="onInputChange()">
+          <div class="chip-group">
+            <button class="chip-btn ${(i.frais_notaire_mode||'pct')==='pct'?'active':''}" onclick="toggleMode('frais_notaire','pct')">%</button>
+            <button class="chip-btn ${(i.frais_notaire_mode||'pct')==='euro'?'active':''}" onclick="toggleMode('frais_notaire','euro')">€</button>
+          </div>
+        </div>
+        <div class="computed-hint">${(i.frais_notaire_mode||'pct')==='pct' ? '≈\u202f' + Math.round((parseFloat(i.prix_acquisition)||0)*(parseFloat(i.frais_notaire)||0)/100).toLocaleString('fr-FR') + '\u202f€' : ((parseFloat(i.prix_acquisition)||0) ? '≈\u202f' + ((parseFloat(i.frais_notaire)||0)/(parseFloat(i.prix_acquisition)||1)*100).toFixed(1) + '%' : '')}</div>
+      </div>
+      <div class="field">
+        <label>Frais d'agence</label>
+        <div class="field-with-toggle">
+          <input type="number" data-field="frais_agence" value="${i.frais_agence}" onblur="onInputChange()">
+          <div class="chip-group">
+            <button class="chip-btn ${(i.frais_agence_mode||'pct')==='pct'?'active':''}" onclick="toggleMode('frais_agence','pct')">%</button>
+            <button class="chip-btn ${(i.frais_agence_mode||'pct')==='euro'?'active':''}" onclick="toggleMode('frais_agence','euro')">€</button>
+          </div>
+        </div>
+        <div class="computed-hint">${(i.frais_agence_mode||'pct')==='pct' ? '≈\u202f' + Math.round((parseFloat(i.prix_acquisition)||0)*(parseFloat(i.frais_agence)||0)/100).toLocaleString('fr-FR') + '\u202f€' : ((parseFloat(i.prix_acquisition)||0) ? '≈\u202f' + ((parseFloat(i.frais_agence)||0)/(parseFloat(i.prix_acquisition)||1)*100).toFixed(1) + '%' : '')}</div>
+      </div>
+      <div class="field">
+        <label>Travaux (€)</label>
+        <input type="number" data-field="travaux" value="${i.travaux}" onblur="onInputChange()">
+      </div>
+      <div class="field">
+        <label>Meubles (€)</label>
+        <input type="number" data-field="meubles" value="${i.meubles}" onblur="onInputChange()">
+      </div>
+      <div class="field">
+        <label>Valeur actuelle (€)</label>
+        <input type="number" data-field="valeur_actuelle" value="${i.valeur_actuelle}" onchange="onInputChange()">
+      </div>
     </div>
 
     <!-- Card: Financement -->
-    <div class="form-card" style="min-width:185px;flex:1;">
+    <div class="form-card" style="min-width:160px;flex:1;">
       <div class="form-card-title"><span class="icon">🏦</span> Financement</div>
-
       <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-          <span>Montant emprunté</span>
-          ${pctEurSwitch('emprunt', i.emprunt_mode)}
-        </label>
-        ${fieldPctEur('montant_emprunt', i.montant_emprunt, 'emprunt_pct', i.emprunt_pct, empruntEur, i.emprunt_mode)}
+        <label>Montant emprunté</label>
+        <div class="field-with-toggle">
+          <input type="number" data-field="montant_emprunt" value="${i.montant_emprunt}" onblur="onInputChange()">
+          <div class="chip-group">
+            <button class="chip-btn ${(i.emprunt_mode||'euro')==='pct'?'active':''}" onclick="toggleMode('emprunt','pct')">%</button>
+            <button class="chip-btn ${(i.emprunt_mode||'euro')==='euro'?'active':''}" onclick="toggleMode('emprunt','euro')">€</button>
+          </div>
+        </div>
+        <div class="computed-hint">${(i.emprunt_mode||'euro')==='pct' ? '≈\u202f' + Math.round((parseFloat(i.prix_acquisition)||0)*(parseFloat(i.montant_emprunt)||0)/100).toLocaleString('fr-FR') + '\u202f€' : ((parseFloat(i.prix_acquisition)||0) ? '≈\u202f' + ((parseFloat(i.montant_emprunt)||0)/(parseFloat(i.prix_acquisition)||1)*100).toFixed(1) + '%' : '')}</div>
       </div>
-
-      <div class="field"><label>Durée (ans)</label><input type="number" data-field="duree_pret" value="${i.duree_pret}" onchange="onInputChange()"></div>
-      <div class="field"><label>Taux nominal (%)</label><input type="number" data-field="taux_pret" value="${i.taux_pret}" onchange="onInputChange()"></div>
       <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-          <span>Assurance décès</span>
-          <span style="font-size:0.65rem;color:var(--text3);">% capital/an</span>
-        </label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="number" data-field="assurance_deces_pct" value="${i.assurance_deces_pct}" step="0.01" onchange="onInputChange();renderCurrentTab()" onkeyup="onInputChange();renderCurrentTab()" style="flex:1;">
-          ${empruntEur > 0 ? '<span style="font-size:0.74rem;color:var(--text3);white-space:nowrap;">≈ ' + new Intl.NumberFormat("fr-FR").format(assuranceDeces) + ' €/an</span>' : ''}
+        <label>Durée (ans)</label>
+        <input type="number" data-field="duree_pret" value="${i.duree_pret}" onchange="onInputChange()">
+      </div>
+      <div class="field">
+        <label>Taux nominal (%)</label>
+        <input type="number" data-field="taux_pret" value="${i.taux_pret}" onchange="onInputChange()">
+      </div>
+      <div class="field">
+        <label>Assurance décès</label>
+        <div class="assurance-deces-row">
+          <div class="assurance-deces-input">
+            <input type="number" data-field="assurance_deces" value="${i.assurance_deces||''}" onblur="onInputChange()" placeholder="0" style="width:100%;">
+          </div>
+          <div class="assurance-deces-meta">
+            <div class="ads-label">% capital / an</div>
+            <div class="ads-computed">${(parseFloat(i.assurance_deces)||0) && (parseFloat(i.montant_emprunt)||0) ? '≈\u202f' + Math.round((parseFloat(i.montant_emprunt)||0)*(parseFloat(i.assurance_deces)||0)/100).toLocaleString('fr-FR') + '\u202f€ / an' : '—'}</div>
+          </div>
         </div>
         <div class="field-hint">Si décès, l'assurance rembourse le capital restant dû</div>
       </div>
@@ -1899,22 +1889,10 @@ function renderInputs(p) {
     <!-- Card: Analyse & Cession -->
     <div class="form-card" style="min-width:160px;flex:1;">
       <div class="form-card-title"><span class="icon">📅</span> Analyse & Cession</div>
-      <div class="field">
-        <label>Année de début</label>
-        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">${anneeDebut}</div>
-        <div class="field-hint">Déduite de la date d'acquisition</div>
-      </div>
-      <div class="field"><label>Durée analyse (ans)</label>
-        <input type="number" data-field="duree_analyse" value="${i.duree_analyse}"
-          onchange="onInputChange();renderCurrentTab()"
-          onkeyup="onInputChange();renderCurrentTab()">
-      </div>
+      <div class="field"><label>Année de début</label><input type="number" data-field="annee_debut" value="${i.annee_debut}" onchange="onInputChange()"></div>
+      <div class="field"><label>Durée analyse (ans)</label><input type="number" data-field="duree_analyse" value="${i.duree_analyse}" onchange="onInputChange()"></div>
       <div class="field"><label>Prix de cession (€)</label><input type="number" data-field="prix_cession" value="${i.prix_cession}" onchange="onInputChange()"></div>
-      <div class="field">
-        <label>Année de cession</label>
-        <div style="padding:6px 10px;background:var(--navy-dim);border-radius:var(--radius);font-size:0.82rem;color:var(--navy);font-weight:600;">${anneeCession}</div>
-        <div class="field-hint">= Année début + durée analyse</div>
-      </div>
+      <div class="field"><label>Année de cession</label><input type="number" data-field="annee_cession" value="${i.annee_cession}" onchange="onInputChange()"></div>
     </div>
 
     <!-- Card: Amortissements -->
@@ -1924,9 +1902,12 @@ function renderInputs(p) {
       <div class="field"><label>Durée immo (ans)</label><input type="number" data-field="duree_amort_immo" value="${i.duree_amort_immo}" onchange="onInputChange()"></div>
       <div class="field"><label>Durée travaux (ans)</label><input type="number" data-field="duree_amort_travaux" value="${i.duree_amort_travaux}" onchange="onInputChange()"></div>
       <div class="field"><label>Durée meubles (ans)</label><input type="number" data-field="duree_amort_meubles" value="${i.duree_amort_meubles}" onchange="onInputChange()"></div>
-      <div style="background:var(--navy-dim2);border-radius:6px;padding:8px;font-size:0.68rem;color:var(--navy);font-weight:600;">
-        ⚖ LdF 2025 — Réintégration amort. LMNP active
-        <div class="field-hint">Amortissements déduits réintégrés dans la PV</div>
+      <div class="field"><label>Réintégration amort. à la revente</label>
+        <select data-field="lmnp_reintegration_amort" data-type="bool" onchange="onInputChange()">
+          <option value="true" \${i.lmnp_reintegration_amort!==false?'selected':''}>Oui — LF 2025</option>
+          <option value="false" \${i.lmnp_reintegration_amort===false?'selected':''}>Non — Ancien régime</option>
+        </select>
+        <div class="field-hint">Amort. cumulés réintégrés dans la PV LMNP</div>
       </div>
     </div>
 
@@ -1935,44 +1916,44 @@ function renderInputs(p) {
       <div class="form-card-title"><span class="icon">€</span> Exploitation</div>
       <div class="field"><label>Type de location</label>
         <select data-field="type_location" onchange="onInputChange()">
-          <option value="meuble" ${i.type_location==='meuble'?'selected':''}>Meublée (LMNP/LMP)</option>
-          <option value="nu" ${i.type_location==='nu'?'selected':''}>Nue</option>
+          <option value="meuble" \${i.type_location==='meuble'?'selected':''}>Meublée (LMNP/LMP)</option>
+          <option value="nu" \${i.type_location==='nu'?'selected':''}>Nue</option>
         </select>
       </div>
-      <div class="field"><label>Loyer mensuel (€)</label><input type="number" data-field="montant_loyer" value="${i.montant_loyer}" onchange="calcRecettes()"></div>
-      <div class="field"><label>Recettes annuelles (€)</label><input type="number" data-field="recettes_annuelles" id="recettes_annuelles_field" value="${(parseFloat(i.montant_loyer)||0)*12||i.recettes_annuelles}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly></div>
-      <div class="field"><label>Assurance MRH (€/an)</label><input type="number" data-field="assurance" value="${i.assurance}" onchange="onInputChange()"></div>
-      <div class="field"><label>Copropriété (€/an)</label><input type="number" data-field="copropriete" value="${i.copropriete}" onchange="onInputChange()"></div>
-      <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="${i.taxe_fonciere}" onchange="onInputChange()"></div>
-      <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="${i.honoraires_gestion}" onchange="onInputChange()"></div>
-      <div class="field"><label>Comptable (€/an)</label><input type="number" data-field="comptable" value="${i.comptable}" onchange="onInputChange()"></div>
-      <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
+      <div class="field"><label>Loyer mensuel (€)</label><input type="number" data-field="montant_loyer" value="\${i.montant_loyer}" onchange="calcRecettes()"></div>
+      <div class="field"><label>Recettes annuelles (€)</label><input type="number" data-field="recettes_annuelles" id="recettes_annuelles_field" value="\${(parseFloat(i.montant_loyer)||0)*12||i.recettes_annuelles}" style="background:var(--navy-dim);color:var(--navy);font-weight:600;" readonly></div>
+      <div class="field"><label>Assurance (€/an)</label><input type="number" data-field="assurance" value="\${i.assurance}" onchange="onInputChange()"></div>
+      <div class="field"><label>Copropriété (€/an)</label><input type="number" data-field="copropriete" value="\${i.copropriete}" onchange="onInputChange()"></div>
+      <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="\${i.taxe_fonciere}" onchange="onInputChange()"></div>
+      <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="\${i.honoraires_gestion}" onchange="onInputChange()"></div>
+      <div class="field"><label>Comptable (€/an)</label><input type="number" data-field="comptable" value="\${i.comptable}" onchange="onInputChange()"></div>
+      <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="\${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
     </div>
 
-    <!-- Card: Fiscalité particulier -->
+    <!-- Card: Fiscalité -->
     <div class="form-card" style="min-width:160px;flex:1;">
-      <div class="form-card-title"><span class="icon">⚖</span> Fiscalité particulier</div>
+      <div class="form-card-title"><span class="icon">⚖</span> Fiscalité</div>
       <div class="field"><label>TMI</label>
         <select data-field="tmi" onchange="onInputChange()">
-          <option value="0" ${parseFloat(i.tmi)===0?'selected':''}>0%</option>
-          <option value="11" ${parseFloat(i.tmi)===11?'selected':''}>11%</option>
-          <option value="30" ${parseFloat(i.tmi)===30?'selected':''}>30%</option>
-          <option value="41" ${parseFloat(i.tmi)===41?'selected':''}>41%</option>
-          <option value="45" ${parseFloat(i.tmi)===45?'selected':''}>45%</option>
+          <option value="0" \${parseFloat(i.tmi)===0?'selected':''}>0%</option>
+          <option value="11" \${parseFloat(i.tmi)===11?'selected':''}>11%</option>
+          <option value="30" \${parseFloat(i.tmi)===30?'selected':''}>30%</option>
+          <option value="41" \${parseFloat(i.tmi)===41?'selected':''}>41%</option>
+          <option value="45" \${parseFloat(i.tmi)===45?'selected':''}>45%</option>
         </select>
       </div>
       <div class="field"><label>Déclaration conjointe</label>
         <select data-field="declaration_conjoint" data-type="bool" onchange="onInputChange()">
-          <option value="true" ${i.declaration_conjoint?'selected':''}>Oui</option>
-          <option value="false" ${!i.declaration_conjoint?'selected':''}>Non</option>
+          <option value="true" \${i.declaration_conjoint?'selected':''}>Oui</option>
+          <option value="false" \${!i.declaration_conjoint?'selected':''}>Non</option>
         </select>
       </div>
-      <div class="field"><label>Revenu fiscal réf. (€)</label><input type="number" data-field="revenu_fiscal_ref" value="${i.revenu_fiscal_ref}" onchange="onInputChange()"><div class="field-hint">Détection LMP auto</div></div>
+      <div class="field"><label>Revenu fiscal réf. (€)</label><input type="number" data-field="revenu_fiscal_ref" value="\${i.revenu_fiscal_ref}" onchange="onInputChange()"><div class="field-hint">Détection LMP auto</div></div>
       <div class="field"><label>CEHR (%)</label>
         <select data-field="cehr_taux" onchange="onInputChange()">
-          <option value="0" ${parseFloat(i.cehr_taux)===0?'selected':''}>0% — Non assujetti</option>
-          <option value="3" ${parseFloat(i.cehr_taux)===3?'selected':''}>3% — RFR 250k–500k€</option>
-          <option value="4" ${parseFloat(i.cehr_taux)===4?'selected':''}>4% — RFR > 500k€</option>
+          <option value="0" \${parseFloat(i.cehr_taux)===0?'selected':''}>0% — Non assujetti</option>
+          <option value="3" \${parseFloat(i.cehr_taux)===3?'selected':''}>3% — RFR 250k–500k€</option>
+          <option value="4" \${parseFloat(i.cehr_taux)===4?'selected':''}>4% — RFR > 500k€</option>
         </select>
         <div class="field-hint">Contribution exceptionnelle hauts revenus</div>
       </div>
@@ -1981,13 +1962,22 @@ function renderInputs(p) {
     <!-- Card: IFI -->
     <div class="form-card" style="min-width:150px;flex:1;">
       <div class="form-card-title"><span class="icon">🏛</span> IFI</div>
-      <div class="field"><label>Actif immobilier pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="${i.ifi_base_pre}" onchange="onInputChange()"></div>
-      <div class="field"><label>Passif (dettes) pré-acq. (€)</label><input type="number" data-field="ifi_passif_pre" value="${i.ifi_passif_pre}" onchange="onInputChange()"></div>
-      <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="${i.ifi_ir_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Base IFI pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="\${i.ifi_base_pre}" onchange="onInputChange()"></div>
+      <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="\${i.ifi_ir_pre}" onchange="onInputChange()"></div>
     </div>
 
   </div>
   `;
+}
+
+// Scénarios actifs dans la synthèse
+let activeScenarios = { lmnp: true, foncier: true, is: true, micro_bic: true, micro_foncier: true, lmp: false };
+
+function toggleScenario(sc) {
+  const next = { ...activeScenarios, [sc]: !activeScenarios[sc] };
+  if (!next.lmnp && !next.foncier && !next.is && !next.micro_bic && !next.micro_foncier && !next.lmp) return;
+  activeScenarios = next;
+  showTab('synthese');
 }
 
 function calcRecettes() {
@@ -2004,117 +1994,8 @@ function calcRecettes() {
 
 
 
-/* ══════════════════════════════════════════════════════
-   RÉFÉRENTIEL FISCAL
-══════════════════════════════════════════════════════ */
-function renderReferentiel(p) {
-  const f = p.inputs;
-  const fv = (key, def) => f[key] !== undefined ? f[key] : def;
-
-  const row = (label, key, def, hint='') =>
-    `<tr>
-      <td style="padding:6px 10px;font-size:0.72rem;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;">${label}${hint ? '<div style="font-size:0.62rem;color:var(--text3);">'+hint+'</div>' : ''}</td>
-      <td style="padding:6px 10px;border-bottom:1px solid var(--border);width:100px;">
-        <input type="number" value="${fv(key,def)}" step="any" onchange="onRefFieldChange('${key}',this.value)" style="width:100%;border:1px solid var(--border2);border-radius:3px;padding:3px 6px;font-size:0.78rem;text-align:right;font-family:'DM Mono',monospace;">
-      </td>
-    </tr>`;
-
-  const infoRow = (label, val) =>
-    `<tr>
-      <td style="padding:5px 10px;font-size:0.7rem;color:var(--text2);border-bottom:1px solid var(--border);">${label}</td>
-      <td style="padding:5px 10px;font-size:0.7rem;color:var(--navy);font-weight:600;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;">${val}</td>
-    </tr>`;
-
-  const section = (title, color, badge, rows) =>
-    `<div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;">
-      <div style="background:${color};padding:7px 12px;display:flex;align-items:center;gap:8px;">
-        <span style="background:rgba(255,255,255,0.25);color:#fff;font-size:0.58rem;font-weight:700;padding:1px 6px;border-radius:3px;letter-spacing:0.08em;">${badge}</span>
-        <span style="font-size:0.72rem;font-weight:700;color:#fff;letter-spacing:0.05em;">${title}</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;">${rows}</table>
-    </div>`;
-
-  return `
-  <div style="padding:0;">
-    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Taux généraux 2025</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
-      ${section('Prélèvements sociaux','#1b3a6b','PS',row('Taux PS (%)', 'taux_ps', 17.2, 'Revenus locatifs + PV'))}
-      ${section('Flat Tax (PFU)','#1b3a6b','PFU',row('Taux (%)', 'taux_flat_tax', 31.4, 'LdF 2025 : 31,4%'))}
-      ${section('IS','#1b3a6b','IS',
-        row('Taux réduit (%)', 'is_taux_reduit', 15) +
-        row('Plafond réduit (€)', 'is_plafond_reduit', 42500) +
-        row('Taux normal (%)', 'is_taux_normal', 25)
-      )}
-      ${section('Plus-values IR directes','#1b3a6b','PV',
-        row('IR PV (%)', 'taux_ir_pv', 19) +
-        row('PS PV (%)', 'taux_ps_pv', 17.2)
-      )}
-    </div>
-
-    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Paramètres par régime</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-      ${section('LMNP Réel','#1b3a6b','LMNP',
-        row('Abatt. Micro-BIC (%)', 'micro_bic_abat', 50) +
-        infoRow('Déficit', 'Report illimité') +
-        infoRow('PV revente', 'Réintégration amort. LdF 2025')
-      )}
-      ${section('Micro-BIC','#2563a8','μBIC',
-        row('Abattement (%)', 'micro_bic_abat', 50) +
-        infoRow('Plafond standard', '77 700 €/an') +
-        infoRow('Plafond tourisme classé', '188 700 €/an')
-      )}
-      ${section('LMP','#15653a','LMP',
-        row('Seuil recettes (€)', 'lmp_seuil_recettes', 23000) +
-        infoRow('Condition 1', '> 23 000 €/an') +
-        infoRow('Condition 2', '> 50% revenu foyer') +
-        infoRow('PV exo totale si', '< 90k€/an + 5 ans')
-      )}
-      ${section('Foncier Réel','#8f4010','FONC',
-        row('Plafond déficit (€)', 'deficit_foncier_plafond', 10700) +
-        infoRow('Excédent', 'Reportable 10 ans') +
-        infoRow('Notaire/travaux', 'Déduit en charge an. 1')
-      )}
-      ${section('Micro-Foncier','#8f4010','μFONC',
-        row('Abattement (%)', 'micro_foncier_abat', 30) +
-        row('Plafond (€)', 'micro_foncier_plafond', 15000) +
-        infoRow('Si dépassement', 'Bascule foncier réel')
-      )}
-      ${section('Société IS','#5b21b6','STE IS',
-        row('IS taux réduit (%)', 'is_taux_reduit', 15) +
-        row('Plafond réduit (€)', 'is_plafond_reduit', 42500) +
-        infoRow('Distribution', 'Flat tax ' + fv('taux_flat_tax',31.4) + '%') +
-        infoRow('PV revente', 'Imposée IS sur VNC')
-      )}
-    </div>
-
-    <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Abattements PV pour durée de détention</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;">
-        <div style="background:var(--navy);padding:7px 12px;font-size:0.72rem;font-weight:700;color:#fff;">IR — Abattement annuel</div>
-        <table style="width:100%;border-collapse:collapse;">
-          ${infoRow('Ans 1–5','0%')}${infoRow('Ans 6–21','6%/an')}${infoRow('An 22','4% → Exonération IR')}${infoRow('> 30 ans','Exonération IR + PS')}
-        </table>
-      </div>
-      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;">
-        <div style="background:var(--navy);padding:7px 12px;font-size:0.72rem;font-weight:700;color:#fff;">Prélèvements sociaux — Abattement</div>
-        <table style="width:100%;border-collapse:collapse;">
-          ${infoRow('Ans 1–5','0%')}${infoRow('Ans 6–21','1,65%/an')}${infoRow('An 22','1,60%')}${infoRow('Ans 23–30','9%/an')}
-        </table>
-      </div>
-    </div>
-  </div>`;
-}
-
-
-function onRefFieldChange(key, val) {
-  const p = state.projects[state.activeId];
-  if (!p) return;
-  p.inputs[key] = parseFloat(val)||0;
-  onInputChange();
-}
-
 function renderSynthese(p) {
-  const i = p.inputs;
+  const i = resolveInputs(p.inputs);
   const _n = (v, d=0) => parseFloat(v)||d;
 
   // ── Calculs (full arrays, N=idx 0, N+1=idx 1) ──
@@ -2175,9 +2056,9 @@ function renderSynthese(p) {
   const nipCard = (label, color, treso, pv_net, nip, effort) => {
     const nipColor = nip >= 0 ? 'var(--green)' : 'var(--red)';
     return `<div style="flex:1;background:#fff;border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;min-width:180px;">
-      <div style="font-family:inherit;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:${color};font-weight:700;margin-bottom:10px;">${label}</div>
-      <div style="font-family:serif;font-size:1.6rem;color:${nipColor};margin-bottom:10px;">${nip>=0?'':'-\u00a0'}${fmt(Math.abs(nip))}</div>
-      <div style="font-size:0.65rem;font-family:inherit;color:var(--text3);line-height:2;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:${color};font-weight:700;margin-bottom:10px;">${label}</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:${nipColor};margin-bottom:10px;">${nip>=0?'':'-\u00a0'}${fmt(Math.abs(nip))}</div>
+      <div style="font-size:0.65rem;font-family:'DM Mono',monospace;color:var(--text3);line-height:2;">
         <div style="display:flex;justify-content:space-between;"><span>Apport initial</span><span style="color:var(--red)">− ${fmt(apport)}</span></div>
         <div style="display:flex;justify-content:space-between;"><span>Tréso cumulée ${duree} ans</span><span style="color:${treso>=0?'var(--green)':'var(--red)'}">${treso>=0?'+':'-\u00a0'}${fmt(Math.abs(treso))}</span></div>
         ${pvCession>0?`<div style="display:flex;justify-content:space-between;"><span>Net revente</span><span style="color:var(--green)">+ ${fmt(pv_net)}</span></div>`:''}
@@ -2187,7 +2068,7 @@ function renderSynthese(p) {
   };
 
   const nipHtml = `
-  <div style="font-family:inherit;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">
+  <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">
     💼 Net in pocket — bilan global (apport + trésorerie + revente)
   </div>
   <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
@@ -2468,7 +2349,7 @@ function renderSynthese(p) {
 
   return `
   <!-- ① BULLES RÉCAP : 3 familles -->
-  <div style="font-family:inherit;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">
+  <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">
     💰 Trésorerie nette cumulée sur ${duree} ans — hors revente
   </div>
   <div class="poche-banner" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:16px;">
@@ -2487,7 +2368,7 @@ function renderSynthese(p) {
   ${tableHtml}
 
   <!-- ④ DÉTAILS PAR FAMILLE (collapsibles) -->
-  <div style="font-family:inherit;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">Détail par structure de détention</div>
+  <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">Détail par structure de détention</div>
   ${collapsibleSection('lmnp', '#1a4f8a', '🛋 LMP / LMNP — Location meublée', lmnpBody)}
   ${collapsibleSection('foncier', '#8f4010', '🏠 Foncier — Location nue', foncierBody)}
   ${collapsibleSection('is', '#0f6338', '🏢 Société à l\'IS', isBody)}
@@ -2548,10 +2429,10 @@ function renderReventeHtml(i, pv, foncier_bilan, lmnp_bilan, is_bilan) {
 
 function renderLoanTable(inp) {
   var _n = function(v,d) { return parseFloat(v) || (d||0); };
-  var montant = getMontantEmprunt(inp);
+  var montant = _n(inp.montant_emprunt);
   var taux = _n(inp.taux_pret);
   var duree = _n(inp.duree_pret, 20);
-  var annee_debut = getAnneeDebut(inp);
+  var annee_debut = _n(inp.annee_debut, 2024);
   if (!montant || !duree) return '<div style="padding:12px;color:var(--text3);font-size:0.72rem;">Saisissez les paramètres du prêt.</div>';
 
   var loan = calcLoanSchedule(montant, taux, duree);
@@ -2602,7 +2483,7 @@ function renderLoanTable(inp) {
    RENDER CASHFLOW
 ══════════════════════════════════════════════════════ */
 function renderCashflow(p) {
-  const i = p.inputs;
+  const i = resolveInputs(p.inputs);
   const lmnp = calcYearsLMNP(i);
   const foncier = calcYearsFoncier(i);
   const is = calcYearsIS(i);
@@ -2641,7 +2522,7 @@ function renderCashflow(p) {
   <div class="cf-table-wrap">
     <div class="cf-table-header">
       Détail année par année
-      <span style="font-family:inherit;font-size:0.65rem;color:var(--text3)">${i.duree_analyse} ans · ${i.annee_debut} → ${i.annee_debut + i.duree_analyse - 1}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text3)">${i.duree_analyse} ans · ${i.annee_debut} → ${i.annee_debut + i.duree_analyse - 1}</span>
     </div>
     <div class="cf-scroll">
       <table>
@@ -2672,7 +2553,7 @@ function setCfScenario(sc) {
    RENDER PRÊT
 ══════════════════════════════════════════════════════ */
 function renderPret(p) {
-  const i = p.inputs;
+  const i = resolveInputs(p.inputs);
   const loan = calcLoanSchedule(i.montant_emprunt, i.taux_pret, i.duree_pret);
   const total_interets = loan.rows.reduce((s, r) => s + r.interets, 0);
   const total_capital = i.montant_emprunt;
@@ -2746,7 +2627,7 @@ function calcPV(inp) {
   const is_plafond = parseFloat(inp.is_plafond_reduit)||42500;
   const is_normal = (parseFloat(inp.is_taux_normal)||25) / 100;
   const cehr = (parseFloat(inp.cehr_taux)||0) / 100;
-  const reintegration = true;
+  const reintegration = inp.lmnp_reintegration_amort !== false;
 
   // Abattements communs
   const abat_ir = annees_detention >= 22 ? 1.0 : annees_detention >= 6 ? Math.min(1, (annees_detention - 5) * 0.06) : 0;
@@ -2798,7 +2679,7 @@ function calcPV(inp) {
 }
 
 function renderPV(p) {
-  const i = p.inputs;
+  const i = resolveInputs(p.inputs);
   const pv = calcPV(i);
   return `
   <div style="margin-bottom:14px">
@@ -2848,15 +2729,15 @@ function renderPV(p) {
     <div class="chart-title">Net en poche après cession — comparaison</div>
     <div class="chart-wrap" style="height:180px"><canvas id="chartPV"></canvas></div>
     <div style="display:flex;gap:20px;justify-content:center;margin-top:10px;flex-wrap:wrap;" id="pvLegend">
-      <div style="display:flex;align-items:center;gap:6px;font-family:inherit;font-size:0.68rem;color:var(--text2);">
+      <div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text2);">
         <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(143,64,16,0.7);flex-shrink:0;"></span>
         🏠 Location nue directe
       </div>
-      <div style="display:flex;align-items:center;gap:6px;font-family:inherit;font-size:0.68rem;color:var(--text2);">
+      <div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text2);">
         <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(26,79,138,0.7);flex-shrink:0;"></span>
         🛋 LMNP Meublé
       </div>
-      <div style="display:flex;align-items:center;gap:6px;font-family:inherit;font-size:0.68rem;color:var(--text2);">
+      <div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text2);">
         <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(15,99,56,0.7);flex-shrink:0;"></span>
         🏢 Société IS
       </div>
@@ -2884,7 +2765,7 @@ function calcIFI(base) {
 }
 
 function renderIFI(p) {
-  const i = p.inputs;
+  const i = resolveInputs(p.inputs);
   // Pré acquisition
   const base_pre = Math.max(0, i.ifi_actif_pre - i.ifi_passif_pre);
   const ifi_pre = calcIFI(base_pre);
@@ -2919,7 +2800,7 @@ function renderIFI(p) {
       <div class="pv-line"><span class="pv-line-label">Base imposable IFI</span><span class="pv-line-val">${fmt(base_pre)}</span></div>
       <div class="pv-line"><span class="pv-line-label">IFI théorique</span><span class="pv-line-val">${fmt(ifi_pre)}</span></div>
       <div class="pv-line"><span class="pv-line-label">Plafonnement (75% revenus)</span><span class="pv-line-val">${fmt(plafonnem_pre)}</span></div>
-      <div class="pv-total"><span class="pv-total-label">IFI final pré-acquisition</span><span style="font-family:serif;font-size:1.1rem;color:var(--gold2)">${fmt(ifi_pre_final)}</span></div>
+      <div class="pv-total"><span class="pv-total-label">IFI final pré-acquisition</span><span style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--gold2)">${fmt(ifi_pre_final)}</span></div>
     </div>
 
     <div>
@@ -2947,7 +2828,7 @@ function renderIFI(p) {
     <div class="chart-wrap" style="height:160px"><canvas id="chartIFI"></canvas></div>
   </div>
 
-  <div style="margin-top:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);font-size:0.72rem;color:var(--text3);font-family:inherit;line-height:1.6;">
+  <div style="margin-top:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);font-size:0.72rem;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.6;">
     ⚠ Note : Les règles IFI relatives aux sociétés IS sont complexes (proratisation de la valeur des parts, dettes intragroupes). Ce calcul est une approximation à valider avec un conseil spécialisé.
   </div>`;
 }
@@ -2970,7 +2851,7 @@ const CHART_OPTS = {
 };
 
 function initChartsForTab(tab, p) {
-  const i = p.inputs;
+  const i = resolveInputs(p.inputs);
   setTimeout(() => {
     if (tab === 'synthese') {
       const el = document.getElementById('chartSynthese');
@@ -3083,25 +2964,15 @@ function hideLoginScreen() {
   document.getElementById('loginScreen').style.display = 'none';
 }
 
-const ALLOWED_DOMAINS = ['agami.com', 'agami.fr'];
-
 async function sendMagicLink() {
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const email = document.getElementById('loginEmail').value.trim();
   if (!email) return;
-  // Vérification domaine
-  const domain = email.split('@')[1];
-  if (!domain || !ALLOWED_DOMAINS.includes(domain)) {
-    document.getElementById('loginMsg').textContent = 'Accès réservé aux emails Agami (@agami.com ou @agami.fr).';
-    document.getElementById('loginMsg').style.color = 'var(--red)';
-    return;
-  }
   const btn = document.getElementById('loginBtn');
   btn.disabled = true;
   btn.textContent = 'Envoi…';
-  const { error } = await supaClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
   if (error) {
     document.getElementById('loginMsg').textContent = 'Erreur : ' + error.message;
-    document.getElementById('loginMsg').style.color = 'var(--red)';
     btn.disabled = false;
     btn.textContent = 'Envoyer le lien';
   } else {
@@ -3111,7 +2982,7 @@ async function sendMagicLink() {
 }
 
 async function signOut() {
-  await supaClient.auth.signOut();
+  await sb.auth.signOut();
   currentUser = null;
   state.projects = {};
   state.activeId = null;
@@ -3122,20 +2993,23 @@ async function signOut() {
 async function loadUserData(user) {
   try {
     currentUser = user;
-    console.log('loadUserData START - user:', user.email);
+    console.log('loadUserData START - user:', user.email, 'id:', user.id);
     hideLoginScreen();
     await loadFiscalDefaultsFromDB();
     await loadState();
-    console.log('loadUserData OK - projets:', Object.keys(state.projects).length);
+    console.log('loadUserData - projets en mémoire:', Object.keys(state.projects).length);
     renderProjectList();
     const ids = Object.keys(state.projects);
+    console.log('loadUserData - ids:', ids);
     if (ids.length) {
       selectProject(ids[0]);
     } else {
+      console.log('loadUserData - aucun projet, création démo');
       const demo = defaultProject('Mon premier projet', true);
-      const { data, error } = await supaClient.from('projects').insert({
+      const { data, error } = await sb.from('projects').insert({
         user_id: currentUser.id, name: demo.name, data: demo.inputs
       }).select('id').single();
+      console.log('loadUserData - insert démo:', data, error);
       if (data) { demo.id = data.id; state.projects[demo.id] = demo; renderProjectList(); selectProject(demo.id); }
     }
   } catch(e) {
@@ -3144,28 +3018,41 @@ async function loadUserData(user) {
   }
 }
 
-// AUTH — setTimeout pour sortir du contexte de l'auth callback
-// et permettre aux requêtes supabase de fonctionner
-let _authDone = false;
-supaClient.auth.onAuthStateChange((event, session) => {
+async function initApp() {
+  try {
+    // Laisser onAuthStateChange gérer tout — c'est lui qui a toujours la session à jour
+    // initApp sert juste de fallback si INITIAL_SESSION ne se déclenche pas
+    const { data: { session }, error } = await sb.auth.getSession();
+    if (error) { console.error('getSession error:', error); showLoginScreen(); return; }
+    if (session?.user) {
+      if (!currentUser) await loadUserData(session.user);
+    } else {
+      showLoginScreen();
+    }
+  } catch(e) {
+    console.error('initApp crash:', e);
+    showLoginScreen();
+  }
+}
+
+sb.auth.onAuthStateChange(async (event, session) => {
   console.log('AUTH EVENT:', event, session?.user?.email || 'no user');
-  if (event === 'SIGNED_OUT') {
-    _authDone = false;
+  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+    if (session?.user) {
+      if (currentUser && currentUser.id === session.user.id) return; // déjà chargé
+      await loadUserData(session.user);
+    } else {
+      showLoginScreen();
+    }
+  } else if (event === 'SIGNED_OUT') {
     currentUser = null;
     state.projects = {};
     state.activeId = null;
     showLoginScreen();
-    return;
-  }
-  if (session?.user) {
-    if (_authDone && currentUser?.id === session.user.id) return;
-    _authDone = true;
-    // setTimeout 0 pour sortir du contexte auth et débloquer les requêtes fetch
-    setTimeout(() => loadUserData(session.user), 0);
-  } else if (event === 'INITIAL_SESSION') {
-    showLoginScreen();
   }
 });
+
+initApp();
 </script>
 </body>
 </html>
