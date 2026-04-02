@@ -1359,11 +1359,14 @@ function showEmpty() {
    MODE
 ══════════════════════════════════════════════════════ */
 async function setMode(mode, rerender = true) {
-  // Sauvegarder p.inputs tel quel en mémoire — pas besoin de relire le DOM
-  // p.inputs est déjà à jour via onInputChange() qui tourne à chaque frappe
-  if (state.activeId && state.mode === 'saisie') {
+  const prevMode = state.mode;
+
+  // ── Quitter SAISIE → sauvegarder d'abord ──
+  if (prevMode === 'saisie' && state.activeId) {
+    collectInputs();
     await persistState();
   }
+
   state.mode = mode;
   document.getElementById('btnSaisie').classList.toggle('active', mode === 'saisie');
   document.getElementById('btnPresentation').classList.toggle('active', mode === 'presentation');
@@ -1372,11 +1375,8 @@ async function setMode(mode, rerender = true) {
   badge.className = 'topbar-mode-badge' + (mode === 'saisie' ? ' saisie' : '');
   document.getElementById('btnSave').style.display = mode === 'saisie' ? '' : 'none';
 
-  // Saisie : Paramètres + Fiscal uniquement
-  // Client : Synthèse + Cash Flow + Prêt + Plus-Values + IFI uniquement
   const saisieOnly = ['inputs','referentiel','fiscal'];
-  const clientOnly = ['synthese','cashflow','pret','pv','ifi'];
-
+  const clientOnly  = ['synthese','cashflow','pret','pv','ifi'];
   saisieOnly.forEach(id => {
     const el = document.getElementById('tab-' + id);
     if (el) el.style.display = mode === 'saisie' ? '' : 'none';
@@ -1387,9 +1387,31 @@ async function setMode(mode, rerender = true) {
   });
 
   if (rerender) {
-    if (mode === 'presentation') showTab('synthese');
-    else showTab('inputs');
+    if (mode === 'presentation') {
+      showTab('synthese');
+    } else {
+      // ── Entrer en SAISIE → recharger depuis Supabase pour être sûr ──
+      await reloadActiveProject();
+      showTab('inputs');
+    }
   }
+}
+
+async function reloadActiveProject() {
+  if (!currentUser || !state.activeId) return;
+  const { data, error } = await sb
+    .from('projects')
+    .select('id, name, data')
+    .eq('id', state.activeId)
+    .single();
+  if (error || !data) {
+    console.warn('reloadActiveProject error:', error);
+    return;
+  }
+  const base   = defaultProject(data.name, false).inputs;
+  const merged = Object.assign({}, base, loadFiscalDefaults(), data.data || {});
+  state.projects[state.activeId].inputs = merged;
+  state.projects[state.activeId].name   = data.name;
 }
 
 /* ══════════════════════════════════════════════════════
