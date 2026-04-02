@@ -1055,12 +1055,19 @@ function loadFiscalDefaults() {
 async function saveFiscalDefaults(vals) {
   _fiscalDefaultsCache = vals;
   if (!currentUser) return;
-  await sb.from('fiscal_defaults').upsert({ user_id: currentUser.id, data: vals, updated_at: new Date().toISOString() });
+  // Essai avec updated_at, fallback sans si colonne absente
+  let { error } = await sb.from('fiscal_defaults').upsert({
+    user_id: currentUser.id, data: vals, updated_at: new Date().toISOString()
+  });
+  if (error) {
+    await sb.from('fiscal_defaults').upsert({ user_id: currentUser.id, data: vals });
+  }
 }
 
 async function loadFiscalDefaultsFromDB() {
   if (!currentUser) return;
-  const { data } = await sb.from('fiscal_defaults').select('data').eq('user_id', currentUser.id).single();
+  // maybeSingle() retourne null sans erreur si aucune ligne (évite le 406 avec .single())
+  const { data } = await sb.from('fiscal_defaults').select('data').eq('user_id', currentUser.id).maybeSingle();
   if (data?.data) _fiscalDefaultsCache = data.data;
 }
 
@@ -1134,8 +1141,13 @@ async function loadState() {
   console.log('loadState: ' + (data?.length || 0) + ' projets trouvés');
   state.projects = {};
   (data || []).forEach(row => {
-    console.log('loadState row:', row.id, '| data keys:', row.data ? Object.keys(row.data).length : 'NULL');
-    state.projects[row.id] = { id: row.id, name: row.name, inputs: row.data || {} };
+    // Merger les defaults avec les données sauvegardées :
+    // les nouveaux champs ajoutés après création du projet ont leur valeur par défaut,
+    // sans écraser ce qui était déjà saisi
+    const base = defaultProject(row.name, false).inputs;
+    const merged = Object.assign({}, base, loadFiscalDefaults(), row.data || {});
+    console.log('loadState row:', row.id, '| data keys:', Object.keys(merged).length);
+    state.projects[row.id] = { id: row.id, name: row.name, inputs: merged };
   });
 }
 
