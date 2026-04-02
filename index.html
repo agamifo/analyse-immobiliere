@@ -1142,23 +1142,40 @@ async function persistState() {
   if (!currentUser || !state.activeId) return;
   const p = state.projects[state.activeId];
   if (!p) return;
-  // Vérifier si l'id est un UUID valide (format Supabase) ou un timestamp legacy
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.id);
   if (isUUID) {
-    const { error } = await sb.from('projects').update({
+    // Essai avec updated_at
+    let { error } = await sb.from('projects').update({
       name: p.name,
       data: p.inputs,
       updated_at: new Date().toISOString()
     }).eq('id', p.id).eq('user_id', currentUser.id);
-    if (error) { console.error('persistState update error:', error); return; }
+
+    // Si erreur (ex: colonne updated_at absente), retry sans
+    if (error) {
+      console.warn('persistState (with updated_at) failed:', error.message, '— retrying without');
+      const r2 = await sb.from('projects').update({
+        name: p.name,
+        data: p.inputs
+      }).eq('id', p.id).eq('user_id', currentUser.id);
+      if (r2.error) {
+        console.error('persistState update error:', r2.error);
+        notify('Erreur sauvegarde : ' + r2.error.message);
+        return;
+      }
+    }
   } else {
-    // Id legacy (timestamp) — insérer proprement et mettre à jour l'id local
+    // Id legacy (timestamp) — insérer proprement
     const { data, error } = await sb.from('projects').insert({
       user_id: currentUser.id,
       name: p.name,
       data: p.inputs
     }).select('id').single();
-    if (error) { console.error('persistState insert error:', error); return; }
+    if (error) {
+      console.error('persistState insert error:', error);
+      notify('Erreur sauvegarde : ' + error.message);
+      return;
+    }
     if (data) {
       const oldId = p.id;
       p.id = data.id;
@@ -1321,7 +1338,12 @@ function showEmpty() {
 /* ══════════════════════════════════════════════════════
    MODE
 ══════════════════════════════════════════════════════ */
-function setMode(mode, rerender = true) {
+async function setMode(mode, rerender = true) {
+  // Sauvegarder avant de changer de mode (évite de perdre les saisies non enregistrées)
+  if (state.activeId) {
+    collectInputs();
+    await persistState();
+  }
   state.mode = mode;
   document.getElementById('btnSaisie').classList.toggle('active', mode === 'saisie');
   document.getElementById('btnPresentation').classList.toggle('active', mode === 'presentation');
@@ -1381,8 +1403,11 @@ function showTab(tab) {
 ══════════════════════════════════════════════════════ */
 async function saveProject() {
   if (!state.activeId) return;
+  const btn = document.getElementById('btnSave');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
   collectInputs();
   await persistState();
+  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   notify('Enregistré ✓');
 }
 function collectInputs() {
@@ -1417,6 +1442,13 @@ function computedPctEuro(value, mode, base, label) {
 function onInputChange() {
   collectInputs();
   if (state.activeTab !== 'inputs') { destroyCharts(); const p = state.projects[state.activeId]; showTab(state.activeTab); }
+  // Déclenche une sauvegarde auto debounced (500ms après la dernière modif)
+  clearTimeout(window._autoSaveTimer);
+  window._autoSaveTimer = setTimeout(async () => {
+    if (state.activeId && state.mode === 'saisie') {
+      await persistState();
+    }
+  }, 1500);
 }
 
 /* ══════════════════════════════════════════════════════
