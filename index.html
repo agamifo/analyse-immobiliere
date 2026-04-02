@@ -1501,11 +1501,12 @@ function calcAmortissements(inp) {
 ══════════════════════════════════════════════════════ */
 
 function calcMicroBIC(inp) {
-  // Micro-BIC : abattement 50% (ou 71% tourisme classée)
-  // Applicable si recettes < 77 700 € (ou 188 700 € tourisme)
+  // Micro-BIC : abattement selon variante (standard / tourisme NC / tourisme classé)
+  // Plafonds et abattements depuis référentiel fiscal
   const _n = (v, d=0) => parseFloat(v)||d;
   const recettes = _n(inp.recettes_annuelles);
-  const seuil = _n(inp.seuil_micro_bic, 77700);
+  // Seuil applicable : standard 77 700€ (ou tourisme NC 15 000€)
+  const seuil = _n(inp.micro_bic_standard_plafond, 77700);
   const eligible = recettes < seuil && recettes > 0;
   const abat = _n(inp.micro_bic_abat, 50) / 100;
   const tmi = _n(inp.tmi) / 100;
@@ -1561,13 +1562,15 @@ function isLMP(inp) {
 }
 
 function calcYearsLMP(inp) {
-  // LMP : comme LMNP mais déficits imputables sur revenu global SANS plafond
-  // + exonération PV après 5 ans d'activité si recettes < 90k€
+  // LMP : déficits imputables sur revenu global SANS plafond
+  // Cotisations sociales = SSI (11,5%) et non PS (17,2%)
+  // + exonération PV après durée min d'activité si recettes < plafond
   const _n = (v, d=0) => parseFloat(v)||d;
   const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
   const tmi = _n(inp.tmi) / 100;
-  const tps = _n(inp.taux_ps, 17.2) / 100;
+  // LMP : cotisations SSI (Sécurité Sociale des Indépendants) ≠ PS LMNP
+  const tps = _n(inp.lmp_cotisations_ssi_pct, 11.5) / 100;
   const years = [];
   let cumul_deficit = 0;
   const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
@@ -1689,11 +1692,14 @@ function calcYearsFoncier(inp) {
     const extra_y1 = y === 0 ? _n(inp.frais_notaire) : 0;
     const revenu_foncier = _n(inp.recettes_annuelles) - charges - la.interets - extra_y1;
 
+    // Plafond déficit foncier depuis référentiel (standard ou énergétique si travaux)
+    const plafond_def = _n(inp.deficit_foncier_plafond, 10700);
+
     let revenu_net = 0, impot = 0, ir = 0, ps = 0;
     if (revenu_foncier < 0) {
-      // déficit foncier (hors intérêts) imputable sur RI dans la limite de 10 700€
+      // déficit foncier (hors intérêts) imputable sur RI dans la limite du plafond paramétré
       const deficit_hors_interets = Math.min(0, _n(inp.recettes_annuelles) - charges - extra_y1);
-      const imputable_ri = Math.min(10700, Math.abs(deficit_hors_interets));
+      const imputable_ri = Math.min(plafond_def, Math.abs(deficit_hors_interets));
       deficit_reportable += Math.abs(revenu_foncier) - imputable_ri;
       revenu_net = -imputable_ri; // économie IR
       ir = revenu_net * tmi;
@@ -3059,19 +3065,83 @@ function calcPV(inp) {
   const cehr = (parseFloat(inp.cehr_taux)||0) / 100;
   const reintegration = inp.lmnp_reintegration_amort !== false;
 
-  // Abattements communs
-  const abat_ir = annees_detention >= 22 ? 1.0 : annees_detention >= 6 ? Math.min(1, (annees_detention - 5) * 0.06) : 0;
-  const abat_ps = annees_detention >= 30 ? 1.0 : annees_detention >= 22 ? 0.28 + (annees_detention - 22) * 0.09 : annees_detention >= 6 ? (annees_detention - 5) * 0.0165 : 0;
+  // Abattements paramétrables depuis référentiel LdF
+  const _abat_ir_taux   = (parseFloat(inp.abat_ir_debut)  || 6)    / 100;
+  const _abat_ir_fin    = (parseFloat(inp.abat_ir_fin)    || 4)    / 100;
+  const _abat_ir_exo    = parseFloat(inp.abat_exo_ir_annee) || 22;
+  const _abat_ps_taux   = (parseFloat(inp.abat_ps_debut)  || 1.65) / 100;
+  const _abat_ps_fin    = (parseFloat(inp.abat_ps_fin)    || 1.6)  / 100;
+  const _abat_ps_fin2   = (parseFloat(inp.abat_ps_fin2)   || 9)    / 100;
+  const _abat_ps_exo    = parseFloat(inp.abat_exo_ps_annee) || 30;
+
+  // IR : 0% ans 1-5, taux/an ans 6-21, fin an 22, exo complète à partir an exo
+  const abat_ir = annees_detention >= _abat_ir_exo ? 1.0
+    : annees_detention >= 6
+      ? Math.min(1, (annees_detention - 5) * _abat_ir_taux + (annees_detention >= 22 ? _abat_ir_fin - _abat_ir_taux : 0))
+      : 0;
+  // PS : 0% ans 1-5, 1,65%/an ans 6-21, 1,60% an 22, 9%/an ans 23-30, exo à 30 ans
+  const _ps_tranche1 = Math.min(Math.max(0, annees_detention - 5), 16) * _abat_ps_taux;
+  const _ps_tranche2 = annees_detention >= 22 ? _abat_ps_fin : 0;
+  const _ps_tranche3 = annees_detention >= 23 ? Math.min(annees_detention - 22, 8) * _abat_ps_fin2 : 0;
+  const abat_ps = annees_detention >= _abat_ps_exo ? 1.0
+    : Math.min(1, _ps_tranche1 + _ps_tranche2 + _ps_tranche3);
+
+  // ── Surtaxe haute PV (art. 1609 nonies G CGI) ──────────────────────────
+  // Barème progressif depuis référentiel, appliqué sur PV NETTE imposable (après abattements IR)
+  function calcSurtaxe(pv_nette_imposable, inp) {
+    const _n = (v, d) => parseFloat(v) != null && !isNaN(parseFloat(v)) ? parseFloat(v) : d;
+    if (pv_nette_imposable <= 50000) return 0;
+    const t1 = _n(inp.taxe_pv_taux1, 2) / 100;
+    const t2 = _n(inp.taxe_pv_taux2, 3) / 100;
+    const t3 = _n(inp.taxe_pv_taux3, 4) / 100;
+    const t4 = _n(inp.taxe_pv_taux4, 5) / 100;
+    const t5 = _n(inp.taxe_pv_taux5, 6) / 100;
+    const s1 = _n(inp.taxe_pv_seuil1, 50000);
+    const s2 = _n(inp.taxe_pv_seuil2, 150000);
+    const s3 = _n(inp.taxe_pv_seuil3, 200000);
+    const s4 = _n(inp.taxe_pv_seuil4, 250000);
+    const s5 = _n(inp.taxe_pv_seuil5, 260000);
+    // Tranche 50k–60k : formule dégressive pour éviter effet de seuil
+    // Taxe = (PV - 50000) × 1/10 × 2%  (progressif de 0 à 2%)
+    if (pv_nette_imposable <= 60000) {
+      return (pv_nette_imposable - s1) / 10 * t1;
+    }
+    // Au-delà de 60k : taux plein par tranche sur toute la PV nette
+    let tx = t1;
+    if (pv_nette_imposable > s2)  tx = t2;
+    if (pv_nette_imposable > s3)  tx = t3;
+    if (pv_nette_imposable > s4)  tx = t4;
+    if (pv_nette_imposable > s5)  tx = t5;
+    return pv_nette_imposable * tx;
+  }
+
+  // ── Coût de revient : réel ou forfait ──────────────────────────────────
+  const _forfait_frais = (parseFloat(inp.pv_forfait_frais_acquisition) || 7.5) / 100;
+  const _forfait_trav  = (parseFloat(inp.pv_forfait_travaux) || 15) / 100;
+  const frais_reel = parseFloat(inp.frais_notaire) || 0;
+  const travaux_reel = parseFloat(inp.travaux) || 0;
+  const annee_detention_int = Math.floor(annees_detention);
+  // Forfait frais si aucun montant réel saisi
+  const frais_deductibles = frais_reel > 0 ? frais_reel
+    : (parseFloat(inp.prix_acquisition) || 0) * _forfait_frais;
+  // Forfait travaux si > 5 ans et aucun montant réel, ou si montant réel disponible
+  const travaux_deductibles = travaux_reel > 0 ? travaux_reel
+    : (annee_detention_int >= 5 ? (parseFloat(inp.prix_acquisition) || 0) * _forfait_trav : 0);
+
+  // ── Exonération si prix cession ≤ seuil ────────────────────────────────
+  const _exo_seuil = parseFloat(inp.pv_exo_cession_seuil) || 15000;
+  const exo_cession_seuil = (parseFloat(inp.prix_cession) || 0) <= _exo_seuil;
 
   // 1. Détention directe NUE
-  const pv_brute_nu = Math.max(0, inp.prix_cession - inp.prix_acquisition - inp.frais_notaire - inp.travaux);
-  const pv_ir_nu = pv_brute_nu * (1 - abat_ir);
-  const pv_ps_nu = pv_brute_nu * (1 - abat_ps);
+  const pv_brute_nu = Math.max(0, (inp.prix_cession||0) - (inp.prix_acquisition||0) - frais_deductibles - travaux_deductibles);
+  const pv_ir_nu = exo_cession_seuil ? 0 : pv_brute_nu * (1 - abat_ir);
+  const pv_ps_nu = exo_cession_seuil ? 0 : pv_brute_nu * (1 - abat_ps);
   const ir_nu = pv_ir_nu * taux_ir_pv;
   const ps_nu = pv_ps_nu * taux_ps_pv;
   const cehr_nu = pv_ir_nu * cehr;
-  const taxe_haute_pv = pv_brute_nu > 50000 ? Math.min(pv_brute_nu - 50000, 100000) * 0.02 + Math.max(0, pv_brute_nu - 150000) * 0.06 : 0;
-  const net_nu = inp.prix_cession - ir_nu - ps_nu - cehr_nu - taxe_haute_pv;
+  // Surtaxe sur PV nette imposable IR (après abattements IR)
+  const taxe_haute_pv = exo_cession_seuil ? 0 : calcSurtaxe(pv_ir_nu, inp);
+  const net_nu = (inp.prix_cession||0) - ir_nu - ps_nu - cehr_nu - taxe_haute_pv;
 
   // 2. LMNP meublé (avec réintégration amortissements LF 2025)
   const amort_pratique_immo = Math.min(annees_detention, amort.duree_immo) * amort.immo_annuel;
@@ -3089,10 +3159,14 @@ function calcPV(inp) {
   const pvct_lmnp = reintegration ? Math.min(total_amort_pratique, pv_brute_lmnp) : 0;
   const pvlt_lmnp = Math.max(0, pv_brute_lmnp - pvct_lmnp);
   const tmi = parseFloat(inp.tmi) / 100;
-  const ir_lmnp = pvct_lmnp * tmi + pvlt_lmnp * taux_ir_pv * (1 - abat_ir);
-  const ps_lmnp = (pvct_lmnp + pvlt_lmnp * (1 - abat_ps)) * taux_ps_pv;
-  const cehr_lmnp = (pvct_lmnp + pvlt_lmnp * (1 - abat_ir)) * cehr;
-  const net_lmnp = inp.prix_cession - ir_lmnp - ps_lmnp - cehr_lmnp;
+  const exo_lmnp = exo_cession_seuil;
+  const ir_lmnp = exo_lmnp ? 0 : pvct_lmnp * tmi + pvlt_lmnp * taux_ir_pv * (1 - abat_ir);
+  const ps_lmnp = exo_lmnp ? 0 : (pvct_lmnp + pvlt_lmnp * (1 - abat_ps)) * taux_ps_pv;
+  const cehr_lmnp = exo_lmnp ? 0 : (pvct_lmnp + pvlt_lmnp * (1 - abat_ir)) * cehr;
+  // Surtaxe sur la PV nette LMNP (PVLT après abattement IR + PVCT non abattu)
+  const pv_nette_ir_lmnp = pvct_lmnp + pvlt_lmnp * (1 - abat_ir);
+  const taxe_haute_pv_lmnp = exo_lmnp ? 0 : calcSurtaxe(pv_nette_ir_lmnp, inp);
+  const net_lmnp = (inp.prix_cession||0) - ir_lmnp - ps_lmnp - cehr_lmnp - taxe_haute_pv_lmnp;
 
   // 3. IS
   const vnet_comptable = Math.max(0, (parseFloat(inp.prix_acquisition)||0) + (parseFloat(inp.frais_notaire)||0) + (parseFloat(inp.travaux)||0) - total_amort_pratique);
@@ -3103,8 +3177,15 @@ function calcPV(inp) {
   const impot_distribution = result_apres_is * taux_distribution;
   const net_is = (parseFloat(inp.prix_cession)||0) - is_pv - impot_distribution - vnet_comptable;
 
-  return { annees_detention: Math.round(annees_detention * 10) / 10, pv_brute_nu, ir_nu, ps_nu, cehr_nu, taxe_haute_pv, net_nu, abat_ir: abat_ir*100, abat_ps: abat_ps*100,
-    pvct_lmnp, pvlt_lmnp, pv_brute_lmnp, ir_lmnp, ps_lmnp, cehr_lmnp, net_lmnp, total_amort_pratique, reintegration,
+  return { annees_detention: Math.round(annees_detention * 10) / 10,
+    // NU
+    pv_brute_nu, pv_ir_nu, pv_ps_nu, ir_nu, ps_nu, cehr_nu, taxe_haute_pv, net_nu,
+    abat_ir: abat_ir*100, abat_ps: abat_ps*100,
+    frais_deductibles, travaux_deductibles, exo_cession_seuil,
+    // LMNP
+    pvct_lmnp, pvlt_lmnp, pv_brute_lmnp, ir_lmnp, ps_lmnp, cehr_lmnp,
+    taxe_haute_pv_lmnp, net_lmnp, total_amort_pratique, reintegration,
+    // IS
     pv_is, vnet_comptable, is_pv, impot_distribution, net_is };
 }
 
@@ -3123,26 +3204,32 @@ function renderPV(p) {
   <div class="pv-grid">
     <div class="pv-card">
       <div class="pv-card-title">🏠 Détention directe — Location nue</div>
+      ${pv.exo_cession_seuil ? `<div class="pv-line" style="background:var(--green-dim);padding:4px 6px;border-radius:4px;"><span class="pv-line-label" style="color:var(--green);font-weight:600;">✓ Exonération totale</span><span class="pv-line-val" style="color:var(--green);">Prix cession ≤ ${fmt(i.pv_exo_cession_seuil||15000)}</span></div>` : ''}
+      <div class="pv-line"><span class="pv-line-label">Coût de revient</span><span class="pv-line-val">${fmt((i.prix_acquisition||0) + pv.frais_deductibles + pv.travaux_deductibles)}</span></div>
+      ${pv.frais_deductibles !== (i.frais_notaire||0) ? `<div class="pv-line" style="opacity:0.7"><span class="pv-line-label" style="font-size:0.6rem;">Frais : forfait 7,5% (pas de réel)</span><span class="pv-line-val" style="font-size:0.6rem;">${fmt(pv.frais_deductibles)}</span></div>` : ''}
+      ${pv.travaux_deductibles > 0 && pv.travaux_deductibles !== (i.travaux||0) ? `<div class="pv-line" style="opacity:0.7"><span class="pv-line-label" style="font-size:0.6rem;">Travaux : forfait 15% (> 5 ans)</span><span class="pv-line-val" style="font-size:0.6rem;">${fmt(pv.travaux_deductibles)}</span></div>` : ''}
       <div class="pv-line"><span class="pv-line-label">Plus-value brute</span><span class="pv-line-val">${fmt(pv.pv_brute_nu)}</span></div>
       <div class="pv-line"><span class="pv-line-label">Abattement IR (${pv.abat_ir.toFixed(0)}%)</span><span class="pv-line-val">${fmt(pv.pv_brute_nu * pv.abat_ir / 100)}</span></div>
       <div class="pv-line"><span class="pv-line-label">Abattement PS (${pv.abat_ps.toFixed(1)}%)</span><span class="pv-line-val">${fmt(pv.pv_brute_nu * pv.abat_ps / 100)}</span></div>
-      <div class="pv-line"><span class="pv-line-label">IR (19%)</span><span class="pv-line-val val-neg">${fmt(pv.ir_nu)}</span></div>
-      <div class="pv-line"><span class="pv-line-label">Prélèvements sociaux (17.2%)</span><span class="pv-line-val val-neg">${fmt(pv.ps_nu)}</span></div>
+      <div class="pv-line"><span class="pv-line-label">IR (${i.taux_ir_pv||19}%)</span><span class="pv-line-val val-neg">${fmt(pv.ir_nu)}</span></div>
+      <div class="pv-line"><span class="pv-line-label">Prélèvements sociaux (${i.taux_ps_pv||17.2}%)</span><span class="pv-line-val val-neg">${fmt(pv.ps_nu)}</span></div>
       ${pv.cehr_nu>0?`<div class="pv-line"><span class="pv-line-label">CEHR (${i.cehr_taux}%)</span><span class="pv-line-val val-neg">${fmt(pv.cehr_nu)}</span></div>`:''}
-      <div class="pv-line"><span class="pv-line-label">Taxe haute PV</span><span class="pv-line-val val-neg">${fmt(pv.taxe_haute_pv)}</span></div>
-      <div class="pv-total"><span class="pv-total-label">Net en poche</span><span class="kpi-value" style="font-size:1rem;color:var(--green)">${fmt(pv.net_nu)}</span></div>
+      ${pv.taxe_haute_pv>0?`<div class="pv-line"><span class="pv-line-label">Surtaxe haute PV</span><span class="pv-line-val val-neg">${fmt(pv.taxe_haute_pv)}</span></div>`:''}
+      <div class="pv-total"><span class="pv-total-label">Net en poche</span><span class="kpi-value" style="font-size:1rem;color:var(--green)">${pv.exo_cession_seuil ? fmt(i.prix_cession) : fmt(pv.net_nu)}</span></div>
     </div>
 
     <div class="pv-card">
       <div class="pv-card-title">🛋 LMNP — Location meublée</div>
+      ${pv.exo_cession_seuil ? `<div class="pv-line" style="background:var(--green-dim);padding:4px 6px;border-radius:4px;"><span class="pv-line-label" style="color:var(--green);font-weight:600;">✓ Exonération totale</span><span class="pv-line-val" style="color:var(--green);">Prix cession ≤ ${fmt(i.pv_exo_cession_seuil||15000)}</span></div>` : ''}
       <div class="pv-line"><span class="pv-line-label">Amortissements pratiqués</span><span class="pv-line-val val-neg">${fmt(pv.total_amort_pratique)}</span></div>
-      ${pv.reintegration?`<div class="pv-line" style="opacity:0.7;"><span class="pv-line-label" style="font-size:0.6rem;">⚠ LF 2025 — réintégrés dans PV</span><span class="pv-line-val" style="font-size:0.6rem;">+ ${fmt(pv.total_amort_pratique)}</span></div>`:''}
-      <div class="pv-line"><span class="pv-line-label">PV court terme (TMI+PS)</span><span class="pv-line-val">${fmt(pv.pvct_lmnp)}</span></div>
-      <div class="pv-line"><span class="pv-line-label">PV long terme</span><span class="pv-line-val">${fmt(pv.pvlt_lmnp)}</span></div>
-      <div class="pv-line"><span class="pv-line-label">IR (TMI/${i.tmi}% + 19%)</span><span class="pv-line-val val-neg">${fmt(pv.ir_lmnp)}</span></div>
+      ${pv.reintegration?`<div class="pv-line" style="opacity:0.75"><span class="pv-line-label" style="font-size:0.6rem;">⚠ LF 2025 — réintégrés dans base PV</span><span class="pv-line-val" style="font-size:0.6rem;color:var(--secondary);">+ ${fmt(pv.total_amort_pratique)}</span></div>`:''}
+      <div class="pv-line"><span class="pv-line-label">PV court terme — amort. (TMI ${i.tmi}% + PS)</span><span class="pv-line-val">${fmt(pv.pvct_lmnp)}</span></div>
+      <div class="pv-line"><span class="pv-line-label">PV long terme (régime particuliers)</span><span class="pv-line-val">${fmt(pv.pvlt_lmnp)}</span></div>
+      <div class="pv-line"><span class="pv-line-label">IR total</span><span class="pv-line-val val-neg">${fmt(pv.ir_lmnp)}</span></div>
       <div class="pv-line"><span class="pv-line-label">Prélèvements sociaux</span><span class="pv-line-val val-neg">${fmt(pv.ps_lmnp)}</span></div>
       ${pv.cehr_lmnp>0?`<div class="pv-line"><span class="pv-line-label">CEHR (${i.cehr_taux}%)</span><span class="pv-line-val val-neg">${fmt(pv.cehr_lmnp)}</span></div>`:''}
-      <div class="pv-total"><span class="pv-total-label">Net en poche</span><span class="kpi-value" style="font-size:1rem;color:var(--blue)">${fmt(pv.net_lmnp)}</span></div>
+      ${pv.taxe_haute_pv_lmnp>0?`<div class="pv-line"><span class="pv-line-label">Surtaxe haute PV</span><span class="pv-line-val val-neg">${fmt(pv.taxe_haute_pv_lmnp)}</span></div>`:''}
+      <div class="pv-total"><span class="pv-total-label">Net en poche</span><span class="kpi-value" style="font-size:1rem;color:var(--blue)">${pv.exo_cession_seuil ? fmt(i.prix_cession) : fmt(pv.net_lmnp)}</span></div>
     </div>
 
     <div class="pv-card">
