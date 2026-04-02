@@ -1361,9 +1361,10 @@ function showEmpty() {
 async function setMode(mode, rerender = true) {
   const prevMode = state.mode;
 
-  // ── Quitter SAISIE → sauvegarder d'abord ──
+  // ── Quitter SAISIE → sauvegarder p.inputs tel quel (PAS de collectInputs) ──
+  // collectInputs lirait le DOM qui peut être incomplet/vide → corrompt p.inputs
+  // p.inputs est déjà à jour via onInputChange() déclenché à chaque frappe
   if (prevMode === 'saisie' && state.activeId) {
-    collectInputs();
     await persistState();
   }
 
@@ -1447,8 +1448,7 @@ async function saveProject() {
   if (!state.activeId) return;
   const btn = document.getElementById('btnSave');
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
-  // collectInputs seulement si on est en mode saisie et sur un onglet de saisie
-  if (state.mode === 'saisie') collectInputs();
+  // p.inputs est déjà à jour via onInputChange — on sauvegarde directement
   await persistState();
   if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   notify('Enregistré ✓');
@@ -1500,9 +1500,35 @@ function computedPctEuro(value, mode, base, label) {
 }
 
 function onInputChange() {
-  collectInputs();
-  if (state.activeTab !== 'inputs') { destroyCharts(); const p = state.projects[state.activeId]; showTab(state.activeTab); }
-  // Déclenche une sauvegarde auto debounced (500ms après la dernière modif)
+  // Sync p.inputs depuis le DOM pour TOUS les champs data-field de l'onglet actif
+  // (sauf si on est en mode présentation — pas de champs à collecter)
+  if (state.mode === 'saisie' && ['inputs','referentiel','fiscal'].includes(state.activeTab)) {
+    const p = state.projects[state.activeId];
+    const container = document.getElementById('tabContent');
+    if (p && container) {
+      container.querySelectorAll('[data-field]').forEach(el => {
+        const k = el.dataset.field;
+        if (el.type === 'number') {
+          if (el.value !== '' && el.value !== null) p.inputs[k] = parseFloat(el.value) || 0;
+          // Si vide → NE PAS écraser ce qui est déjà en mémoire
+        } else if (el.type === 'checkbox') {
+          p.inputs[k] = el.checked;
+        } else if (el.tagName === 'SELECT') {
+          p.inputs[k] = el.dataset.type === 'bool' ? el.value === 'true' : el.value;
+        } else {
+          if (el.value !== '') p.inputs[k] = el.value;
+        }
+      });
+    }
+  }
+
+  if (state.activeTab !== 'inputs') {
+    destroyCharts();
+    const p = state.projects[state.activeId];
+    showTab(state.activeTab);
+  }
+
+  // Sauvegarde auto debounced 1500ms
   clearTimeout(window._autoSaveTimer);
   window._autoSaveTimer = setTimeout(async () => {
     if (state.activeId && state.mode === 'saisie') {
