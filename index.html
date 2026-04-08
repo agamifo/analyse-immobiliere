@@ -2814,10 +2814,10 @@ function renderInputs(p) {
       const _ok = Math.abs(_ta-100)<0.5;
       const _fmt = v => v ? Math.round(v).toLocaleString('fr-FR')+' €' : '—';
       const _hdr = 'font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);';
-      const _calc = 'font-size:0.65rem;font-family:DM Mono,monospace;color:var(--primary);text-align:right;white-space:nowrap;';
+      const _calc = 'font-size:0.68rem;font-family:DM Mono,monospace;color:var(--on-surface-2);text-align:right;white-space:nowrap;';
       const _rowSep = 'border-bottom:1px solid rgba(0,32,70,0.12);';
       const _grid = 'display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(80px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;align-items:center;';
-      const _lbl = 'font-size:0.72rem;font-weight:600;color:#1e3a52;';
+      const _lbl = 'display:block;font-size:0.68rem;color:var(--on-surface-3);font-family:DM Mono,monospace;letter-spacing:0.03em;margin-bottom:3px;';
       const _inp_s = 'width:55px;text-align:right;';
       const _dur = (field,val) => '<div style="display:flex;align-items:center;gap:4px;"><input type="number" data-field="'+field+'" value="'+val+'" onchange="onInputChange()" style="'+_inp_s+'"><span class="field-unit">ans</span></div>';
       const _pct = (field,val) => '<div style="display:flex;align-items:center;gap:4px;"><input type="number" data-field="'+field+'" value="'+val+'" onchange="onInputChange()" style="'+_inp_s+'"><span class="field-unit">%</span></div>';
@@ -2874,7 +2874,7 @@ function renderInputs(p) {
       </div>
       <div style="${_grid}padding:6px 0 2px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:0.66rem;font-weight:700;color:var(--on-surface);">Total</span>
+          <span style="font-size:0.68rem;font-weight:600;color:var(--on-surface-2);font-family:DM Mono,monospace;">Total</span>
           <span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:${_ok?'#15803d':'#c0392b'};">${_ta.toFixed(0)}% ${_ok?'✓':'✗'}</span>
         </div>
         <div style="font-size:0.6rem;color:var(--on-surface-3);font-style:italic;">Amort. total</div>
