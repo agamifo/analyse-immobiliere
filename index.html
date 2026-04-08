@@ -2633,12 +2633,12 @@ function renderInputs(p) {
         </div>
         <div class="field" style="margin-bottom:0;">
           <label>État du bien</label>
-          <select data-field="bien_etat" onchange="onInputChange()" style="font-size:0.7rem;padding:4px 6px;">
+          <select data-field="bien_etat" onchange="onInputChange()" style="font-size:0.7rem;padding:4px 6px;min-width:150px;">
             ${['neuf','bon','renover','travaux'].map(v=>`<option value="${v}" ${(i.bien_etat||'bon')===v?'selected':''}>${{neuf:'Neuf',bon:'Bon état',renover:'À rénover',travaux:'Travaux importants'}[v]}</option>`).join('')}
           </select>
         </div>
       </div>
-      <div style="flex-shrink:0;width:55px;">
+      <div style="flex-shrink:0;width:70px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:transparent;margin-bottom:6px;">&nbsp;</div>
         <div class="field" style="margin-bottom:6px;">
           <label>Étage</label>
