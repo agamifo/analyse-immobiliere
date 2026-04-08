@@ -1848,17 +1848,16 @@ function calcAmortissements(inp) {
 
 function calcMicroBIC(inp) {
   // Micro-BIC : abattement selon variante (standard / tourisme NC / tourisme classé)
-  // Plafonds et abattements depuis référentiel fiscal
   const _n = (v, d=0) => parseFloat(v)||d;
   const recettes = _n(inp.recettes_annuelles);
-  // Seuil applicable : standard 77 700€ (ou tourisme NC 15 000€)
   const seuil = _n(inp.micro_bic_standard_plafond, 77700);
   const eligible = recettes < seuil && recettes > 0;
   const abat = _n(inp.micro_bic_abat, 50) / 100;
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps, 18.6) / 100;
+  const cehr_pct = (parseFloat(inp.cehr_taux)||0) / 100;
   const montant_imposable = recettes * (1 - abat);
-  const impot_annuel = montant_imposable * (tmi + tps);
+  const impot_annuel = montant_imposable * (tmi + tps + cehr_pct);
   const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
@@ -1883,8 +1882,9 @@ function calcMicroFoncier(inp) {
   const abat = _n(inp.micro_foncier_abat, 30) / 100;
   const tmi = _n(inp.tmi) / 100;
   const tps = _n(inp.taux_ps_foncier, 17.2) / 100; // Foncier = 17,2%
+  const cehr_pct = (parseFloat(inp.cehr_taux)||0) / 100;
   const montant_imposable = recettes * (1 - abat);
-  const impot_annuel = montant_imposable * (tmi + tps);
+  const impot_annuel = montant_imposable * (tmi + tps + cehr_pct);
   const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
@@ -1937,16 +1937,16 @@ function calcYearsLMP(inp) {
     const resultat = _n(inp.recettes_annuelles) - total_charges - total_amort;
 
     // LMP : déficit imputable sur RI sans plafond (économie d'impôt)
+    const cehr_pct = (parseFloat(inp.cehr_taux)||0) / 100;
     let impot = 0, economie_ir = 0;
     if (resultat < 0) {
-      // Déficit déduit du revenu global → économie d'IR
       economie_ir = Math.abs(resultat) * tmi;
       cumul_deficit += Math.abs(resultat);
-      impot = -economie_ir; // négatif = économie
+      impot = -economie_ir;
     } else {
       const apres = Math.max(0, resultat - cumul_deficit);
       cumul_deficit = Math.max(0, cumul_deficit - resultat);
-      impot = apres * (tmi + tps);
+      impot = apres * (tmi + tps + cehr_pct);
     }
     const treso = _n(inp.recettes_annuelles) - charges - la.annuites - impot;
     years.push({ year, recettes: _n(inp.recettes_annuelles), charges, interets: la.interets,
@@ -2567,7 +2567,7 @@ function renderInputs(p) {
     <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
 
       <!-- Bloc client -->
-      <div style="flex-shrink:0;width:110px;">
+      <div style="flex-shrink:0;width:140px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Client</div>
         <div class="field" style="margin-bottom:6px;">
           <label>Nom</label>
@@ -2580,7 +2580,7 @@ function renderInputs(p) {
       </div>
 
       <!-- Bloc type & titre -->
-      <div style="flex-shrink:0;width:140px;">
+      <div style="flex-shrink:0;width:160px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Type de bien</div>
         <div class="field" style="margin-bottom:6px;">
           <label>Titre / Nom</label>
@@ -2595,7 +2595,7 @@ function renderInputs(p) {
       </div>
 
       <!-- Bloc adresse -->
-      <div style="flex:0 0 200px;">
+      <div style="flex:0 0 240px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Adresse</div>
         <div class="field" style="margin-bottom:6px;">
           <label>Adresse</label>
@@ -2614,7 +2614,7 @@ function renderInputs(p) {
       </div>
 
       <!-- Bloc caractéristiques -->
-      <div style="flex:1;min-width:220px;">
+      <div style="flex:0 1 auto;min-width:180px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Caractéristiques</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px 6px;">
           <div class="field" style="margin-bottom:0;">
@@ -2643,7 +2643,7 @@ function renderInputs(p) {
       </div>
 
       <!-- Bloc notes -->
-      <div style="flex:1;min-width:150px;">
+      <div style="flex:1;min-width:140px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Notes</div>
         <div class="field" style="margin-bottom:0;">
           <label>Description libre</label>
@@ -2984,6 +2984,7 @@ function renderRapport(p) {
         ${kpi('Rendement brut', fmtPct(rend_brut), fmtE(_n(i.recettes_annuelles))+'/an')}
         ${kpi('Mensualité', fmtE(loan.mensualite), 'Prêt '+_n(i.duree_pret,20)+' ans à '+_n(i.taux_pret)+'%')}
         ${kpi('Apport', fmtE(apport), Math.round(apport/(_n(i.prix_acquisition)+_n(i.frais_notaire)+_n(i.frais_agence)+_n(i.travaux)+_n(i.meubles)||1)*100)+'% du coût total')}
+        ${kpi('Effort mensuel ('+best.label+')', fmtE(Math.round(best.treso/duree/12)), best.treso>=0?'Cash flow positif':'Effort investisseur')}
       </div>`,
 
     'section-bien': `
@@ -3090,6 +3091,7 @@ function renderRapport(p) {
               ${tableRow('Résultat fiscal', yrN.resultat_fiscal||0, yrN1.resultat_fiscal||0, fnN.revenu_net||0, fnN1.revenu_net||0, isN.resultat_fiscal||0, isN1.resultat_fiscal||0)}
               ${tableRow('Impôt (IR+PS / IS)', yrN.impot||0, yrN1.impot||0, fnN.impot||0, fnN1.impot||0, isN.is||0, isN1.is||0)}
               ${tableRow('🔥 Tréso année', yrN.treso, yrN1.treso, fnN.treso, fnN1.treso, isN.treso, isN1.treso, true)}
+              ${tableRow('💸 Effort mensuel', yrN.treso!=null?yrN.treso/12:null, yrN1.treso!=null?yrN1.treso/12:null, fnN.treso!=null?fnN.treso/12:null, fnN1.treso!=null?fnN1.treso/12:null, isN.treso!=null?isN.treso/12:null, isN1.treso!=null?isN1.treso/12:null)}
               ${tableRow('📈 Tréso cumulée '+duree+' ans', treso_lmnp, null, treso_foncier, null, treso_is, null, true)}
             </tbody>
           </table>
@@ -4800,6 +4802,7 @@ async function generateDocx() {
         ['Résultat fiscal', yrN.resultat_fiscal||0, fnN.revenu_net||0, isN.resultat_fiscal||0],
         ['Impôt (IR+PS / IS)', yrN.impot||0, fnN.impot||0, isN.is||0],
         ['Trésorerie nette', yrN.treso, fnN.treso, isN.treso],
+        ['Effort mensuel', yrN.treso!=null?yrN.treso/12:0, fnN.treso!=null?fnN.treso/12:0, isN.treso!=null?isN.treso/12:0],
       ];
       const rows = dataRows.map((r,idx)=>{
         const [label,...vals] = r;
