@@ -2817,10 +2817,14 @@ function renderInputs(p) {
       const _calc = 'font-size:0.68rem;font-family:DM Mono,monospace;color:var(--on-surface-2);text-align:right;white-space:nowrap;';
       const _rowSep = 'border-bottom:1px solid rgba(0,32,70,0.12);';
       const _grid = 'display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(80px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;align-items:center;';
-      const _lbl = 'display:block;font-size:0.68rem;color:var(--on-surface-3);font-family:DM Mono,monospace;letter-spacing:0.03em;margin-bottom:3px;';
-      const _inp_s = 'width:55px;text-align:right;';
-      const _dur = (field,val) => '<div style="display:flex;align-items:center;gap:4px;"><input type="number" data-field="'+field+'" value="'+val+'" onchange="onInputChange()" style="'+_inp_s+'"><span class="field-unit">ans</span></div>';
-      const _pct = (field,val) => '<div style="display:flex;align-items:center;gap:4px;"><input type="number" data-field="'+field+'" value="'+val+'" onchange="onInputChange()" style="'+_inp_s+'"><span class="field-unit">%</span></div>';
+      const _cv = 'font-size:0.68rem;font-family:DM Mono,monospace;color:var(--on-surface-2);text-align:right;white-space:nowrap;';
+      const _amortRow = (label,pctField,pctVal,durField,durVal,annuel,base) =>
+        '<div style="'+_grid+'padding:4px 0;'+_rowSep+'">' +
+          '<div class="field" style="margin:0;"><label>'+label+'</label><input type="number" data-field="'+pctField+'" value="'+pctVal+'" onchange="onInputChange()"></div>' +
+          '<div class="field" style="margin:0;"><input type="number" data-field="'+durField+'" value="'+durVal+'" onchange="onInputChange()"><span class="field-unit">ans</span></div>' +
+          '<div style="'+_cv+'">'+_fmt(annuel)+'</div>' +
+          '<div style="'+_cv+'">'+_fmt(base)+'</div>' +
+        '</div>';
       return `
     <div class="form-card" style="min-width:420px;flex:2;">
       <div class="form-card-title"><span class="icon">📉</span> Plan d'amortissement par composant</div>
@@ -2830,56 +2834,36 @@ function renderInputs(p) {
         <div style="${_hdr}text-align:right;">Amort. /an</div>
         <div style="${_hdr}text-align:right;">Base totale</div>
       </div>
-      <div style="${_grid}padding:6px 0;${_rowSep}">
-        <div><span style="${_lbl}">Terrain</span><br>${_pct('lmnp_part_terrain_pct',_terrain_pct)}</div>
-        <div style="font-size:0.62rem;color:var(--on-surface-3);font-style:italic;">Non amortissable</div>
-        <div style="${_calc}">—</div>
-        <div style="${_calc}">${_fmt(_prix*_terrain_pct/100)}</div>
+      <div style="${_grid}padding:4px 0;${_rowSep}">
+        <div class="field" style="margin:0;"><label>Terrain</label><input type="number" data-field="lmnp_part_terrain_pct" value="${_terrain_pct}" onchange="onInputChange()"></div>
+        <div style="font-size:0.65rem;color:var(--on-surface-3);font-style:italic;">Non amort.</div>
+        <div style="${_cv}">—</div>
+        <div style="${_cv}">${_fmt(_prix*_terrain_pct/100)}</div>
       </div>
-      <div style="${_grid}padding:6px 0;${_rowSep}">
-        <div><span style="${_lbl}">Gros œuvre</span><br>${_pct('lmnp_gros_oeuvre_pct',_go_pct)}</div>
-        <div>${_dur('lmnp_gros_oeuvre_duree',_go_dur)}</div>
-        <div style="${_calc}">${_fmt(_go_an)}</div>
-        <div style="${_calc}">${_fmt(_go_base)}</div>
+      ${_amortRow('Gros œuvre','lmnp_gros_oeuvre_pct',_go_pct,'lmnp_gros_oeuvre_duree',_go_dur,_go_an,_go_base)}
+      ${_amortRow('Toiture','lmnp_toiture_pct',_to_pct,'lmnp_toiture_duree',_to_dur,_to_an,_to_base)}
+      ${_amortRow('Installations','lmnp_installations_pct',_in_pct,'lmnp_installations_duree',_in_dur,_in_an,_in_base)}
+      ${_amortRow('Agencements','lmnp_agencements_pct',_ag_pct,'lmnp_agencements_duree',_ag_dur,_ag_an,_ag_base)}
+      <div style="${_grid}padding:4px 0;${_rowSep}">
+        <div class="field" style="margin:0;"><label>Travaux</label></div>
+        <div class="field" style="margin:0;"><input type="number" data-field="duree_amort_travaux" value="${(parseFloat(i.duree_amort_travaux)||20)}" onchange="onInputChange()"><span class="field-unit">ans</span></div>
+        <div style="${_cv}">${_fmt(_trav_an)}</div>
+        <div style="${_cv}">${_fmt(_travaux)}</div>
       </div>
-      <div style="${_grid}padding:6px 0;${_rowSep}">
-        <div><span style="${_lbl}">Toiture</span><br>${_pct('lmnp_toiture_pct',_to_pct)}</div>
-        <div>${_dur('lmnp_toiture_duree',_to_dur)}</div>
-        <div style="${_calc}">${_fmt(_to_an)}</div>
-        <div style="${_calc}">${_fmt(_to_base)}</div>
+      <div style="${_grid}padding:4px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
+        <div class="field" style="margin:0;"><label>Mobilier</label></div>
+        <div class="field" style="margin:0;"><input type="number" data-field="lmnp_mobilier_duree" value="${_mo_dur}" onchange="onInputChange()"><span class="field-unit">ans</span></div>
+        <div style="${_cv}">${_fmt(_mo_an)}</div>
+        <div style="${_cv}">${_fmt(_meubles)}</div>
       </div>
-      <div style="${_grid}padding:6px 0;${_rowSep}">
-        <div><span style="${_lbl}">Installations</span><br>${_pct('lmnp_installations_pct',_in_pct)}</div>
-        <div>${_dur('lmnp_installations_duree',_in_dur)}</div>
-        <div style="${_calc}">${_fmt(_in_an)}</div>
-        <div style="${_calc}">${_fmt(_in_base)}</div>
-      </div>
-      <div style="${_grid}padding:6px 0;${_rowSep}">
-        <div><span style="${_lbl}">Agencements</span><br>${_pct('lmnp_agencements_pct',_ag_pct)}</div>
-        <div>${_dur('lmnp_agencements_duree',_ag_dur)}</div>
-        <div style="${_calc}">${_fmt(_ag_an)}</div>
-        <div style="${_calc}">${_fmt(_ag_base)}</div>
-      </div>
-      <div style="${_grid}padding:6px 0;${_rowSep}">
-        <div><span style="${_lbl}">Travaux</span></div>
-        <div>${_dur('duree_amort_travaux',(parseFloat(i.duree_amort_travaux)||20))}</div>
-        <div style="${_calc}">${_fmt(_trav_an)}</div>
-        <div style="${_calc}">${_fmt(_travaux)}</div>
-      </div>
-      <div style="${_grid}padding:6px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
-        <div><span style="${_lbl}">Mobilier</span></div>
-        <div>${_dur('lmnp_mobilier_duree',_mo_dur)}</div>
-        <div style="${_calc}">${_fmt(_mo_an)}</div>
-        <div style="${_calc}">${_fmt(_meubles)}</div>
-      </div>
-      <div style="${_grid}padding:6px 0 2px;">
+      <div style="${_grid}padding:5px 0 2px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:0.68rem;font-weight:600;color:var(--on-surface-2);font-family:DM Mono,monospace;">Total</span>
+          <span style="font-size:0.68rem;font-weight:600;color:var(--on-surface-2);">Total</span>
           <span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:${_ok?'#15803d':'#c0392b'};">${_ta.toFixed(0)}% ${_ok?'✓':'✗'}</span>
         </div>
         <div style="font-size:0.6rem;color:var(--on-surface-3);font-style:italic;">Amort. total</div>
-        <div style="${_calc}font-weight:700;">${_fmt(_total_an)}/an</div>
-        <div style="${_calc}font-weight:700;">${_fmt(_total_base)}</div>
+        <div style="${_cv}font-weight:700;">${_fmt(_total_an)}/an</div>
+        <div style="${_cv}font-weight:700;">${_fmt(_total_base)}</div>
       </div>
       <div style="font-size:0.54rem;color:var(--on-surface-3);margin-top:2px;font-style:italic;">Amort. cumulés réintégrés dans la PV LMNP (LF 2025)</div>
     </div>`;})()}
