@@ -2633,12 +2633,12 @@ function renderInputs(p) {
             <label>Année</label>
             <input type="number" data-field="bien_annee_construction" value="${i.bien_annee_construction||''}" onchange="onInputChange()" placeholder="1890">
           </div>
-        </div>
-        <div class="field" style="margin-top:6px;margin-bottom:0;">
-          <label>État du bien</label>
-          <select data-field="bien_etat" onchange="onInputChange()">
-            ${['neuf','bon','renover','travaux'].map(v=>`<option value="${v}" ${(i.bien_etat||'bon')===v?'selected':''}>${{neuf:'Neuf',bon:'Bon état',renover:'À rénover',travaux:'Travaux importants'}[v]}</option>`).join('')}
-          </select>
+          <div class="field" style="margin-bottom:0;grid-column:span 2;">
+            <label>État du bien</label>
+            <select data-field="bien_etat" onchange="onInputChange()">
+              ${['neuf','bon','renover','travaux'].map(v=>`<option value="${v}" ${(i.bien_etat||'bon')===v?'selected':''}>${{neuf:'Neuf',bon:'Bon état',renover:'À rénover',travaux:'Travaux importants'}[v]}</option>`).join('')}
+            </select>
+          </div>
         </div>
       </div>
 
