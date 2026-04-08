@@ -338,6 +338,7 @@
   .field-row { display: flex; gap: 8px; }
   .field-row .field { flex: 1; }
   .field-hint { font-size: 0.62rem; color: var(--text3); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .field-unit { font-size: 0.62rem; color: var(--text3); margin-left: 4px; white-space: nowrap; }
 
   /* ── FORM SECTIONS ── */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -394,6 +395,7 @@
   .field-row { display: flex; gap: 8px; }
   .field-row .field { flex: 1; }
   .field-hint { font-size: 0.65rem; color: var(--text3); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .field-unit { font-size: 0.65rem; color: var(--text3); margin-left: 4px; white-space: nowrap; }
 
   /* ── PCT / EURO CHIP TOGGLE ── */
   .field-with-toggle { display: flex; gap: 5px; align-items: center; }
@@ -1366,8 +1368,8 @@ function toggleCollapse(id) {
 
 function toggleSidebar() {
   const sbEl = document.querySelector('.sidebar');
-  sb.classList.toggle('collapsed');
-  const collapsed = sb.classList.contains('collapsed');
+  sbEl.classList.toggle('collapsed');
+  const collapsed = sbEl.classList.contains('collapsed');
   const floatBtn = document.getElementById('sidebarToggleFloat');
   if (floatBtn) floatBtn.style.display = collapsed ? 'flex' : 'none';
 }
@@ -1670,6 +1672,20 @@ function onInputChange() {
       const elCession = container.querySelector('[data-field="annee_cession"]');
       if (elDebut) elDebut.value = p.inputs.annee_debut;
       if (elCession) elCession.value = p.inputs.annee_cession;
+
+      // Recalcul dynamique du total composants amortissement
+      const totalEl = document.getElementById('amortTotalDisplay');
+      if (totalEl) {
+        const _g = parseFloat(p.inputs.lmnp_gros_oeuvre_pct) || 0;
+        const _t = parseFloat(p.inputs.lmnp_toiture_pct) || 0;
+        const _i = parseFloat(p.inputs.lmnp_installations_pct) || 0;
+        const _a = parseFloat(p.inputs.lmnp_agencements_pct) || 0;
+        const _te = parseFloat(p.inputs.lmnp_part_terrain_pct) || 0;
+        const ta = _g + _t + _i + _a + _te;
+        const ok = Math.abs(ta - 100) < 0.5;
+        totalEl.style.color = ok ? '#15803d' : '#c0392b';
+        totalEl.textContent = ta.toFixed(0) + '% ' + (ok ? '✓' : '✗');
+      }
     }
   }
 
@@ -2516,7 +2532,7 @@ function renderInputs(p) {
   <div style="background:#fff;border-radius:var(--radius2);padding:10px 14px 8px;margin-bottom:14px;
               box-shadow:0 1px 6px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
     <div class="form-card-title" style="margin-bottom:8px;"><span class="icon">📋</span> Client & Description du bien</div>
-    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto;">
+    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
 
       <!-- Bloc client -->
       <div style="flex-shrink:0;width:110px;">
@@ -2608,7 +2624,7 @@ function renderInputs(p) {
     </div>
   </div>
 
-  <div style="display:flex;gap:14px;padding-bottom:16px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto;">
+  <div style="display:flex;gap:14px;padding-bottom:16px;align-items:flex-start;flex-wrap:wrap;">
 
     <!-- Card: Le Bien -->
     <div class="form-card" style="min-width:180px;flex:1;">
@@ -2730,7 +2746,7 @@ function renderInputs(p) {
           <div class="field"><label>Toiture</label><input type="number" data-field="lmnp_toiture_pct" value="${fv('lmnp_toiture_pct',10)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span></div>
           <div class="field"><label>Installations techniques</label><input type="number" data-field="lmnp_installations_pct" value="${fv('lmnp_installations_pct',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Élec., plomb., chauffage</div></div>
           <div class="field"><label>Agencements intérieurs</label><input type="number" data-field="lmnp_agencements_pct" value="${fv('lmnp_agencements_pct',20)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Cloisons, revêtements</div></div>
-          ${(()=>{const ta=Number(fv('lmnp_gros_oeuvre_pct',50))+Number(fv('lmnp_toiture_pct',10))+Number(fv('lmnp_installations_pct',15))+Number(fv('lmnp_agencements_pct',20));const ok=Math.abs(ta-95)<0.5;return '<div style="display:flex;justify-content:space-between;padding:3px 0 1px;border-top:1px solid rgba(0,32,70,0.1);margin-top:2px;"><span style="font-size:0.64rem;font-weight:600;color:var(--on-surface-2);">Total composants</span><span style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:'+(ok?'#15803d':'#c0392b')+';">'+ta.toFixed(0)+'% '+(ok?'✓':'⚠ doit = 95%')+'</span></div>';})()}
+          ${(()=>{const ta=Number(fv('lmnp_gros_oeuvre_pct',50))+Number(fv('lmnp_toiture_pct',10))+Number(fv('lmnp_installations_pct',15))+Number(fv('lmnp_agencements_pct',20))+Number(fv('lmnp_part_terrain_pct',15));const ok=Math.abs(ta-100)<0.5;return '<div style="display:flex;justify-content:space-between;padding:3px 0 1px;border-top:1px solid rgba(0,32,70,0.1);margin-top:2px;"><span style="font-size:0.64rem;font-weight:600;color:var(--on-surface-2);">Total composants</span><span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:'+(ok?'#15803d':'#c0392b')+';">'+ta.toFixed(0)+'% '+(ok?'✓':'✗')+'</span></div>';})()}
           <div style="font-size:0.56rem;color:var(--on-surface-3);margin-top:4px;font-style:italic;">Amort. cumulés réintégrés dans la PV LMNP (LF 2025)</div>
         </div>
         <div>
@@ -4398,7 +4414,18 @@ async function loadUserData(user) {
     if (ids.length) {
       selectProject(ids[0]);
     } else if (isAdmin) {
-      // Admin sans projets : afficher directement le référentiel fiscal
+      // Admin sans projets : afficher directement les onglets fiscaux
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('projectView').style.display = 'flex';
+      // Cacher les éléments inutiles pour l'admin
+      document.getElementById('btnSave').style.display = 'none';
+      document.getElementById('modeBadge').style.display = 'none';
+      document.getElementById('topbarName').textContent = 'Administration fiscale';
+      // Masquer onglets Projet et Rapport + mode SAISIE/CLIENT
+      document.getElementById('tab-inputs').style.display = 'none';
+      document.getElementById('tab-rapport').style.display = 'none';
+      document.querySelectorAll('.mode-btn').forEach(el => el.style.display = 'none');
+      // Afficher referentiel par défaut
       showTab('referentiel');
     } else {
       const demo = defaultProject('Mon premier projet', true);
@@ -4454,9 +4481,10 @@ async function generateDocx() {
   const _totalComp = (parseFloat(i.lmnp_gros_oeuvre_pct) || FISCAL_DEFAULTS.lmnp_gros_oeuvre_pct || 50)
                    + (parseFloat(i.lmnp_toiture_pct) || FISCAL_DEFAULTS.lmnp_toiture_pct || 10)
                    + (parseFloat(i.lmnp_installations_pct) || FISCAL_DEFAULTS.lmnp_installations_pct || 15)
-                   + (parseFloat(i.lmnp_agencements_pct) || FISCAL_DEFAULTS.lmnp_agencements_pct || 20);
-  if (Math.abs(_totalComp - 95) >= 0.5) {
-    alert('⚠ Total des composants incorrect (' + _totalComp.toFixed(0) + '% au lieu de 95%) — vérifiez le plan d\'amortissement (onglet Projet).');
+                   + (parseFloat(i.lmnp_agencements_pct) || FISCAL_DEFAULTS.lmnp_agencements_pct || 20)
+                   + (parseFloat(i.lmnp_part_terrain_pct) || FISCAL_DEFAULTS.lmnp_part_terrain_pct || 15);
+  if (Math.abs(_totalComp - 100) >= 0.5) {
+    alert('⚠ Total des composants incorrect (' + _totalComp.toFixed(0) + '% au lieu de 100%) — vérifiez le plan d\'amortissement (onglet Projet).');
     return;
   }
   const _n = (v, d=0) => parseFloat(v)||d;
