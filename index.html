@@ -2649,13 +2649,27 @@ function renderInputs(p) {
 
       <!-- Bloc notes -->
       <div style="flex-shrink:0;width:1px;border-left:1px solid rgba(0,32,70,0.08);margin:0 6px;"></div>
-      <div style="flex:1;min-width:120px;max-width:350px;">
+      <div style="flex:1;min-width:120px;max-width:280px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Notes</div>
         <div class="field" style="margin-bottom:0;">
           <label>Description libre</label>
           <textarea data-field="bien_notes" onchange="onInputChange()"
             style="width:100%;height:76px;resize:vertical;background:var(--surface-card);border:1px solid rgba(0,32,70,0.15);border-radius:6px;padding:5px 8px;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--on-surface);outline:none;line-height:1.4;"
             placeholder="Vue dégagée, parquet, double vitrage...">${i.bien_notes||''}</textarea>
+        </div>
+      </div>
+
+      <!-- Bloc IFI -->
+      <div style="flex-shrink:0;width:1px;border-left:1px solid rgba(0,32,70,0.08);margin:0 6px;"></div>
+      <div style="flex-shrink:0;width:130px;">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">IFI</div>
+        <div class="field" style="margin-bottom:6px;">
+          <label>Base pré-acq. (€)</label>
+          <input type="number" data-field="ifi_base_pre" value="${i.ifi_base_pre||''}" onchange="onInputChange()" placeholder="0">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Revenus IR pré-acq.</label>
+          <input type="number" data-field="ifi_ir_pre" value="${i.ifi_ir_pre||''}" onchange="onInputChange()" placeholder="0">
         </div>
       </div>
 
@@ -2802,66 +2816,66 @@ function renderInputs(p) {
       const _calc = 'font-size:0.65rem;font-family:DM Mono,monospace;color:var(--primary);text-align:right;white-space:nowrap;';
       const _rowSep = 'border-bottom:1px solid rgba(0,32,70,0.12);';
       return `
-    <div class="form-card" style="min-width:340px;flex:2;">
+    <div class="form-card" style="min-width:420px;flex:2;">
       <div class="form-card-title"><span class="icon">📉</span> Plan d'amortissement par composant</div>
       <!-- En-têtes 4 colonnes -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding-bottom:4px;border-bottom:2px solid rgba(0,32,70,0.12);margin-bottom:2px;">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding-bottom:4px;border-bottom:2px solid rgba(0,32,70,0.12);margin-bottom:2px;">
         <div style="${_hdr}">Composant</div>
         <div style="${_hdr}">Durée</div>
         <div style="${_hdr}text-align:right;">Amort. /an</div>
         <div style="${_hdr}text-align:right;">Base totale</div>
       </div>
       <!-- Terrain -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:5px 0;${_rowSep}">
         <div class="field" style="margin:0;"><label>Terrain</label><input type="number" data-field="lmnp_part_terrain_pct" value="${_terrain_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span></div>
         <div style="display:flex;align-items:center;font-size:0.62rem;color:var(--on-surface-3);font-style:italic;">Non amortissable</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">—</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_prix*_terrain_pct/100)}</div>
       </div>
       <!-- Gros œuvre -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:5px 0;${_rowSep}">
         <div class="field" style="margin:0;"><label>Gros œuvre</label><input type="number" data-field="lmnp_gros_oeuvre_pct" value="${_go_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span></div>
         <div class="field" style="margin:0;"><input type="number" data-field="lmnp_gros_oeuvre_duree" value="${_go_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_go_an)}</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_go_base)}</div>
       </div>
       <!-- Toiture -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:5px 0;${_rowSep}">
         <div class="field" style="margin:0;"><label>Toiture</label><input type="number" data-field="lmnp_toiture_pct" value="${_to_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span></div>
         <div class="field" style="margin:0;"><input type="number" data-field="lmnp_toiture_duree" value="${_to_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_to_an)}</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_to_base)}</div>
       </div>
       <!-- Installations techniques -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:5px 0;${_rowSep}">
         <div class="field" style="margin:0;"><label>Installations</label><input type="number" data-field="lmnp_installations_pct" value="${_in_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Élec., plomb., chauffage</div></div>
         <div class="field" style="margin:0;"><input type="number" data-field="lmnp_installations_duree" value="${_in_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_in_an)}</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_in_base)}</div>
       </div>
       <!-- Agencements intérieurs -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:5px 0;${_rowSep}">
         <div class="field" style="margin:0;"><label>Agencements</label><input type="number" data-field="lmnp_agencements_pct" value="${_ag_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Cloisons, revêtements</div></div>
         <div class="field" style="margin:0;"><input type="number" data-field="lmnp_agencements_duree" value="${_ag_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_ag_an)}</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_ag_base)}</div>
       </div>
       <!-- Travaux -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:5px 0;${_rowSep}">
         <div style="display:flex;align-items:center;font-size:0.7rem;color:var(--on-surface-2);">Travaux</div>
         <div style="display:flex;align-items:center;font-size:0.65rem;color:var(--on-surface-3);font-family:DM Mono,monospace;">20 ans</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_trav_an)}</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_travaux)}</div>
       </div>
       <!-- Mobilier -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:5px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
         <div style="display:flex;align-items:center;font-size:0.7rem;color:var(--on-surface-2);">Mobilier</div>
         <div class="field" style="margin:0;"><input type="number" data-field="lmnp_mobilier_duree" value="${_mo_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_mo_an)}</div>
         <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_meubles)}</div>
       </div>
       <!-- Total -->
-      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:6px 0 2px;">
+      <div style="display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(70px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;padding:6px 0 2px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:0.64rem;font-weight:600;color:var(--on-surface-2);">Total</span>
           <span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:${_ok?'#15803d':'#c0392b'};">${_ta.toFixed(0)}% ${_ok?'✓':'✗'}</span>
@@ -2921,12 +2935,6 @@ function renderInputs(p) {
       </div>
     </div>
 
-    <!-- Card: IFI -->
-    <div class="form-card" style="min-width:150px;flex:1;">
-      <div class="form-card-title"><span class="icon">🏛</span> IFI</div>
-      <div class="field"><label>Base IFI pré-acq. (€)</label><input type="number" data-field="ifi_base_pre" value="${i.ifi_base_pre}" onchange="onInputChange()"></div>
-      <div class="field"><label>Revenus IR pré-acq. (€)</label><input type="number" data-field="ifi_ir_pre" value="${i.ifi_ir_pre}" onchange="onInputChange()"></div>
-    </div>
 
   </div>
   `;
