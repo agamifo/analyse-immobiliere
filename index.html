@@ -2614,9 +2614,9 @@ function renderInputs(p) {
       </div>
 
       <!-- Bloc caractéristiques -->
-      <div style="flex:0 1 auto;min-width:180px;">
+      <div style="flex:0 0 auto;min-width:130px;max-width:200px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Caractéristiques</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px 6px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 6px;">
           <div class="field" style="margin-bottom:0;">
             <label>Surface m²</label>
             <input type="number" data-field="bien_surface" value="${i.bien_surface||''}" onchange="onInputChange()" placeholder="85">
@@ -2643,7 +2643,7 @@ function renderInputs(p) {
       </div>
 
       <!-- Bloc notes -->
-      <div style="flex:1;min-width:140px;">
+      <div style="flex:2;min-width:200px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Notes</div>
         <div class="field" style="margin-bottom:0;">
           <label>Description libre</label>
@@ -2984,7 +2984,10 @@ function renderRapport(p) {
         ${kpi('Rendement brut', fmtPct(rend_brut), fmtE(_n(i.recettes_annuelles))+'/an')}
         ${kpi('Mensualité', fmtE(loan.mensualite), 'Prêt '+_n(i.duree_pret,20)+' ans à '+_n(i.taux_pret)+'%')}
         ${kpi('Apport', fmtE(apport), Math.round(apport/(_n(i.prix_acquisition)+_n(i.frais_notaire)+_n(i.frais_agence)+_n(i.travaux)+_n(i.meubles)||1)*100)+'% du coût total')}
-        ${kpi('Effort mensuel ('+best.label+')', fmtE(Math.round(best.treso/duree/12)), best.treso>=0?'Cash flow positif':'Effort investisseur')}
+        ${(()=>{const effortMoy=Math.round(best.treso/duree/12);const isPos=effortMoy>=0;return kpi('Effort mensuel', fmtE(Math.abs(effortMoy)), isPos?'Gain/mois ('+best.label+')':'D\'effort/mois ('+best.label+')');})()}
+        ${kpi('Impôt annuel N', fmtE(Math.round((best.label==='LMNP Réel'?yrN.impot:best.label==='Location nue'?fnN.impot:isN.is)||0)), best.label)}
+        ${kpi('Tréso cumulée '+duree+' ans', fmtE(Math.round(best.treso)), best.label)}
+        ${hasPV&&pv?kpi('Net à la revente', fmtE(Math.round(Math.max(pv.net_nu||0, pv.net_lmnp||0, pv.net_is||0))), 'Meilleur régime'):kpi('Net à la revente', '—', 'Renseigner prix de cession')}
       </div>`,
 
     'section-bien': `
