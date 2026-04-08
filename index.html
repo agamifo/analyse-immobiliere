@@ -2816,26 +2816,31 @@ function renderInputs(p) {
       const _hdr = 'font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);';
       const _calc = 'font-size:0.68rem;font-family:DM Mono,monospace;color:var(--on-surface-2);text-align:right;white-space:nowrap;';
       const _rowSep = 'border-bottom:1px solid rgba(0,32,70,0.12);';
-      const _grid = 'display:grid;grid-template-columns:minmax(100px,1.2fr) minmax(80px,0.7fr) minmax(80px,0.8fr) minmax(80px,0.8fr);gap:0 8px;align-items:center;';
+      const _g5 = 'display:grid;grid-template-columns:90px 70px 80px 85px 85px;gap:0 6px;align-items:center;';
       const _cv = 'font-size:0.68rem;font-family:DM Mono,monospace;color:var(--on-surface-2);text-align:right;white-space:nowrap;';
+      const _lb = 'font-size:0.68rem;color:var(--on-surface-2);font-weight:500;';
+      const _inp50 = 'width:50px;text-align:right;padding:4px 6px;';
       const _amortRow = (label,pctField,pctVal,durField,durVal,annuel,base) =>
-        '<div style="'+_grid+'padding:4px 0;'+_rowSep+'">' +
-          '<div class="field" style="margin:0;"><label>'+label+'</label><input type="number" data-field="'+pctField+'" value="'+pctVal+'" onchange="onInputChange()"></div>' +
-          '<div class="field" style="margin:0;"><input type="number" data-field="'+durField+'" value="'+durVal+'" onchange="onInputChange()"><span class="field-unit">ans</span></div>' +
+        '<div style="'+_g5+'padding:6px 0;'+_rowSep+'">' +
+          '<div style="'+_lb+'">'+label+'</div>' +
+          '<div style="display:flex;align-items:center;gap:3px;"><input type="number" data-field="'+pctField+'" value="'+pctVal+'" onchange="onInputChange()" style="'+_inp50+'"><span class="field-unit">%</span></div>' +
+          '<div style="display:flex;align-items:center;gap:3px;"><input type="number" data-field="'+durField+'" value="'+durVal+'" onchange="onInputChange()" style="'+_inp50+'"><span class="field-unit">ans</span></div>' +
           '<div style="'+_cv+'">'+_fmt(annuel)+'</div>' +
           '<div style="'+_cv+'">'+_fmt(base)+'</div>' +
         '</div>';
       return `
-    <div class="form-card" style="min-width:420px;flex:2;">
+    <div class="form-card" style="min-width:440px;flex:2;">
       <div class="form-card-title"><span class="icon">📉</span> Plan d'amortissement par composant</div>
-      <div style="${_grid}padding-bottom:4px;border-bottom:2px solid rgba(0,32,70,0.12);margin-bottom:2px;">
+      <div style="${_g5}padding-bottom:4px;border-bottom:2px solid rgba(0,32,70,0.12);margin-bottom:2px;">
         <div style="${_hdr}">Composant</div>
+        <div style="${_hdr}">Pourcentage</div>
         <div style="${_hdr}">Durée</div>
         <div style="${_hdr}text-align:right;">Amort. /an</div>
         <div style="${_hdr}text-align:right;">Base totale</div>
       </div>
-      <div style="${_grid}padding:4px 0;${_rowSep}">
-        <div class="field" style="margin:0;"><label>Terrain</label><input type="number" data-field="lmnp_part_terrain_pct" value="${_terrain_pct}" onchange="onInputChange()"></div>
+      <div style="${_g5}padding:6px 0;${_rowSep}">
+        <div style="${_lb}">Terrain</div>
+        <div style="display:flex;align-items:center;gap:3px;"><input type="number" data-field="lmnp_part_terrain_pct" value="${_terrain_pct}" onchange="onInputChange()" style="${_inp50}"><span class="field-unit">%</span></div>
         <div style="font-size:0.65rem;color:var(--on-surface-3);font-style:italic;">Non amort.</div>
         <div style="${_cv}">—</div>
         <div style="${_cv}">${_fmt(_prix*_terrain_pct/100)}</div>
@@ -2844,24 +2849,24 @@ function renderInputs(p) {
       ${_amortRow('Toiture','lmnp_toiture_pct',_to_pct,'lmnp_toiture_duree',_to_dur,_to_an,_to_base)}
       ${_amortRow('Installations','lmnp_installations_pct',_in_pct,'lmnp_installations_duree',_in_dur,_in_an,_in_base)}
       ${_amortRow('Agencements','lmnp_agencements_pct',_ag_pct,'lmnp_agencements_duree',_ag_dur,_ag_an,_ag_base)}
-      <div style="${_grid}padding:4px 0;${_rowSep}">
-        <div class="field" style="margin:0;"><label>Travaux</label></div>
-        <div class="field" style="margin:0;"><input type="number" data-field="duree_amort_travaux" value="${(parseFloat(i.duree_amort_travaux)||20)}" onchange="onInputChange()"><span class="field-unit">ans</span></div>
+      <div style="${_g5}padding:6px 0;${_rowSep}">
+        <div style="${_lb}">Travaux</div>
+        <div style="font-size:0.65rem;color:var(--on-surface-3);">—</div>
+        <div style="display:flex;align-items:center;gap:3px;"><input type="number" data-field="duree_amort_travaux" value="${(parseFloat(i.duree_amort_travaux)||20)}" onchange="onInputChange()" style="${_inp50}"><span class="field-unit">ans</span></div>
         <div style="${_cv}">${_fmt(_trav_an)}</div>
         <div style="${_cv}">${_fmt(_travaux)}</div>
       </div>
-      <div style="${_grid}padding:4px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
-        <div class="field" style="margin:0;"><label>Mobilier</label></div>
-        <div class="field" style="margin:0;"><input type="number" data-field="lmnp_mobilier_duree" value="${_mo_dur}" onchange="onInputChange()"><span class="field-unit">ans</span></div>
+      <div style="${_g5}padding:6px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
+        <div style="${_lb}">Mobilier</div>
+        <div style="font-size:0.65rem;color:var(--on-surface-3);">—</div>
+        <div style="display:flex;align-items:center;gap:3px;"><input type="number" data-field="lmnp_mobilier_duree" value="${_mo_dur}" onchange="onInputChange()" style="${_inp50}"><span class="field-unit">ans</span></div>
         <div style="${_cv}">${_fmt(_mo_an)}</div>
         <div style="${_cv}">${_fmt(_meubles)}</div>
       </div>
-      <div style="${_grid}padding:5px 0 2px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:0.68rem;font-weight:600;color:var(--on-surface-2);">Total</span>
-          <span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:${_ok?'#15803d':'#c0392b'};">${_ta.toFixed(0)}% ${_ok?'✓':'✗'}</span>
-        </div>
-        <div style="font-size:0.6rem;color:var(--on-surface-3);font-style:italic;">Amort. total</div>
+      <div style="${_g5}padding:6px 0 2px;">
+        <div style="${_lb}font-weight:700;">Total</div>
+        <div><span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:${_ok?'#15803d':'#c0392b'};">${_ta.toFixed(0)}%${_ok?' ✓':' ✗'}</span></div>
+        <div></div>
         <div style="${_cv}font-weight:700;">${_fmt(_total_an)}/an</div>
         <div style="${_cv}font-weight:700;">${_fmt(_total_base)}</div>
       </div>
