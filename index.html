@@ -2613,32 +2613,36 @@ function renderInputs(p) {
         </div>
       </div>
 
-      <!-- Bloc caractéristiques -->
-      <div style="flex:0 0 auto;min-width:160px;max-width:240px;">
+      <!-- Caractéristiques — champs individuels dans le flux -->
+      <div style="flex-shrink:0;width:70px;">
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-3);margin-bottom:6px;">Caractéristiques</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 6px;">
-          <div class="field" style="margin-bottom:0;">
-            <label>Surface m²</label>
-            <input type="number" data-field="bien_surface" value="${i.bien_surface||''}" onchange="onInputChange()" placeholder="85">
-          </div>
-          <div class="field" style="margin-bottom:0;">
-            <label>Pièces</label>
-            <input type="number" data-field="bien_pieces" value="${i.bien_pieces||''}" onchange="onInputChange()" placeholder="3">
-          </div>
-          <div class="field" style="margin-bottom:0;">
-            <label>Étage</label>
-            <input type="number" data-field="bien_etage" value="${i.bien_etage||''}" onchange="onInputChange()" placeholder="3">
-          </div>
-          <div class="field" style="margin-bottom:0;">
-            <label>Année</label>
-            <input type="number" data-field="bien_annee_construction" value="${i.bien_annee_construction||''}" onchange="onInputChange()" placeholder="1890">
-          </div>
-          <div class="field" style="margin-bottom:0;grid-column:span 2;">
-            <label>État du bien</label>
-            <select data-field="bien_etat" onchange="onInputChange()">
-              ${['neuf','bon','renover','travaux'].map(v=>`<option value="${v}" ${(i.bien_etat||'bon')===v?'selected':''}>${{neuf:'Neuf',bon:'Bon état',renover:'À rénover',travaux:'Travaux importants'}[v]}</option>`).join('')}
-            </select>
-          </div>
+        <div class="field" style="margin-bottom:6px;">
+          <label>Surface m²</label>
+          <input type="number" data-field="bien_surface" value="${i.bien_surface||''}" onchange="onInputChange()" placeholder="85">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Année</label>
+          <input type="number" data-field="bien_annee_construction" value="${i.bien_annee_construction||''}" onchange="onInputChange()" placeholder="1890">
+        </div>
+      </div>
+      <div style="flex-shrink:0;width:70px;">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:transparent;margin-bottom:6px;">&nbsp;</div>
+        <div class="field" style="margin-bottom:6px;">
+          <label>Pièces</label>
+          <input type="number" data-field="bien_pieces" value="${i.bien_pieces||''}" onchange="onInputChange()" placeholder="3">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>État du bien</label>
+          <select data-field="bien_etat" onchange="onInputChange()" style="font-size:0.7rem;padding:4px 6px;">
+            ${['neuf','bon','renover','travaux'].map(v=>`<option value="${v}" ${(i.bien_etat||'bon')===v?'selected':''}>${{neuf:'Neuf',bon:'Bon état',renover:'À rénover',travaux:'Travaux importants'}[v]}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="flex-shrink:0;width:55px;">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:transparent;margin-bottom:6px;">&nbsp;</div>
+        <div class="field" style="margin-bottom:6px;">
+          <label>Étage</label>
+          <input type="number" data-field="bien_etage" value="${i.bien_etage||''}" onchange="onInputChange()" placeholder="3">
         </div>
       </div>
 
