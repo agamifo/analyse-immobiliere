@@ -2771,42 +2771,107 @@ function renderInputs(p) {
     </div>
 
     <!-- Card: Plan d'amortissement par composant -->
-    <div class="form-card" style="min-width:280px;flex:2;">
+    ${(()=>{
+      const _prix = parseFloat(i.prix_acquisition)||0;
+      const _frais = parseFloat(i.frais_notaire)||0;
+      const _travaux = parseFloat(i.travaux)||0;
+      const _meubles = parseFloat(i.meubles)||0;
+      const _terrain_pct = Number(fv('lmnp_part_terrain_pct',15));
+      const _go_pct = Number(fv('lmnp_gros_oeuvre_pct',50));
+      const _to_pct = Number(fv('lmnp_toiture_pct',10));
+      const _in_pct = Number(fv('lmnp_installations_pct',15));
+      const _ag_pct = Number(fv('lmnp_agencements_pct',20));
+      const _go_dur = Number(fv('lmnp_gros_oeuvre_duree',60));
+      const _to_dur = Number(fv('lmnp_toiture_duree',25));
+      const _in_dur = Number(fv('lmnp_installations_duree',20));
+      const _ag_dur = Number(fv('lmnp_agencements_duree',15));
+      const _mo_dur = Number(fv('lmnp_mobilier_duree',7));
+      const _base = (_prix + _frais) - (_prix * _terrain_pct / 100);
+      const _go_base = _base * _go_pct / 100, _go_an = _go_dur>0 ? _go_base/_go_dur : 0;
+      const _to_base = _base * _to_pct / 100, _to_an = _to_dur>0 ? _to_base/_to_dur : 0;
+      const _in_base = _base * _in_pct / 100, _in_an = _in_dur>0 ? _in_base/_in_dur : 0;
+      const _ag_base = _base * _ag_pct / 100, _ag_an = _ag_dur>0 ? _ag_base/_ag_dur : 0;
+      const _mo_base = _meubles, _mo_an = _mo_dur>0 ? _meubles/_mo_dur : 0;
+      const _trav_an = _travaux>0 ? _travaux/20 : 0;
+      const _total_an = _go_an + _to_an + _in_an + _ag_an + _trav_an + _mo_an;
+      const _total_base = _go_base + _to_base + _in_base + _ag_base + _travaux + _meubles;
+      const _ta = _terrain_pct + _go_pct + _to_pct + _in_pct + _ag_pct;
+      const _ok = Math.abs(_ta-100)<0.5;
+      const _fmt = v => v ? Math.round(v).toLocaleString('fr-FR')+' €' : '—';
+      const _hdr = 'font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);';
+      const _calc = 'font-size:0.65rem;font-family:DM Mono,monospace;color:var(--primary);text-align:right;white-space:nowrap;';
+      const _rowSep = 'border-bottom:1px solid rgba(0,32,70,0.12);';
+      return `
+    <div class="form-card" style="min-width:340px;flex:2;">
       <div class="form-card-title"><span class="icon">📉</span> Plan d'amortissement par composant</div>
-      <!-- En-têtes -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding-bottom:4px;border-bottom:1px solid rgba(0,32,70,0.08);margin-bottom:4px;">
-        <div style="font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);">Répartition du bâti</div>
-        <div style="font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);">Durées d'amortissement</div>
+      <!-- En-têtes 4 colonnes -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding-bottom:4px;border-bottom:2px solid rgba(0,32,70,0.12);margin-bottom:2px;">
+        <div style="${_hdr}">Composant</div>
+        <div style="${_hdr}">Durée</div>
+        <div style="${_hdr}text-align:right;">Amort. /an</div>
+        <div style="${_hdr}text-align:right;">Base totale</div>
       </div>
-      <!-- Ligne 1 : Terrain | Mobilier -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.12);">
-        <div class="field" style="margin:0;"><label>Terrain (non amortissable)</label><input type="number" data-field="lmnp_part_terrain_pct" value="${fv('lmnp_part_terrain_pct',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span></div>
-        <div class="field" style="margin:0;"><label>Mobilier & équipements</label><input type="number" data-field="lmnp_mobilier_duree" value="${fv('lmnp_mobilier_duree',7)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">7–10 ans</div></div>
+      <!-- Terrain -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+        <div class="field" style="margin:0;"><label>Terrain</label><input type="number" data-field="lmnp_part_terrain_pct" value="${_terrain_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span></div>
+        <div style="display:flex;align-items:center;font-size:0.62rem;color:var(--on-surface-3);font-style:italic;">Non amortissable</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">—</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_prix*_terrain_pct/100)}</div>
       </div>
-      <!-- Ligne 2 : Gros œuvre -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.12);">
-        <div class="field" style="margin:0;"><label>Gros œuvre</label><input type="number" data-field="lmnp_gros_oeuvre_pct" value="${fv('lmnp_gros_oeuvre_pct',50)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">% du bâti amortissable</div></div>
-        <div class="field" style="margin:0;"><label>Durée</label><input type="number" data-field="lmnp_gros_oeuvre_duree" value="${fv('lmnp_gros_oeuvre_duree',60)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">50–80 ans</div></div>
+      <!-- Gros œuvre -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+        <div class="field" style="margin:0;"><label>Gros œuvre</label><input type="number" data-field="lmnp_gros_oeuvre_pct" value="${_go_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span></div>
+        <div class="field" style="margin:0;"><input type="number" data-field="lmnp_gros_oeuvre_duree" value="${_go_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_go_an)}</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_go_base)}</div>
       </div>
-      <!-- Ligne 3 : Toiture -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.12);">
-        <div class="field" style="margin:0;"><label>Toiture</label><input type="number" data-field="lmnp_toiture_pct" value="${fv('lmnp_toiture_pct',10)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span></div>
-        <div class="field" style="margin:0;"><label>Durée</label><input type="number" data-field="lmnp_toiture_duree" value="${fv('lmnp_toiture_duree',25)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span></div>
+      <!-- Toiture -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+        <div class="field" style="margin:0;"><label>Toiture</label><input type="number" data-field="lmnp_toiture_pct" value="${_to_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span></div>
+        <div class="field" style="margin:0;"><input type="number" data-field="lmnp_toiture_duree" value="${_to_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_to_an)}</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_to_base)}</div>
       </div>
-      <!-- Ligne 4 : Installations techniques -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.12);">
-        <div class="field" style="margin:0;"><label>Installations techniques</label><input type="number" data-field="lmnp_installations_pct" value="${fv('lmnp_installations_pct',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Élec., plomb., chauffage</div></div>
-        <div class="field" style="margin:0;"><label>Durée</label><input type="number" data-field="lmnp_installations_duree" value="${fv('lmnp_installations_duree',20)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">15–25 ans</div></div>
+      <!-- Installations techniques -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+        <div class="field" style="margin:0;"><label>Installations</label><input type="number" data-field="lmnp_installations_pct" value="${_in_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Élec., plomb., chauffage</div></div>
+        <div class="field" style="margin:0;"><input type="number" data-field="lmnp_installations_duree" value="${_in_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_in_an)}</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_in_base)}</div>
       </div>
-      <!-- Ligne 5 : Agencements intérieurs -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.15);">
-        <div class="field" style="margin:0;"><label>Agencements intérieurs</label><input type="number" data-field="lmnp_agencements_pct" value="${fv('lmnp_agencements_pct',20)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Cloisons, revêtements</div></div>
-        <div class="field" style="margin:0;"><label>Durée</label><input type="number" data-field="lmnp_agencements_duree" value="${fv('lmnp_agencements_duree',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">10–20 ans</div></div>
+      <!-- Agencements intérieurs -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+        <div class="field" style="margin:0;"><label>Agencements</label><input type="number" data-field="lmnp_agencements_pct" value="${_ag_pct}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Cloisons, revêtements</div></div>
+        <div class="field" style="margin:0;"><input type="number" data-field="lmnp_agencements_duree" value="${_ag_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_ag_an)}</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_ag_base)}</div>
       </div>
-      <!-- Total + mention LF 2025 -->
-      ${(()=>{const ta=Number(fv('lmnp_gros_oeuvre_pct',50))+Number(fv('lmnp_toiture_pct',10))+Number(fv('lmnp_installations_pct',15))+Number(fv('lmnp_agencements_pct',20))+Number(fv('lmnp_part_terrain_pct',15));const ok=Math.abs(ta-100)<0.5;return '<div style="display:flex;justify-content:space-between;padding:5px 0 2px;"><span style="font-size:0.64rem;font-weight:600;color:var(--on-surface-2);">Total composants</span><span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:'+(ok?'#15803d':'#c0392b')+';">'+ta.toFixed(0)+'% '+(ok?'✓':'✗')+'</span></div>';})()}
-      <div style="font-size:0.56rem;color:var(--on-surface-3);margin-top:2px;font-style:italic;">Amort. cumulés réintégrés dans la PV LMNP (LF 2025)</div>
-    </div>
+      <!-- Travaux -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;${_rowSep}">
+        <div style="display:flex;align-items:center;font-size:0.7rem;color:var(--on-surface-2);">Travaux</div>
+        <div style="display:flex;align-items:center;font-size:0.65rem;color:var(--on-surface-3);font-family:DM Mono,monospace;">20 ans</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_trav_an)}</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_travaux)}</div>
+      </div>
+      <!-- Mobilier -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:5px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
+        <div style="display:flex;align-items:center;font-size:0.7rem;color:var(--on-surface-2);">Mobilier</div>
+        <div class="field" style="margin:0;"><input type="number" data-field="lmnp_mobilier_duree" value="${_mo_dur}" onchange="onInputChange()" style="width:55px;text-align:right;"><span class="field-unit">ans</span></div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_mo_an)}</div>
+        <div style="${_calc}display:flex;align-items:center;justify-content:flex-end;">${_fmt(_meubles)}</div>
+      </div>
+      <!-- Total -->
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;gap:0 12px;padding:6px 0 2px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.64rem;font-weight:600;color:var(--on-surface-2);">Total</span>
+          <span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:${_ok?'#15803d':'#c0392b'};">${_ta.toFixed(0)}% ${_ok?'✓':'✗'}</span>
+        </div>
+        <div style="display:flex;align-items:center;font-size:0.62rem;color:var(--on-surface-3);font-style:italic;">Amort. total</div>
+        <div style="${_calc}font-weight:700;display:flex;align-items:center;justify-content:flex-end;">${_fmt(_total_an)}/an</div>
+        <div style="${_calc}font-weight:700;display:flex;align-items:center;justify-content:flex-end;">${_fmt(_total_base)}</div>
+      </div>
+      <div style="font-size:0.54rem;color:var(--on-surface-3);margin-top:2px;font-style:italic;">Amort. cumulés réintégrés dans la PV LMNP (LF 2025)</div>
+    </div>`;})()}
 
     <!-- Card: Exploitation -->
     <div class="form-card" style="min-width:180px;flex:1;">
