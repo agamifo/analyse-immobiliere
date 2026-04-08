@@ -2773,32 +2773,39 @@ function renderInputs(p) {
     <!-- Card: Plan d'amortissement par composant -->
     <div class="form-card" style="min-width:280px;flex:2;">
       <div class="form-card-title"><span class="icon">📉</span> Plan d'amortissement par composant</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
-        <div>
-          <div style="font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-                      color:var(--on-surface-3);padding:3px 0;border-bottom:1px solid rgba(0,32,70,0.08);margin-bottom:2px;">
-            Répartition du bâti
-          </div>
-          <div class="field"><label>Terrain (non amortissable)</label><input type="number" data-field="lmnp_part_terrain_pct" value="${fv('lmnp_part_terrain_pct',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span></div>
-          <div class="field"><label>Gros œuvre</label><input type="number" data-field="lmnp_gros_oeuvre_pct" value="${fv('lmnp_gros_oeuvre_pct',50)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">% du bâti amortissable</div></div>
-          <div class="field"><label>Toiture</label><input type="number" data-field="lmnp_toiture_pct" value="${fv('lmnp_toiture_pct',10)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span></div>
-          <div class="field"><label>Installations techniques</label><input type="number" data-field="lmnp_installations_pct" value="${fv('lmnp_installations_pct',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Élec., plomb., chauffage</div></div>
-          <div class="field"><label>Agencements intérieurs</label><input type="number" data-field="lmnp_agencements_pct" value="${fv('lmnp_agencements_pct',20)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Cloisons, revêtements</div></div>
-          ${(()=>{const ta=Number(fv('lmnp_gros_oeuvre_pct',50))+Number(fv('lmnp_toiture_pct',10))+Number(fv('lmnp_installations_pct',15))+Number(fv('lmnp_agencements_pct',20))+Number(fv('lmnp_part_terrain_pct',15));const ok=Math.abs(ta-100)<0.5;return '<div style="display:flex;justify-content:space-between;padding:3px 0 1px;border-top:1px solid rgba(0,32,70,0.1);margin-top:2px;"><span style="font-size:0.64rem;font-weight:600;color:var(--on-surface-2);">Total composants</span><span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:'+(ok?'#15803d':'#c0392b')+';">'+ta.toFixed(0)+'% '+(ok?'✓':'✗')+'</span></div>';})()}
-          <div style="font-size:0.56rem;color:var(--on-surface-3);margin-top:4px;font-style:italic;">Amort. cumulés réintégrés dans la PV LMNP (LF 2025)</div>
-        </div>
-        <div>
-          <div style="font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-                      color:var(--on-surface-3);padding:3px 0;border-bottom:1px solid rgba(0,32,70,0.08);margin-bottom:2px;">
-            Durées d'amortissement
-          </div>
-          <div class="field"><label>Gros œuvre</label><input type="number" data-field="lmnp_gros_oeuvre_duree" value="${fv('lmnp_gros_oeuvre_duree',60)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">50–80 ans</div></div>
-          <div class="field"><label>Toiture</label><input type="number" data-field="lmnp_toiture_duree" value="${fv('lmnp_toiture_duree',25)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span></div>
-          <div class="field"><label>Installations techniques</label><input type="number" data-field="lmnp_installations_duree" value="${fv('lmnp_installations_duree',20)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">15–25 ans</div></div>
-          <div class="field"><label>Agencements intérieurs</label><input type="number" data-field="lmnp_agencements_duree" value="${fv('lmnp_agencements_duree',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">10–20 ans</div></div>
-          <div class="field"><label>Mobilier & équipements</label><input type="number" data-field="lmnp_mobilier_duree" value="${fv('lmnp_mobilier_duree',7)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">7–10 ans</div></div>
-        </div>
+      <!-- En-têtes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding-bottom:4px;border-bottom:1px solid rgba(0,32,70,0.08);margin-bottom:4px;">
+        <div style="font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);">Répartition du bâti</div>
+        <div style="font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);">Durées d'amortissement</div>
       </div>
+      <!-- Ligne 1 : Terrain | Mobilier -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
+        <div class="field" style="margin:0;"><label>Terrain (non amortissable)</label><input type="number" data-field="lmnp_part_terrain_pct" value="${fv('lmnp_part_terrain_pct',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span></div>
+        <div class="field" style="margin:0;"><label>Mobilier & équipements</label><input type="number" data-field="lmnp_mobilier_duree" value="${fv('lmnp_mobilier_duree',7)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">7–10 ans</div></div>
+      </div>
+      <!-- Ligne 2 : Gros œuvre % | Gros œuvre durée -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
+        <div class="field" style="margin:0;"><label>Gros œuvre</label><input type="number" data-field="lmnp_gros_oeuvre_pct" value="${fv('lmnp_gros_oeuvre_pct',50)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">% du bâti amortissable</div></div>
+        <div class="field" style="margin:0;"><label>Gros œuvre</label><input type="number" data-field="lmnp_gros_oeuvre_duree" value="${fv('lmnp_gros_oeuvre_duree',60)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">50–80 ans</div></div>
+      </div>
+      <!-- Ligne 3 : Toiture % | Toiture durée -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
+        <div class="field" style="margin:0;"><label>Toiture</label><input type="number" data-field="lmnp_toiture_pct" value="${fv('lmnp_toiture_pct',10)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span></div>
+        <div class="field" style="margin:0;"><label>Toiture</label><input type="number" data-field="lmnp_toiture_duree" value="${fv('lmnp_toiture_duree',25)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span></div>
+      </div>
+      <!-- Ligne 4 : Installations % | Installations durée -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.04);">
+        <div class="field" style="margin:0;"><label>Installations techniques</label><input type="number" data-field="lmnp_installations_pct" value="${fv('lmnp_installations_pct',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Élec., plomb., chauffage</div></div>
+        <div class="field" style="margin:0;"><label>Installations techniques</label><input type="number" data-field="lmnp_installations_duree" value="${fv('lmnp_installations_duree',20)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">15–25 ans</div></div>
+      </div>
+      <!-- Ligne 5 : Agencements % | Agencements durée -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:4px 0;border-bottom:1px solid rgba(0,32,70,0.08);">
+        <div class="field" style="margin:0;"><label>Agencements intérieurs</label><input type="number" data-field="lmnp_agencements_pct" value="${fv('lmnp_agencements_pct',20)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">%</span><div class="field-hint">Cloisons, revêtements</div></div>
+        <div class="field" style="margin:0;"><label>Agencements intérieurs</label><input type="number" data-field="lmnp_agencements_duree" value="${fv('lmnp_agencements_duree',15)}" onchange="onInputChange()" style="width:60px;text-align:right;"><span class="field-unit">ans</span><div class="field-hint">10–20 ans</div></div>
+      </div>
+      <!-- Total + mention LF 2025 -->
+      ${(()=>{const ta=Number(fv('lmnp_gros_oeuvre_pct',50))+Number(fv('lmnp_toiture_pct',10))+Number(fv('lmnp_installations_pct',15))+Number(fv('lmnp_agencements_pct',20))+Number(fv('lmnp_part_terrain_pct',15));const ok=Math.abs(ta-100)<0.5;return '<div style="display:flex;justify-content:space-between;padding:5px 0 2px;"><span style="font-size:0.64rem;font-weight:600;color:var(--on-surface-2);">Total composants</span><span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:'+(ok?'#15803d':'#c0392b')+';">'+ta.toFixed(0)+'% '+(ok?'✓':'✗')+'</span></div>';})()}
+      <div style="font-size:0.56rem;color:var(--on-surface-3);margin-top:2px;font-style:italic;">Amort. cumulés réintégrés dans la PV LMNP (LF 2025)</div>
     </div>
 
     <!-- Card: Exploitation -->
