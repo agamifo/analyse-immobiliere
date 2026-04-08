@@ -1064,9 +1064,9 @@ let isAdmin = false;
 const FISCAL_DEFAULTS = {
   // ── Taux généraux ──
   is_taux_reduit: 15, is_plafond_reduit: 42500, is_taux_normal: 25,
-  taux_flat_tax: 30, taux_ps: 18.6, micro_bic_abat: 50,
+  taux_flat_tax: 30, taux_ps: 18.6, taux_ps_foncier: 17.2, micro_bic_abat: 50,
   micro_foncier_abat: 30, micro_foncier_plafond: 15000, lmp_seuil_recettes: 23000,
-  taux_ir_pv: 19, taux_ps_pv: 18.6,
+  taux_ir_pv: 19, taux_ps_pv: 17.2,
   // ── Abattements PV ──
   abat_ir_debut: 6, abat_ir_debut_annee: 6, abat_ir_debut_jusqu: 21,
   abat_ir_fin: 4, abat_ir_fin_annee: 22, abat_exo_ir_annee: 22,
@@ -1122,6 +1122,7 @@ const FISCAL_DEFAULTS = {
 };
 
 let _fiscalDefaultsCache = null;
+let _adminInputs = null; // Stocke les modifications admin entre re-rendus
 
 function loadFiscalDefaults() {
   return _fiscalDefaultsCache ? { ...FISCAL_DEFAULTS, ..._fiscalDefaultsCache } : { ...FISCAL_DEFAULTS };
@@ -1139,29 +1140,38 @@ async function saveFiscalDefaults(vals) {
 }
 
 async function saveAsFiscalDefaults() {
-  const p = state.projects[state.activeId];
-  if (!p) return;
+  // Admin sans projet : utiliser _adminInputs
+  const isAdminNoProject = isAdmin && !state.activeId;
+  const inputs = isAdminNoProject ? _adminInputs : (state.projects[state.activeId] || {}).inputs;
+  if (!inputs) return;
   // Collecter tous les champs data-field de l'onglet fiscal
   const container = document.getElementById('tabContent');
   if (container) {
     container.querySelectorAll('[data-field]').forEach(el => {
       const k = el.dataset.field;
-      if (el.type === 'number' && el.value !== '') p.inputs[k] = parseFloat(el.value) || 0;
-      else if (el.tagName === 'SELECT') p.inputs[k] = el.dataset.type === 'bool' ? el.value === 'true' : el.value;
+      if (el.type === 'number' && el.value !== '') inputs[k] = parseFloat(el.value) || 0;
+      else if (el.tagName === 'SELECT') inputs[k] = el.dataset.type === 'bool' ? el.value === 'true' : el.value;
     });
   }
   // Extraire uniquement les champs fiscaux (clés présentes dans FISCAL_DEFAULTS)
   const fiscalKeys = Object.keys(FISCAL_DEFAULTS);
   const vals = {};
-  fiscalKeys.forEach(k => { if (p.inputs[k] !== undefined) vals[k] = p.inputs[k]; });
+  fiscalKeys.forEach(k => { if (inputs[k] !== undefined) vals[k] = inputs[k]; });
   await saveFiscalDefaults(vals);
   notify('Paramètres fiscaux enregistrés comme défaut ✓');
 }
 
 function resetFiscalToDefaults() {
+  if (isAdmin && !state.activeId) {
+    // Admin : réinitialiser _adminInputs
+    _adminInputs = Object.assign({}, FISCAL_DEFAULTS);
+    _fiscalDefaultsCache = null;
+    showTab('fiscal');
+    notify('Paramètres fiscaux réinitialisés ✓');
+    return;
+  }
   const p = state.projects[state.activeId];
   if (!p) return;
-  // Réinitialiser les clés fiscales aux valeurs FISCAL_DEFAULTS
   Object.keys(FISCAL_DEFAULTS).forEach(k => { p.inputs[k] = FISCAL_DEFAULTS[k]; });
   _fiscalDefaultsCache = null;
   showTab('fiscal');
@@ -1561,9 +1571,10 @@ function showTab(tab) {
   if (el) el.classList.add('active');
   destroyCharts();
   let p = state.projects[state.activeId];
-  // Admin sans projet : créer un projet virtuel pour accéder aux onglets fiscaux
+  // Admin sans projet : utiliser _adminInputs (persistant entre re-rendus)
   if (!p && isAdmin && (tab === 'referentiel' || tab === 'fiscal')) {
-    p = { inputs: Object.assign({}, FISCAL_DEFAULTS), name: 'Admin' };
+    if (!_adminInputs) _adminInputs = Object.assign({}, FISCAL_DEFAULTS, _fiscalDefaultsCache || {});
+    p = { inputs: _adminInputs, name: 'Admin' };
   }
   if (!p) return;
   const content = document.getElementById('tabContent');
@@ -1638,9 +1649,12 @@ function computedPctEuro(value, mode, base, label) {
 function onInputChange() {
   // Sync p.inputs depuis le DOM pour TOUS les champs data-field de l'onglet actif
   if (state.mode === 'saisie' && ['inputs','referentiel','fiscal'].includes(state.activeTab)) {
-    const p = state.projects[state.activeId];
+    // Admin sans projet : stocker dans _adminInputs
+    const isAdminTab = isAdmin && !state.activeId && (state.activeTab === 'referentiel' || state.activeTab === 'fiscal');
+    const target = isAdminTab ? _adminInputs : (state.projects[state.activeId] || {}).inputs;
+    const p = isAdminTab ? { inputs: target } : state.projects[state.activeId];
     const container = document.getElementById('tabContent');
-    if (p && container) {
+    if (p && target && container) {
       container.querySelectorAll('[data-field]').forEach(el => {
         const k = el.dataset.field;
         if (el.type === 'number') {
@@ -1689,16 +1703,23 @@ function onInputChange() {
     }
   }
 
-  if (state.activeTab !== 'inputs') {
+  // Ne pas re-rendre pour l'admin (sinon perte de focus + reset valeurs)
+  const isAdminNoProject = isAdmin && !state.activeId;
+  if (state.activeTab !== 'inputs' && !isAdminNoProject) {
     destroyCharts();
-    const p = state.projects[state.activeId];
     showTab(state.activeTab);
   }
 
   // Sauvegarde auto debounced 1500ms
   clearTimeout(window._autoSaveTimer);
   window._autoSaveTimer = setTimeout(async () => {
-    if (state.activeId && state.mode === 'saisie') {
+    if (isAdminNoProject) {
+      // Admin : auto-save les paramètres fiscaux en base
+      const fiscalKeys = Object.keys(FISCAL_DEFAULTS);
+      const vals = {};
+      fiscalKeys.forEach(k => { if (_adminInputs && _adminInputs[k] !== undefined) vals[k] = _adminInputs[k]; });
+      await saveFiscalDefaults(vals);
+    } else if (state.activeId && state.mode === 'saisie') {
       await persistState();
     }
   }, 1500);
@@ -1841,11 +1862,13 @@ function calcMicroBIC(inp) {
   const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
+  const ads = _n(inp.assurance_deces_euros);
   const years = [];
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
     const year = _n(inp.annee_debut, 2024) + y;
     const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { annuites:0, crd:0 };
-    const treso = recettes - charges_base - la.annuites - impot_annuel;
+    const ads_y = year < annee_fin_pret ? ads : 0;
+    const treso = recettes - charges_base - ads_y - la.annuites - impot_annuel;
     years.push({ year, recettes, impot: impot_annuel, annuites: la.annuites, treso, crd: la.crd });
   }
   return { eligible, seuil, abat: abat*100, montant_imposable, impot_annuel, years };
@@ -1853,24 +1876,25 @@ function calcMicroBIC(inp) {
 
 function calcMicroFoncier(inp) {
   // Micro-foncier : abattement 30%
-  // Applicable si recettes < 15 000 € (seuil dans params fiscaux)
   const _n = (v, d=0) => parseFloat(v)||d;
   const recettes = _n(inp.recettes_annuelles);
   const seuil = _n(inp.micro_foncier_plafond, 15000);
   const eligible = recettes < seuil && recettes > 0;
   const abat = _n(inp.micro_foncier_abat, 30) / 100;
   const tmi = _n(inp.tmi) / 100;
-  const tps = _n(inp.taux_ps, 18.6) / 100;
+  const tps = _n(inp.taux_ps_foncier, 17.2) / 100; // Foncier = 17,2%
   const montant_imposable = recettes * (1 - abat);
   const impot_annuel = montant_imposable * (tmi + tps);
   const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const charges_base = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
+  const ads = _n(inp.assurance_deces_euros);
   const years = [];
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
     const year = _n(inp.annee_debut, 2024) + y;
     const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { annuites:0, crd:0 };
-    const treso = recettes - charges_base - la.annuites - impot_annuel;
+    const ads_y = year < annee_fin_pret ? ads : 0;
+    const treso = recettes - charges_base - ads_y - la.annuites - impot_annuel;
     years.push({ year, recettes, impot: impot_annuel, annuites: la.annuites, treso, crd: la.crd });
   }
   return { eligible, seuil, abat: abat*100, montant_imposable, impot_annuel, years };
@@ -1903,7 +1927,8 @@ function calcYearsLMP(inp) {
   for (let y = 0; y < (inp.duree_analyse||20); y++) {
     const year = _n(inp.annee_debut, 2024) + y;
     const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets:0, capital:0, annuites:0, crd:0 };
-    const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
+    const ads_y = year < annee_fin_pret ? _n(inp.assurance_deces_euros) : 0;
+    const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable) + ads_y;
     const total_charges = charges + la.interets;
     const amort_immo = y < amort.duree_immo ? amort.immo_annuel : 0;
     const amort_trav = y < amort.duree_travaux ? amort.travaux_annuel : 0;
@@ -1935,7 +1960,8 @@ function calcYearsLMNP(inp) {
   const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const amort = calcAmortissements(inp);
   const tmi = _n(inp.tmi) / 100;
-  const tps = _n(inp.taux_ps, 18.6) / 100;
+  const tps = _n(inp.taux_ps, 18.6) / 100; // LMNP = 18,6%
+  const ads = _n(inp.assurance_deces_euros); // Assurance décès résolue en €/an
   const meubles_val = _n(inp.meubles);
   const years = [];
   let cumul_amort_differe = 0;
@@ -1953,8 +1979,9 @@ function calcYearsLMNP(inp) {
     // si amort.meubles_annuel = 0 = pas d'amortissement → charge directe année 1
     const mobiliers_charge = (y === 0 && amort.meubles_annuel === 0) ? meubles_val : 0;
 
+    const ads_y = year < annee_fin_pret ? ads : 0; // assurance décès pendant le prêt
     const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere)
-      + _n(inp.honoraires_gestion) + _n(inp.comptable) + mobiliers_charge;
+      + _n(inp.honoraires_gestion) + _n(inp.comptable) + mobiliers_charge + ads_y;
     const total_charges = charges + la.interets;
     const recettes = _n(inp.recettes_annuelles);
     const resultat_avant_amort = recettes - total_charges;
@@ -2004,7 +2031,8 @@ function calcYearsFoncier(inp) {
   const _n = (v, d=0) => parseFloat(v)||d;
   const loan = calcLoanSchedule(_n(inp.montant_emprunt), _n(inp.taux_pret), _n(inp.duree_pret,20));
   const tmi = _n(inp.tmi) / 100;
-  const tps = _n(inp.taux_ps, 18.6) / 100;
+  const tps = _n(inp.taux_ps_foncier, 17.2) / 100; // Foncier = 17,2%
+  const ads = _n(inp.assurance_deces_euros);
   const annee_fin_pret = _n(inp.annee_debut, 2024) + _n(inp.duree_pret, 20);
   const years = [];
   let deficit_reportable = 0;
@@ -2012,7 +2040,8 @@ function calcYearsFoncier(inp) {
   for (let y = 0; y < (_n(inp.duree_analyse, 20)); y++) {
     const year = _n(inp.annee_debut, 2024) + y;
     const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
-    const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable);
+    const ads_y = year < annee_fin_pret ? ads : 0;
+    const charges = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable) + ads_y;
     // Foncier réel an 1 : frais d'acquisition déductibles (traitement GORREST)
     // GORREST: charges LN an 1 = charges courantes + frais notaire (les travaux sont en LMNP uniquement)
     const extra_y1 = y === 0 ? _n(inp.frais_notaire) : 0;
@@ -2066,7 +2095,8 @@ function calcYearsIS(inp) {
     const la = year < annee_fin_pret ? getAnnualLoan(loan.rows, _n(inp.annee_debut,2024), year) : { interets: 0, capital: 0, annuites: 0, crd: 0 };
     // IS: frais acquisition déductibles année 1 (via provisions ou charges)
     const frais_acq_y1 = y === 0 ? _n(inp.frais_notaire) + _n(inp.frais_agence) : 0;
-    const charges_courantes = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable) + _n(inp.remuneration_gerant);
+    const ads_y = year < annee_fin_pret ? _n(inp.assurance_deces_euros) : 0;
+    const charges_courantes = _n(inp.assurance) + _n(inp.copropriete) + _n(inp.taxe_fonciere) + _n(inp.honoraires_gestion) + _n(inp.comptable) + _n(inp.remuneration_gerant) + ads_y;
     const amort_immo = y < amort.duree_immo ? amort.immo_annuel : 0;
     const amort_trav = y < amort.duree_travaux ? amort.travaux_annuel : 0;
     const amort_meub = y < amort.duree_meubles ? amort.meubles_annuel : 0;
@@ -2233,6 +2263,7 @@ function renderReferentiel(p) {
     ${_card('LMP','Cotisations sociales','#15653a',
       _row('Cotisations SSI','lmp_cotisations_ssi_pct',11.5,'%','Sécurité Sociale Indép.') +
       _info('PS (LMNP — comparaison)','18,6 %') +
+      _info('PS (Foncier / PV immo)','17,2 %') +
       _info('Avantage LMP','−5,7 pts vs LMNP')
     )}
 
@@ -2412,7 +2443,7 @@ function renderFiscal(p) {
               border-radius:7px;border:1px solid rgba(0,32,70,0.09);">
     <span style="font-size:0.68rem;flex-shrink:0;">${isAdmin?'⚠':'🔒'}</span>
     <div style="flex:1;font-size:0.62rem;color:var(--on-surface-2);line-height:1.4;">
-      ${isAdmin?'Ces paramètres reflètent la législation fiscale. Modifiables par le FO à chaque LdF.':'Paramètres fiscaux verrouillés — seul le compte admin peut les modifier.'}
+      ${isAdmin?'Ces paramètres reflètent la législation fiscale. Modifiables par l\'administrateur à chaque LdF.':'Paramètres fiscaux verrouillés — seul le compte admin peut les modifier.'}
     </div>
     ${isAdmin?`<button onclick="saveAsFiscalDefaults()" style="flex-shrink:0;background:var(--primary);color:#fff;
       border:none;padding:3px 10px;border-radius:5px;cursor:pointer;
@@ -2440,7 +2471,8 @@ function renderFiscal(p) {
       )}
       <div style="margin-top:7px;">
       ${_card('IR','Revenus locatifs','#1a4f8a',
-        _row('Prélèvements sociaux','taux_ps',18.6,'%','Revenus fonciers et BIC') +
+        _row('PS — LMNP / BIC / Dividendes','taux_ps',18.6,'%','Meublé + IS distribution') +
+        _row('PS — Foncier','taux_ps_foncier',17.2,'%','Revenus fonciers (nu)') +
         _row('Abattement micro-BIC','micro_bic_abat',50,'%','Meublé longue durée') +
         _row('Abattement micro-foncier','micro_foncier_abat',30,'%','Location nue') +
         _row('Plafond micro-foncier','micro_foncier_plafond',15000,'€/an') +
@@ -2454,7 +2486,7 @@ function renderFiscal(p) {
       ${_sep('Plus-Values Immobilières')}
       ${_card('PV','Taux & Forfaits','#002046',
         _row('Taux IR sur PV','taux_ir_pv',19,'%','Taux fixe') +
-        _row('Taux PS sur PV','taux_ps_pv',18.6,'%') +
+        _row('Taux PS sur PV','taux_ps_pv',17.2,'%','PV immo = 17,2%') +
         _row('Forfait frais acquisition','pv_forfait_frais_acquisition',7.5,'%','Si pas de montant réel') +
         _row('Forfait travaux (si > 5 ans)','pv_forfait_travaux',15,'%','Alternative réel') +
         _row('Exo si cession ≤','pv_exo_cession_seuil',15000,'€') +
@@ -3102,7 +3134,7 @@ function renderRapport(p) {
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;">
         ${[
           {label:"Détention directe — Location nue", color:'#944a00', badge:'NU',
-           lines:[["Coût de revient",fmtE((_n(i.prix_acquisition)||0)+pv.frais_deductibles+pv.travaux_deductibles)],["Plus-value brute",fmtE(pv.pv_brute_nu)],["Abattement IR ("+pv.abat_ir.toFixed(0)+"%)",fmtE(pv.pv_brute_nu*pv.abat_ir/100)],["IR ("+(_n(i.taux_ir_pv)||19)+"%)","-"+fmtE(pv.ir_nu)],["PS ("+(_n(i.taux_ps_pv)||18.6)+"%)","-"+fmtE(pv.ps_nu)],...(pv.taxe_haute_pv>0?[["Surtaxe haute PV","-"+fmtE(pv.taxe_haute_pv)]]:[])],net:pv.net_nu},
+           lines:[["Coût de revient",fmtE((_n(i.prix_acquisition)||0)+pv.frais_deductibles+pv.travaux_deductibles)],["Plus-value brute",fmtE(pv.pv_brute_nu)],["Abattement IR ("+pv.abat_ir.toFixed(0)+"%)",fmtE(pv.pv_brute_nu*pv.abat_ir/100)],["IR ("+(_n(i.taux_ir_pv)||19)+"%)","-"+fmtE(pv.ir_nu)],["PS ("+(_n(i.taux_ps_pv)||17.2)+"%)","-"+fmtE(pv.ps_nu)],...(pv.taxe_haute_pv>0?[["Surtaxe haute PV","-"+fmtE(pv.taxe_haute_pv)]]:[])],net:pv.net_nu},
           {label:'LMNP — Location meublée', color:'#1a4f8a', badge:'LMNP',
            lines:[["Amortissements pratiqués",fmtE(pv.total_amort_pratique)],...(pv.reintegration?[["⚠ LF 2025 réintégrés","+"+fmtE(pv.total_amort_pratique)]]:[]),["PVCT (TMI+PS)",fmtE(pv.pvct_lmnp)],["PVLT",fmtE(pv.pvlt_lmnp)],["IR total","-"+fmtE(pv.ir_lmnp)],["PS","-"+fmtE(pv.ps_lmnp)],...(pv.taxe_haute_pv_lmnp>0?[["Surtaxe haute PV","-"+fmtE(pv.taxe_haute_pv_lmnp)]]:[])],net:pv.net_lmnp},
           {label:"Société à l'IS", color:'#15653a', badge:'IS',
@@ -3463,7 +3495,7 @@ function renderSynthese(p) {
   const microIR = microBIC.montant_imposable * (tmi_pct/100);
   const microPS = microBIC.montant_imposable * (_n(i.taux_ps,18.6)/100);
   const microFIR = microFoncier.montant_imposable * (tmi_pct/100);
-  const microFPS = microFoncier.montant_imposable * (_n(i.taux_ps,18.6)/100);
+  const microFPS = microFoncier.montant_imposable * (_n(i.taux_ps_foncier,17.2)/100); // Foncier = 17,2%
 
   function colHeader(label, color) {
     return '<div style="background:'+color+';padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:0.6rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.08em;">'+label+'</div>';
@@ -3848,7 +3880,7 @@ function calcPV(inp) {
   }
   const amort = calcAmortissements(inp);
   const taux_ir_pv = (parseFloat(inp.taux_ir_pv)||19) / 100;
-  const taux_ps_pv = (parseFloat(inp.taux_ps_pv)||18.6) / 100;
+  const taux_ps_pv = (parseFloat(inp.taux_ps_pv)||17.2) / 100; // PV immo = 17,2%
   const flat_tax = (parseFloat(inp.taux_flat_tax)||30) / 100;
   const is_reduit = (parseFloat(inp.is_taux_reduit)||15) / 100;
   const is_plafond = parseFloat(inp.is_plafond_reduit)||42500;
@@ -4012,7 +4044,7 @@ function renderPV(p) {
       <div class="pv-line"><span class="pv-line-label">Abattement IR (${pv.abat_ir.toFixed(0)}%)</span><span class="pv-line-val">${fmt(pv.pv_brute_nu * pv.abat_ir / 100)}</span></div>
       <div class="pv-line"><span class="pv-line-label">Abattement PS (${pv.abat_ps.toFixed(1)}%)</span><span class="pv-line-val">${fmt(pv.pv_brute_nu * pv.abat_ps / 100)}</span></div>
       <div class="pv-line"><span class="pv-line-label">IR (${i.taux_ir_pv||19}%)</span><span class="pv-line-val val-neg">${fmt(pv.ir_nu)}</span></div>
-      <div class="pv-line"><span class="pv-line-label">Prélèvements sociaux (${i.taux_ps_pv||18.6}%)</span><span class="pv-line-val val-neg">${fmt(pv.ps_nu)}</span></div>
+      <div class="pv-line"><span class="pv-line-label">Prélèvements sociaux (${i.taux_ps_pv||17.2}%)</span><span class="pv-line-val val-neg">${fmt(pv.ps_nu)}</span></div>
       ${pv.cehr_nu>0?`<div class="pv-line"><span class="pv-line-label">CEHR (${i.cehr_taux}%)</span><span class="pv-line-val val-neg">${fmt(pv.cehr_nu)}</span></div>`:''}
       ${pv.taxe_haute_pv>0?`<div class="pv-line"><span class="pv-line-label">Surtaxe haute PV</span><span class="pv-line-val val-neg">${fmt(pv.taxe_haute_pv)}</span></div>`:''}
       <div class="pv-total"><span class="pv-total-label">Net en poche</span><span class="kpi-value" style="font-size:1rem;color:var(--green)">${pv.exo_cession_seuil ? fmt(i.prix_cession) : fmt(pv.net_nu)}</span></div>
