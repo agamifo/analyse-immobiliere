@@ -2933,12 +2933,11 @@ function renderInputs(p) {
       <div class="field"><label>Taxe foncière (€/an)</label><input type="number" data-field="taxe_fonciere" value="${i.taxe_fonciere}" onchange="onInputChange()"></div>
       <div class="field"><label>Honoraires gestion (€/an)</label><input type="number" data-field="honoraires_gestion" value="${i.honoraires_gestion}" onchange="onInputChange()"></div>
       <div class="field"><label>Comptable (€/an)</label><input type="number" data-field="comptable" value="${i.comptable}" onchange="onInputChange()"></div>
-      <div class="field"><label>Rém. gérant IS (€/an)</label><input type="number" data-field="remuneration_gerant" value="${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">IS uniquement</div></div>
     </div>
 
-    <!-- Card: Fiscalité -->
-    <div class="form-card" style="min-width:160px;flex:1;">
-      <div class="form-card-title"><span class="icon">⚖</span> Fiscalité</div>
+    <!-- Card: Fiscalité particulier -->
+    <div class="form-card" style="min-width:150px;flex:1;">
+      <div class="form-card-title"><span class="icon">👤</span> Fiscalité particulier</div>
       <div class="field"><label>TMI</label>
         <select data-field="tmi" onchange="onInputChange()">
           <option value="0" ${parseFloat(i.tmi)===0?'selected':''}>0%</option>
@@ -2962,6 +2961,19 @@ function renderInputs(p) {
           <option value="4" ${parseFloat(i.cehr_taux)===4?'selected':''}>4% — RFR > 500k€</option>
         </select>
         <div class="field-hint">Contribution exceptionnelle hauts revenus</div>
+      </div>
+    </div>
+
+    <!-- Card: Fiscalité sociétés -->
+    <div class="form-card" style="min-width:150px;flex:1;">
+      <div class="form-card-title"><span class="icon">🏢</span> Fiscalité sociétés</div>
+      <div class="field"><label>Rém. gérant (€/an)</label><input type="number" data-field="remuneration_gerant" value="${i.remuneration_gerant}" onchange="onInputChange()"><div class="field-hint">Charge déductible IS</div></div>
+      <div class="field"><label>Taxe holdings 20%</label>
+        <select data-field="taxe_holdings_active" data-type="bool" onchange="onInputChange()">
+          <option value="false" ${!i.taxe_holdings_active?'selected':''}>Non applicable</option>
+          <option value="true" ${i.taxe_holdings_active===true?'selected':''}>Oui — Art. 235 ter C</option>
+        </select>
+        <div class="field-hint">Actifs ≥ 5 M€, contrôle ≥ 50%</div>
       </div>
     </div>
 
