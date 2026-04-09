@@ -3290,13 +3290,13 @@ function renderRapport(p) {
       </div>`:''}`,
 
     'section-cashflow': `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-        <div style="background:#fff;border-radius:8px;padding:14px;
+      <div style="display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:320px;background:#fff;border-radius:8px;padding:14px;
                     box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
           <div style="font-size:0.58rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">Trésorerie annuelle</div>
           <div style="position:relative;width:100%;height:260px;overflow:hidden;"><canvas id="chartRapportCF"></canvas></div>
         </div>
-        <div style="background:#fff;border-radius:8px;padding:14px;
+        <div style="flex:1;min-width:320px;background:#fff;border-radius:8px;padding:14px;
                     box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
           <div style="font-size:0.58rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">Trésorerie cumulée</div>
           <div style="position:relative;width:100%;height:260px;overflow:hidden;"><canvas id="chartRapportCFCum"></canvas></div>
@@ -5020,7 +5020,7 @@ async function generateDocx() {
   const tbl2 = (rows, widths=[5000,4500]) => `
     <w:tbl>
       <w:tblPr>
-        <w:tblW w:w="9500" w:type="dxa"/>
+        <w:tblW w:w="9500" w:type="dxa"/><w:jc w:val="center"/>
         <w:tblBorders>
           <w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/>
           <w:insideV w:val="none"/>
@@ -5063,18 +5063,18 @@ async function generateDocx() {
         i.bien_notes ? tblRow2('Description', i.bien_notes) : '',
       ].filter(Boolean).join('');
       return rows ? [
-        para('Identification', {bold:true, size:20, color:'002046', spBefore:80, spAfter:80}),
+        para('Identification', {bold:true, size:26, color:'002046', spBefore:80, spAfter:80}),
         tbl2(tblRow2('','',true)+rows),
       ].join('') : '';
     })(),
 
-    para(`Analyse du ${today}`, {size:18, color:'5a7a96', spAfter:200}),
+    para(`Analyse du ${today}`, {size:21, color:'5a7a96', spAfter:200}),
 
     para(`Régime optimal : ${best.label}`, {bold:true, size:22, color:'002046', spBefore:120}),
     para(`Sur ${duree} ans, la structure ${best.label} génère la meilleure trésorerie nette cumulée de ${fmtE(best.treso)}.`, {size:20, spAfter:80}),
     hasPV && pv ? para(`À la revente (${fmtE(_n(i.prix_cession))} en ${i.annee_cession}), le net en poche varie de ${fmtE(Math.min(pv.net_nu,pv.net_lmnp,pv.net_is))} à ${fmtE(Math.max(pv.net_nu,pv.net_lmnp,pv.net_is))} selon la structure.`, {size:20, spAfter:200}) : '',
 
-    para('Indicateurs clés', {bold:true, size:20, color:'002046', spBefore:160, spAfter:80}),
+    para('Indicateurs clés', {bold:true, size:26, color:'002046', spBefore:160, spAfter:80}),
     tbl2(
       tblRow2('Indicateur','Valeur',true) +
       tblRow2("Prix d'acquisition", fmtE(_n(i.prix_acquisition))) +
@@ -5095,7 +5095,7 @@ async function generateDocx() {
     pageBreak(),
     sectionTitle('Bien & Financement'),
 
-    para('Le bien', {bold:true, size:20, color:'002046', spBefore:160, spAfter:80}),
+    para('Le bien', {bold:true, size:26, color:'002046', spBefore:160, spAfter:80}),
     tbl2(
       tblRow2('Caractéristique','Valeur',true) +
       tblRow2("Prix d'acquisition", fmtE(_n(i.prix_acquisition))) +
@@ -5106,7 +5106,7 @@ async function generateDocx() {
       tblRow2('Coût total acquisition', fmtE(_n(i.prix_acquisition)+_n(i.frais_notaire)+_n(i.frais_agence)+_n(i.travaux)+_n(i.meubles)), false, 'E8F0FE')
     ),
 
-    para('Financement', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}),
+    para('Financement', {bold:true, size:26, color:'002046', spBefore:200, spAfter:80}),
     tbl2(
       tblRow2('Caractéristique','Valeur',true) +
       tblRow2('Montant emprunté', fmtE(_n(i.montant_emprunt))) +
@@ -5119,7 +5119,7 @@ async function generateDocx() {
       tblRow2('Coût total crédit', fmtE(_n(i.montant_emprunt)+total_interets), false, 'E8F0FE')
     ),
 
-    para('Tableau d\'amortissement du prêt', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}),
+    para('Tableau d\'amortissement du prêt', {bold:true, size:26, color:'002046', spBefore:200, spAfter:80}),
     (() => {
       const border = `<w:top w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/><w:bottom w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/>`;
       const hdr = `<w:tr>${['Année','Annuités','dont Intérêts','dont Capital','CRD'].map((h,ci)=>`
@@ -5141,7 +5141,7 @@ async function generateDocx() {
           <w:color w:val="${ci===2?'C0392B':ci===3?'156630':'1e3a52'}"/>
           <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
           <w:t>${esc(v)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`).join('');
-      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>
+      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/><w:jc w:val="center"/>
         <w:tblBorders><w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/></w:tblBorders>
       </w:tblPr>
       <w:tblGrid>${[1200,2000,2000,2000,2300].map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
@@ -5149,7 +5149,7 @@ async function generateDocx() {
     })(),
 
     // ── Plan d'amortissement par composant ──
-    para('Plan d\'amortissement par composant', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}),
+    para('Plan d\'amortissement par composant', {bold:true, size:26, color:'002046', spBefore:200, spAfter:80}),
     (() => {
       const amort = calcAmortissements(i);
       const _terrain_pct = _n(i.lmnp_part_terrain_pct, 15);
@@ -5167,7 +5167,7 @@ async function generateDocx() {
       ];
       const hdrs = ['Composant','%','Durée','Amort./an','Base totale'];
       const cols = [2200,1200,1400,2200,2500];
-      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>
+      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/><w:jc w:val="center"/>
         <w:tblBorders><w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/></w:tblBorders>
       </w:tblPr>
       <w:tblGrid>${cols.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
@@ -5198,7 +5198,7 @@ async function generateDocx() {
     // ── PAGE 3 : COMPARAISON DES RÉGIMES ─────────────────────────────────────
     pageBreak(),
     sectionTitle('Comparaison des régimes'),
-    para(`Trésorerie nette cumulée sur ${duree} ans — hors revente`, {size:18, color:'5a7a96', spAfter:160}),
+    para(`Trésorerie nette cumulée sur ${duree} ans — hors revente`, {size:21, color:'5a7a96', spAfter:160}),
 
     tbl2(
       tblRow2('Régime','Tréso cumulée',true) +
@@ -5208,7 +5208,7 @@ async function generateDocx() {
       tblRow2('✓ Meilleur régime', best.label, false, 'E8F5E9')
     ),
 
-    para('Tableau comparatif — Année N', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}),
+    para('Tableau comparatif — Année N', {bold:true, size:26, color:'002046', spBefore:200, spAfter:80}),
     (() => {
       const yrN=lmnp[0]||{}, fnN=foncier[0]||{}, isN=is_arr[0]||{};
       const cols = [4000,1833,1833,1834];
@@ -5246,17 +5246,24 @@ async function generateDocx() {
             <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
             <w:t>${esc(v)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`;
       }).join('');
-      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>
+      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/><w:jc w:val="center"/>
         <w:tblBorders><w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/></w:tblBorders>
       </w:tblPr>
       <w:tblGrid>${cols.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
       ${hdr}${rows}</w:tbl>`;
     })(),
 
+    // Analyse comparaison
+    para('💡 Analyse', {bold:true, size:22, color:'002046', spBefore:200, spAfter:60}),
+    para(`Sur ${duree} ans, le régime ${best.label} génère la meilleure trésorerie nette cumulée de ${fmtE(best.treso)}. ` +
+      `L'effort mensuel moyen pour l'investisseur est de ${fmtE(Math.abs(Math.round(best.treso/duree/12)))}${best.treso>=0?' de gain':' d\'effort'} par mois. ` +
+      (treso_lmnp !== treso_foncier ? `L'écart entre LMNP (${fmtE(treso_lmnp)}) et Foncier (${fmtE(treso_foncier)}) sur ${duree} ans est de ${fmtE(Math.abs(treso_lmnp-treso_foncier))}.` : ''),
+      {size:20, color:'3a3a3a', spAfter:100}),
+
     // ── PAGE 3bis : NET IN POCKET ───────────────────────────────────────────
     pageBreak(),
     sectionTitle('Net In Pocket — Bilan global'),
-    para('Apport + trésorerie + revente sur ' + duree + ' ans', {size:18, color:'5a7a96', spAfter:160}),
+    para('Apport + trésorerie + revente sur ' + duree + ' ans', {size:21, color:'5a7a96', spAfter:160}),
     (() => {
       const cols4 = [3000,2166,2167,2167];
       const nipRow = (label, v1, v2, v3, bold=false, bg='FFFFFF') => {
@@ -5278,7 +5285,7 @@ async function generateDocx() {
         <w:r><w:rPr><w:b/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="FFFFFF"/>
           <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
           <w:t>${esc(h)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`;
-      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>
+      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/><w:jc w:val="center"/>
         <w:tblBorders><w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/></w:tblBorders>
       </w:tblPr>
       <w:tblGrid>${cols4.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
@@ -5291,22 +5298,30 @@ async function generateDocx() {
       ${nipRow('Effort mensuel moyen', fmtE(Math.round(treso_lmnp/duree/12)), fmtE(Math.round(treso_foncier/duree/12)), fmtE(Math.round(is_treso_perso/duree/12)))}
       </w:tbl>`;
     })(),
-    hasPV && pv ? para('Société IS — Détail poche société vs perso', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}) : '',
+    hasPV && pv ? para('Société IS — Détail poche société vs perso', {bold:true, size:26, color:'002046', spBefore:200, spAfter:80}) : '',
     hasPV && pv ? tbl2(
       tblRow2('Poche société (avant distribution)', fmtE(nip_is_societe)) +
       tblRow2('Flat tax si distribué (' + (_n(i.taux_flat_tax)||30) + '%)', fmtE(Math.round(is_treso_societe * flat_tax_pct_r))) +
       tblRow2('Poche perso (après flat tax)', fmtE(nip_is_perso), false, 'E8F5E9')
     ) : '',
 
+    // Analyse NIP
+    para('💡 Analyse', {bold:true, size:22, color:'002046', spBefore:200, spAfter:60}),
+    hasPV && pv ? para(
+      `Avec un apport initial de ${fmtE(apport)}, le NIP total sur ${duree} ans est de ${fmtE(nip_lmnp)} en LMNP, ${fmtE(nip_foncier)} en Location nue, et ${fmtE(nip_is_perso)} en Société IS (poche perso). ` +
+      `Le rendement sur apport le plus élevé est de ${Math.max(nip_lmnp,nip_foncier,nip_is_perso)>0?'+':''}${(Math.max(nip_lmnp/apport,nip_foncier/apport,nip_is_perso/apport)*100).toFixed(1)}% (${nip_lmnp>=nip_foncier&&nip_lmnp>=nip_is_perso?'LMNP':nip_foncier>=nip_is_perso?'Location nue':'Société IS'}).`,
+      {size:20, color:'3a3a3a', spAfter:100}
+    ) : para('Saisissez un prix de cession pour calculer le NIP global.', {size:20, color:'5a7a96', spAfter:100}),
+
     // ── PAGE 4 : CASH FLOW ANNUEL ─────────────────────────────────────────────
     pageBreak(),
     sectionTitle('Cash flow détaillé'),
-    para(`Évolution annuelle sur ${duree} ans`, {size:18, color:'5a7a96', spAfter:160}),
+    para(`Évolution annuelle sur ${duree} ans`, {size:21, color:'5a7a96', spAfter:160}),
     // Images des graphiques (capturées avant la génération)
     ...(window._chartImgCF ? [`<w:p><w:pPr><w:spacing w:before="0" w:after="120"/></w:pPr>
       <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="5a7a96"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
       <w:t>Trésorerie annuelle</w:t></w:r></w:p>`,
-      `<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">
+      `<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">
         <wp:extent cx="5400000" cy="2000000"/>
         <wp:docPr id="10" name="ChartCF"/>
         <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -5321,7 +5336,7 @@ async function generateDocx() {
     ...(window._chartImgCFCum ? [`<w:p><w:pPr><w:spacing w:before="200" w:after="120"/></w:pPr>
       <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="5a7a96"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
       <w:t>Trésorerie cumulée</w:t></w:r></w:p>`,
-      `<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">
+      `<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">
         <wp:extent cx="5400000" cy="2000000"/>
         <wp:docPr id="11" name="ChartCFCum"/>
         <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -5370,18 +5385,26 @@ async function generateDocx() {
           <w:color w:val="002046"/>
           <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
           <w:t>${esc(v)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`;
-      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>
+      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/><w:jc w:val="center"/>
         <w:tblBorders><w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/></w:tblBorders>
       </w:tblPr>
       <w:tblGrid>${cols.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
       ${hdr}${rows}${totalRow}</w:tbl>`;
     })(),
 
+    // Analyse cash flow
+    para('💡 Analyse', {bold:true, size:22, color:'002046', spBefore:200, spAfter:60}),
+    para(`La trésorerie annuelle en ${best.label} est ${best.treso/duree>=0?'positive':'négative'} en moyenne (${fmtE(Math.round(best.treso/duree))}/an). ` +
+      (treso_is < treso_lmnp && treso_is < treso_foncier ?
+        `La Société IS génère la trésorerie la plus défavorable (${fmtE(treso_is)} cumulés)${(is_arr[0]||{}).taxe_holdings>0?' en raison de la taxe holdings 20%.':'.'}` :
+        `La trésorerie Foncier réel s'alourdit progressivement après la 5ème année en raison de la fin du déficit foncier reportable.`),
+      {size:20, color:'3a3a3a', spAfter:100}),
+
     // ── PAGE 5 : ANALYSE À LA REVENTE ────────────────────────────────────────
     pageBreak(),
     sectionTitle('Analyse à la revente'),
     hasPV && pv ? [
-      para(`Hypothèse : cession à ${fmtE(_n(i.prix_cession))} en ${i.annee_cession} — Durée de détention : ${pv.annees_detention} ans`, {size:18, color:'5a7a96', spAfter:160}),
+      para(`Hypothèse : cession à ${fmtE(_n(i.prix_cession))} en ${i.annee_cession} — Durée de détention : ${pv.annees_detention} ans`, {size:21, color:'5a7a96', spAfter:160}),
       tbl2(
         tblRow2('Régime','Net en poche',true) +
         tblRow2('Détention directe — Location nue', fmtE(pv.net_nu)) +
@@ -5389,7 +5412,7 @@ async function generateDocx() {
         tblRow2("Société IS (SCI/SAS)", fmtE(pv.net_is))
       ),
       hasPV && pv ? [
-        para('Bilan global — Apport + Trésorerie + Revente', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}),
+        para('Bilan global — Apport + Trésorerie + Revente', {bold:true, size:26, color:'002046', spBefore:200, spAfter:80}),
         tbl2(
           tblRow2('','LMNP / LMP',true) +
           tblRow2('Apport initial', fmtE(-apport)) +
@@ -5397,6 +5420,15 @@ async function generateDocx() {
           tblRow2('Net revente', fmtE(pv.net_lmnp)) +
           tblRow2('TOTAL NET EN POCHE', fmtE(treso_lmnp+pv.net_lmnp-apport), false, 'E8F5E9')
         ),
+      // Analyse revente
+      para('💡 Analyse', {bold:true, size:22, color:'002046', spBefore:200, spAfter:60}),
+      para(
+        `À la revente (${fmtE(_n(i.prix_cession))} en ${i.annee_cession}), le net en poche varie de ${fmtE(Math.min(pv.net_nu,pv.net_lmnp,pv.net_is))} à ${fmtE(Math.max(pv.net_nu,pv.net_lmnp,pv.net_is))} selon la structure. ` +
+        `La détention directe (location nue) offre le meilleur net revente (${fmtE(pv.net_nu)}) grâce aux abattements pour durée de détention. ` +
+        `En LMNP, la réintégration des amortissements (LF 2025) réduit le net en poche à ${fmtE(pv.net_lmnp)}. ` +
+        `En Société IS, l'imposition sur la plus-value (IS + flat tax sur distribution) ramène le net à ${fmtE(pv.net_is)}.`,
+        {size:20, color:'3a3a3a', spAfter:100}
+      ),
       ].join('') : '',
     ].join('') : para('Saisissez un prix de cession dans les Paramètres pour afficher cette section.', {size:20, color:'5a7a96'}),
 
