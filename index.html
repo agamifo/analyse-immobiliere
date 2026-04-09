@@ -2816,14 +2816,13 @@ function renderInputs(p) {
       const _hdr = 'font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--on-surface-3);';
       const _calc = 'font-size:0.68rem;font-family:DM Mono,monospace;color:var(--on-surface-2);text-align:right;white-space:nowrap;';
       const _rowSep = 'border-bottom:1px solid rgba(0,32,70,0.12);';
-      const _g5 = 'display:grid;grid-template-columns:90px 72px 82px 80px 95px;gap:0 6px;align-items:center;';
+      const _g5 = 'display:grid;grid-template-columns:1.1fr 0.7fr 0.8fr 0.9fr 1fr;gap:0 6px;align-items:center;';
       const _cv = 'font-size:0.75rem;font-family:DM Mono,monospace;color:var(--on-surface-2);text-align:right;white-space:nowrap;';
-      const _lb = 'font-size:0.75rem;color:var(--on-surface-2);font-family:DM Mono,monospace;';
       const _fi = 'class="field" style="margin:0;display:flex;align-items:center;gap:3px;width:auto;"';
       const _iw = 'style="width:48px;"';
       const _amortRow = (label,pctField,pctVal,durField,durVal,annuel,base) =>
         '<div style="'+_g5+'padding:6px 0;'+_rowSep+'">' +
-          '<div style="'+_lb+'">'+label+'</div>' +
+          '<div class="field" style="margin:0;"><label>'+label+'</label></div>' +
           '<div '+_fi+'><input type="number" data-field="'+pctField+'" value="'+pctVal+'" onchange="onInputChange()" '+_iw+'><span class="field-unit">%</span></div>' +
           '<div '+_fi+'><input type="number" data-field="'+durField+'" value="'+durVal+'" onchange="onInputChange()" '+_iw+'><span class="field-unit">ans</span></div>' +
           '<div style="'+_cv+'">'+_fmt(annuel)+'</div>' +
@@ -2840,7 +2839,7 @@ function renderInputs(p) {
         <div style="${_hdr}text-align:right;">Base totale</div>
       </div>
       <div style="${_g5}padding:6px 0;${_rowSep}">
-        <div style="${_lb}">Terrain</div>
+        <div class="field" style="margin:0;"><label>Terrain</label></div>
         <div ${_fi}><input type="number" data-field="lmnp_part_terrain_pct" value="${_terrain_pct}" onchange="onInputChange()" ${_iw}><span class="field-unit">%</span></div>
         <div style="font-size:0.65rem;color:var(--on-surface-3);font-style:italic;">Non amort.</div>
         <div style="${_cv}">—</div>
@@ -2851,21 +2850,21 @@ function renderInputs(p) {
       ${_amortRow('Installations','lmnp_installations_pct',_in_pct,'lmnp_installations_duree',_in_dur,_in_an,_in_base)}
       ${_amortRow('Agencements','lmnp_agencements_pct',_ag_pct,'lmnp_agencements_duree',_ag_dur,_ag_an,_ag_base)}
       <div style="${_g5}padding:6px 0;${_rowSep}">
-        <div style="${_lb}">Travaux</div>
+        <div class="field" style="margin:0;"><label>Travaux</label></div>
         <div style="font-size:0.75rem;color:var(--on-surface-3);font-family:DM Mono,monospace;">—</div>
         <div ${_fi}><input type="number" data-field="duree_amort_travaux" value="${(parseFloat(i.duree_amort_travaux)||20)}" onchange="onInputChange()" ${_iw}><span class="field-unit">ans</span></div>
         <div style="${_cv}">${_fmt(_trav_an)}</div>
         <div style="${_cv}">${_fmt(_travaux)}</div>
       </div>
       <div style="${_g5}padding:6px 0;border-bottom:2px solid rgba(0,32,70,0.15);">
-        <div style="${_lb}">Mobilier</div>
+        <div class="field" style="margin:0;"><label>Mobilier</label></div>
         <div style="font-size:0.75rem;color:var(--on-surface-3);font-family:DM Mono,monospace;">—</div>
         <div ${_fi}><input type="number" data-field="lmnp_mobilier_duree" value="${_mo_dur}" onchange="onInputChange()" ${_iw}><span class="field-unit">ans</span></div>
         <div style="${_cv}">${_fmt(_mo_an)}</div>
         <div style="${_cv}">${_fmt(_meubles)}</div>
       </div>
       <div style="${_g5}padding:6px 0 2px;">
-        <div style="${_lb}font-weight:700;">Total</div>
+        <div class="field" style="margin:0;"><label style="font-weight:700;">Total</label></div>
         <div><span id="amortTotalDisplay" style="font-size:0.66rem;font-weight:700;font-family:DM Mono,monospace;color:${_ok?'#15803d':'#c0392b'};">${_ta.toFixed(0)}%${_ok?' ✓':' ✗'}</span></div>
         <div></div>
         <div style="${_cv}font-weight:700;">${_fmt(_total_an)}/an</div>
