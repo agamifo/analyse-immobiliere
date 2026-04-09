@@ -2170,7 +2170,8 @@ function onRefFieldChange(key, val) {
 function renderReferentiel(p) {
   const f = p.inputs;
   const fv = (key, def) => f[key] !== undefined ? f[key]
-              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
+              : (_fiscalDefaultsCache && _fiscalDefaultsCache[key] !== undefined ? _fiscalDefaultsCache[key]
+              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def));
 
   const _inp = (key, def, w='60px', step='any') =>
     `<input type="number" value="${fv(key,def)}" step="${step}"
@@ -2379,7 +2380,8 @@ function renderReferentiel(p) {
 function renderFiscal(p) {
   const f = p.inputs;
   const fv = (key, def) => f[key] !== undefined ? f[key]
-              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
+              : (_fiscalDefaultsCache && _fiscalDefaultsCache[key] !== undefined ? _fiscalDefaultsCache[key]
+              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def));
 
   const _inp = (key, def, w='60px', step='any') =>
     `<input type="number" value="${fv(key,def)}" step="${step}"
@@ -2594,7 +2596,8 @@ function renderFiscal(p) {
 function renderInputs(p) {
   const i = p.inputs;
   const fv = (key, def) => i[key] !== undefined ? i[key]
-              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def);
+              : (_fiscalDefaultsCache && _fiscalDefaultsCache[key] !== undefined ? _fiscalDefaultsCache[key]
+              : (FISCAL_DEFAULTS[key] !== undefined ? FISCAL_DEFAULTS[key] : def));
   return `
   <!-- ── Card: Client & Description du bien ── -->
   <div style="background:#fff;border-radius:var(--radius2);padding:10px 14px 8px;margin-bottom:14px;
