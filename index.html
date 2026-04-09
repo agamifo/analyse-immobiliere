@@ -3293,12 +3293,12 @@ function renderRapport(p) {
       <div style="background:#fff;border-radius:8px;padding:18px;
                   box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
         <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie annuelle — Combien ça coûte/rapporte chaque année ?</div>
-        <canvas id="chartRapportCF" style="height:240px;"></canvas>
+        <div style="position:relative;width:100%;height:220px;overflow:hidden;"><canvas id="chartRapportCF" width="800" height="220"></canvas></div>
       </div>
       <div style="background:#fff;border-radius:8px;padding:18px;
                   box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
         <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie cumulée — Au total, combien je gagne ?</div>
-        <canvas id="chartRapportCFCum" style="height:240px;"></canvas>
+        <div style="position:relative;width:100%;height:220px;overflow:hidden;"><canvas id="chartRapportCFCum" width="800" height="220"></canvas></div>
       </div>
       <div id="rapportChartData"
         data-years='${JSON.stringify(cfYears)}'
@@ -4544,7 +4544,7 @@ function initChartsForTab(tab, p) {
               const dFc = JSON.parse(dataElCF.dataset.foncCum||'[]');
               const dIc = JSON.parse(dataElCF.dataset.isCum||'[]');
               const cfOpts = {
-                responsive:true, maintainAspectRatio:false,
+                responsive:true, maintainAspectRatio:true,
                 plugins:{
                   legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}},
                   annotation: undefined
