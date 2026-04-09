@@ -2719,10 +2719,6 @@ function renderInputs(p) {
         <label>Meubles (€)</label>
         <input type="number" data-field="meubles" value="${i.meubles}" onblur="onInputChange()">
       </div>
-      <div class="field">
-        <label>Valeur actuelle (€)</label>
-        <input type="number" data-field="valeur_actuelle" value="${i.valeur_actuelle}" onchange="onInputChange()">
-      </div>
     </div>
 
     <!-- Card: Financement -->
@@ -4200,7 +4196,7 @@ function renderIFI(p) {
 
   // Actif du bien selon structure
   // Détention directe : 100% de la valeur - emprunt
-  const valeur_bien = i.valeur_actuelle;
+  const valeur_bien = parseFloat(i.prix_acquisition) || 0;
   const emprunt_restant = calcLoanSchedule(i.montant_emprunt, i.taux_pret, i.duree_pret).rows[0]?.crd || i.montant_emprunt;
 
   const base_post_direct = Math.max(0, i.ifi_actif_pre + valeur_bien - i.ifi_passif_pre - emprunt_restant);
@@ -4439,7 +4435,7 @@ function initChartsForTab(tab, p) {
     else if (tab === 'ifi') {
       const base_pre = Math.max(0, i.ifi_actif_pre - i.ifi_passif_pre);
       const ifi_pre = calcIFI(base_pre);
-      const valeur_bien = i.valeur_actuelle;
+      const valeur_bien = parseFloat(i.prix_acquisition) || 0;
       const emprunt_restant = i.montant_emprunt;
       const base_post_direct = Math.max(0, i.ifi_actif_pre + valeur_bien - i.ifi_passif_pre - emprunt_restant);
       const ifi_post_direct = calcIFI(base_post_direct);
