@@ -2114,6 +2114,9 @@ function calcYearsIS(inp) {
   const is_reduit = _n(inp.is_taux_reduit, 15) / 100;
   const is_plafond = _n(inp.is_plafond_reduit, 42500);
   const is_normal = _n(inp.is_taux_normal, 25) / 100;
+  const taxe_holdings_active = inp.taxe_holdings_active === true;
+  const taxe_holdings_taux = 0.20; // 20% art. 235 ter C CGI
+  const valeur_venale = _n(inp.prix_acquisition); // simplifié : valeur vénale = prix acq.
   const years = [];
   let deficit_reportable = 0;
 
@@ -2146,13 +2149,18 @@ function calcYearsIS(inp) {
       is = Math.min(resultat_fiscal, is_plafond) * is_reduit + Math.max(0, resultat_fiscal - is_plafond) * is_normal;
     }
 
-    const treso = _n(inp.recettes_annuelles) - charges_courantes - la.annuites - is;
+    // Taxe holdings 20% (art. 235 ter C) — non déductible de l'IS
+    // Assiette = valeur vénale - CRD (dettes déductibles pour prêts à échéances constantes)
+    const crd_annee = la.crd || (y === 0 ? _n(inp.montant_emprunt) : 0);
+    const taxe_holdings = taxe_holdings_active ? Math.max(0, (valeur_venale - crd_annee) * taxe_holdings_taux) : 0;
+
+    const treso = _n(inp.recettes_annuelles) - charges_courantes - la.annuites - is - taxe_holdings;
     years.push({
       year, recettes: _n(inp.recettes_annuelles), charges: charges_courantes,
       frais_acq_y1, interets: la.interets,
       amort_immo, amort_trav, amort_meub, total_amort,
       resultat, deficit_reportable, resultat_fiscal,
-      is, annuites: la.annuites, treso, effort: treso < 0 ? treso : 0, crd: la.crd
+      is, taxe_holdings, annuites: la.annuites, treso, effort: treso < 0 ? treso : 0, crd: la.crd
     });
   }
   return years;
@@ -3234,6 +3242,7 @@ function renderRapport(p) {
               ${tableRow('Amortissements', yrN.total_amort||0, yrN1.total_amort||0, 0, 0, isN.total_amort||0, isN1.total_amort||0)}
               ${tableRow('Résultat fiscal', yrN.resultat_fiscal||0, yrN1.resultat_fiscal||0, fnN.revenu_net||0, fnN1.revenu_net||0, isN.resultat_fiscal||0, isN1.resultat_fiscal||0)}
               ${tableRow('Impôt (IR+PS / IS)', yrN.impot||0, yrN1.impot||0, fnN.impot||0, fnN1.impot||0, isN.is||0, isN1.is||0)}
+              ${(isN.taxe_holdings||0)>0?tableRow('Taxe holdings 20%', 0, 0, 0, 0, isN.taxe_holdings||0, isN1.taxe_holdings||0):''}
               ${tableRow('🔥 Tréso année', yrN.treso, yrN1.treso, fnN.treso, fnN1.treso, isN.treso, isN1.treso, true)}
               ${tableRow('💸 Effort mensuel', yrN.treso!=null?yrN.treso/12:null, yrN1.treso!=null?yrN1.treso/12:null, fnN.treso!=null?fnN.treso/12:null, fnN1.treso!=null?fnN1.treso/12:null, isN.treso!=null?isN.treso/12:null, isN1.treso!=null?isN1.treso/12:null)}
               ${tableRow('📈 Tréso cumulée '+duree+' ans', treso_lmnp, null, treso_foncier, null, treso_is, null, true)}
@@ -4324,6 +4333,9 @@ function renderIFI(p) {
   const loan = calcLoanSchedule(_n(i.montant_emprunt), _n(i.taux_pret), _n(i.duree_pret, 20));
   const duree_pret = _n(i.duree_pret, 20);
 
+  // Taxe holdings : si active, les actifs IS sont exonérés d'IFI
+  const taxe_holdings_active = i.taxe_holdings_active === true;
+
   // Évolution annuelle : le CRD diminue → base IFI augmente
   const ifi_annuel = [];
   for (let y = 0; y < duree; y++) {
@@ -4334,11 +4346,11 @@ function renderIFI(p) {
     // Détention directe
     const base_direct = Math.max(0, base_pre + valeur_bien - crd);
     const ifi_direct = calcIFI(base_direct);
-    // Société IS (parts = valeur - CRD)
-    const parts = Math.max(0, valeur_bien - crd);
+    // Société IS (parts = valeur - CRD) — exo IFI si taxe holdings active
+    const parts = taxe_holdings_active ? 0 : Math.max(0, valeur_bien - crd);
     const base_is = Math.max(0, base_pre + parts);
     const ifi_is = calcIFI(base_is);
-    ifi_annuel.push({ year, crd, base_direct, ifi_direct, base_is, ifi_is, impact_direct: ifi_direct - ifi_pre_final, impact_is: ifi_is - ifi_pre_final });
+    ifi_annuel.push({ year, crd, base_direct, ifi_direct, base_is, ifi_is, impact_direct: ifi_direct - ifi_pre_final, impact_is: ifi_is - ifi_pre_final, exo_ifi: taxe_holdings_active });
   }
 
   const yr0 = ifi_annuel[0] || {};
@@ -4370,7 +4382,8 @@ function renderIFI(p) {
     <!-- Impact — Société IS (année 1) -->
     <div class="form-card">
       <div class="form-card-title"><span class="icon">⬡</span> Impact — Société à l'IS</div>
-      <div class="pv-line"><span class="pv-line-label">Parts sociales taxables</span><span class="pv-line-val">${fmt(Math.max(0, valeur_bien - yr0.crd))}</span></div>
+      ${taxe_holdings_active?'<div class="pv-line" style="background:rgba(21,128,61,0.08);padding:4px 6px;border-radius:4px;"><span class="pv-line-label" style="color:#15803d;font-weight:600;">✓ Exonéré IFI (taxe holdings 20% active)</span><span class="pv-line-val" style="color:#15803d;">Art. 235 ter C</span></div>':''}
+      <div class="pv-line"><span class="pv-line-label">Parts sociales taxables</span><span class="pv-line-val">${taxe_holdings_active?'0 € (exo)':fmt(Math.max(0, valeur_bien - yr0.crd))}</span></div>
       <div class="pv-line"><span class="pv-line-label">Nouvelle base IFI</span><span class="pv-line-val">${fmt(yr0.base_is)}</span></div>
       <div class="pv-line"><span class="pv-line-label">IFI post-acquisition</span><span class="pv-line-val">${fmt(yr0.ifi_is)}</span></div>
       <div class="pv-total"><span class="pv-total-label">Surcoût IFI an 1</span>${fmt2(yr0.impact_is)}</div>
@@ -5155,6 +5168,7 @@ async function generateDocx() {
         ['Amortissements', yrN.total_amort||0, 0, isN.total_amort||0],
         ['Résultat fiscal', yrN.resultat_fiscal||0, fnN.revenu_net||0, isN.resultat_fiscal||0],
         ['Impôt (IR+PS / IS)', yrN.impot||0, fnN.impot||0, isN.is||0],
+        ...((isN.taxe_holdings||0)>0?[['Taxe holdings 20%', 0, 0, isN.taxe_holdings]]:[]),
         ['Trésorerie nette', yrN.treso, fnN.treso, isN.treso],
         ['Effort mensuel', yrN.treso!=null?yrN.treso/12:0, fnN.treso!=null?fnN.treso/12:0, isN.treso!=null?isN.treso/12:0],
       ];
