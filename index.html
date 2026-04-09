@@ -3091,6 +3091,11 @@ function renderRapport(p) {
   const cfLMNP  = lmnp.slice(0,duree).map(y=>y.treso);
   const cfFonc  = foncier.slice(0,duree).map(y=>y.treso);
   const cfIS    = is_arr.slice(0,duree).map(y=>y.treso);
+  // Cumulées
+  let cumL=0, cumF=0, cumI=0;
+  const cfLMNP_cum = cfLMNP.map(v=>(cumL+=v,cumL));
+  const cfFonc_cum = cfFonc.map(v=>(cumF+=v,cumF));
+  const cfIS_cum   = cfIS.map(v=>(cumI+=v,cumI));
 
   const yrN=lmnp[0]||{}, yrN1=lmnp[1]||{};
   const fnN=foncier[0]||{}, fnN1=foncier[1]||{};
@@ -3287,13 +3292,22 @@ function renderRapport(p) {
     'section-cashflow': `
       <div style="background:#fff;border-radius:8px;padding:18px;
                   box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
-        <canvas id="chartRapportCF" style="height:260px;"></canvas>
+        <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie annuelle — Combien ça coûte/rapporte chaque année ?</div>
+        <canvas id="chartRapportCF" style="height:240px;"></canvas>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:18px;
+                  box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
+        <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie cumulée — Au total, combien je gagne ?</div>
+        <canvas id="chartRapportCFCum" style="height:240px;"></canvas>
       </div>
       <div id="rapportChartData"
         data-years='${JSON.stringify(cfYears)}'
         data-lmnp='${JSON.stringify(cfLMNP)}'
         data-fonc='${JSON.stringify(cfFonc)}'
         data-is='${JSON.stringify(cfIS)}'
+        data-lmnp-cum='${JSON.stringify(cfLMNP_cum)}'
+        data-fonc-cum='${JSON.stringify(cfFonc_cum)}'
+        data-is-cum='${JSON.stringify(cfIS_cum)}'
         style="display:none;"></div>
       <div style="background:#fff;border-radius:8px;overflow:hidden;
                   box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
@@ -4517,35 +4531,67 @@ function initChartsForTab(tab, p) {
 
           window._activeSection = sectionId;
 
-          // Init chart si section cashflow
+          // Init charts si section cashflow
           if (sectionId === 'section-cashflow') {
             setTimeout(() => {
               const dataElCF = document.getElementById('rapportChartData');
-              const chartElCF = document.getElementById('chartRapportCF');
-              if (dataElCF && chartElCF && typeof Chart !== 'undefined') {
-                try {
-                  if (window._rapportChart) { window._rapportChart.destroy(); window._rapportChart = null; }
-                  window._rapportChart = new Chart(chartElCF, {
+              if (!dataElCF || typeof Chart === 'undefined') return;
+              const years = JSON.parse(dataElCF.dataset.years||'[]');
+              const dL = JSON.parse(dataElCF.dataset.lmnp||'[]');
+              const dF = JSON.parse(dataElCF.dataset.fonc||'[]');
+              const dI = JSON.parse(dataElCF.dataset.is||'[]');
+              const dLc = JSON.parse(dataElCF.dataset.lmnpCum||'[]');
+              const dFc = JSON.parse(dataElCF.dataset.foncCum||'[]');
+              const dIc = JSON.parse(dataElCF.dataset.isCum||'[]');
+              const cfOpts = {
+                responsive:true, maintainAspectRatio:false,
+                plugins:{
+                  legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}},
+                  annotation: undefined
+                },
+                scales:{
+                  y:{ticks:{callback:v=>Math.abs(v)>=1000?Math.round(v/1000)+'k€':v+'€',font:{size:10}},grid:{color:'rgba(0,32,70,0.05)'}},
+                  x:{ticks:{font:{size:10}},grid:{color:'rgba(0,32,70,0.04)'}}
+                }
+              };
+              try {
+                // Graphique 1 — Tréso annuelle avec ligne zéro
+                if (window._rapportChart) { window._rapportChart.destroy(); window._rapportChart = null; }
+                const el1 = document.getElementById('chartRapportCF');
+                if (el1) {
+                  window._rapportChart = new Chart(el1, {
                     type: 'line',
                     data: {
-                      labels: JSON.parse(dataElCF.dataset.years||'[]'),
+                      labels: years,
                       datasets: [
-                        {label:'LMNP Réel',    data:JSON.parse(dataElCF.dataset.lmnp||'[]'), borderColor:'#1a4f8a', backgroundColor:'rgba(26,79,138,0.08)', borderWidth:2, tension:0.3, fill:false, pointRadius:3},
-                        {label:'Foncier Réel', data:JSON.parse(dataElCF.dataset.fonc||'[]'), borderColor:'#944a00', backgroundColor:'rgba(148,74,0,0.08)',   borderWidth:2, tension:0.3, fill:false, pointRadius:3},
-                        {label:'Société IS',   data:JSON.parse(dataElCF.dataset.is  ||'[]'), borderColor:'#15653a', backgroundColor:'rgba(21,101,58,0.08)',  borderWidth:2, tension:0.3, fill:false, pointRadius:3},
+                        {label:'LMNP Réel', data:dL, borderColor:'#1a4f8a', backgroundColor:'rgba(26,79,138,0.1)', borderWidth:2, tension:0.3, fill:'origin', pointRadius:3},
+                        {label:'Foncier Réel', data:dF, borderColor:'#944a00', backgroundColor:'rgba(148,74,0,0.06)', borderWidth:2, tension:0.3, fill:false, pointRadius:3},
+                        {label:'Société IS', data:dI, borderColor:'#15653a', backgroundColor:'rgba(21,101,58,0.06)', borderWidth:2, tension:0.3, fill:false, pointRadius:3},
+                        {label:'Équilibre', data:years.map(()=>0), borderColor:'rgba(192,57,43,0.4)', borderWidth:1, borderDash:[6,4], pointRadius:0, fill:false},
                       ]
                     },
-                    options: {
-                      responsive:true, maintainAspectRatio:false,
-                      plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
-                      scales:{
-                        y:{ticks:{callback:v=>Math.abs(v)>=1000?Math.round(v/1000)+'k€':v+'€',font:{size:10}},grid:{color:'rgba(0,32,70,0.05)'}},
-                        x:{ticks:{font:{size:10}},grid:{color:'rgba(0,32,70,0.04)'}}
-                      }
-                    }
+                    options: cfOpts
                   });
-                } catch(e) { console.error('chart CF error:', e); }
-              }
+                }
+                // Graphique 2 — Tréso cumulée
+                if (window._rapportChartCum) { window._rapportChartCum.destroy(); window._rapportChartCum = null; }
+                const el2 = document.getElementById('chartRapportCFCum');
+                if (el2) {
+                  window._rapportChartCum = new Chart(el2, {
+                    type: 'line',
+                    data: {
+                      labels: years,
+                      datasets: [
+                        {label:'LMNP Réel', data:dLc, borderColor:'#1a4f8a', backgroundColor:'rgba(26,79,138,0.12)', borderWidth:2.5, tension:0.3, fill:'origin', pointRadius:3},
+                        {label:'Foncier Réel', data:dFc, borderColor:'#944a00', backgroundColor:'rgba(148,74,0,0.08)', borderWidth:2.5, tension:0.3, fill:false, pointRadius:3},
+                        {label:'Société IS', data:dIc, borderColor:'#15653a', backgroundColor:'rgba(21,101,58,0.08)', borderWidth:2.5, tension:0.3, fill:false, pointRadius:3},
+                        {label:'Équilibre', data:years.map(()=>0), borderColor:'rgba(192,57,43,0.4)', borderWidth:1, borderDash:[6,4], pointRadius:0, fill:false},
+                      ]
+                    },
+                    options: cfOpts
+                  });
+                }
+              } catch(e) { console.error('chart CF error:', e); }
             }, 50);
           }
 
