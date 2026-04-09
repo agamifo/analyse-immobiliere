@@ -5060,18 +5060,42 @@ async function generateDocx() {
     pageBreak(),
     sectionTitle('Net In Pocket — Bilan global'),
     para('Apport + trésorerie + revente sur ' + duree + ' ans', {size:18, color:'5a7a96', spAfter:160}),
-    tbl2(
-      tblRow2('Composante','LMNP / LMP','Location nue','Société IS (perso)',true).replace('w:gridSpan w:val="2"','') +
-      tblRow2('Apport initial', fmtE(-apport), fmtE(-apport), fmtE(-apport)) +
-      tblRow2('Tréso cumulée ' + duree + ' ans', fmtE(treso_lmnp), fmtE(treso_foncier), fmtE(is_treso_perso)) +
-      (hasPV && pv ? tblRow2('Net revente', fmtE(pv.net_lmnp), fmtE(pv.net_nu), fmtE(pv.net_is)) : '') +
-      tblRow2('NIP TOTAL', fmtE(nip_lmnp), fmtE(nip_foncier), fmtE(nip_is_perso), false, nip_lmnp>=nip_foncier&&nip_lmnp>=nip_is_perso?'E8F5E9':'FFFFFF') +
-      tblRow2('Rendement / apport', apport>0?(nip_lmnp/apport*100).toFixed(1)+'%':'—', apport>0?(nip_foncier/apport*100).toFixed(1)+'%':'—', apport>0?(nip_is_perso/apport*100).toFixed(1)+'%':'—') +
-      tblRow2('Effort mensuel moyen', fmtE(Math.round(treso_lmnp/duree/12)), fmtE(Math.round(treso_foncier/duree/12)), fmtE(Math.round(is_treso_perso/duree/12)))
-    ),
+    (() => {
+      const cols4 = [3000,2166,2167,2167];
+      const nipRow = (label, v1, v2, v3, bold=false, bg='FFFFFF') => {
+        return `<w:tr><w:trPr><w:cantSplit/></w:trPr>${[label,v1,v2,v3].map((v,ci)=>`
+          <w:tc><w:tcPr><w:tcW w:w="${cols4[ci]}" w:type="dxa"/>
+            <w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>
+            <w:tcMar><w:top w:w="50" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="50" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar>
+          </w:tcPr><w:p><w:pPr><w:jc w:val="${ci===0?'left':'right'}"/></w:pPr>
+          <w:r><w:rPr>${bold?'<w:b/>':''}<w:sz w:val="18"/><w:szCs w:val="18"/>
+            <w:color w:val="${ci===0?'1e3a52':'002046'}"/>
+            <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
+            <w:t>${esc(v)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`;
+      };
+      const hdr4 = `<w:tr>${['Composante','LMNP / LMP','Location nue','Société IS (perso)'].map((h,ci)=>`
+        <w:tc><w:tcPr><w:tcW w:w="${cols4[ci]}" w:type="dxa"/>
+          <w:shd w:val="clear" w:color="auto" w:fill="002046"/>
+          <w:tcMar><w:top w:w="60" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar>
+        </w:tcPr><w:p><w:pPr><w:jc w:val="${ci===0?'left':'right'}"/></w:pPr>
+        <w:r><w:rPr><w:b/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="FFFFFF"/>
+          <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
+          <w:t>${esc(h)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`;
+      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>
+        <w:tblBorders><w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/></w:tblBorders>
+      </w:tblPr>
+      <w:tblGrid>${cols4.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
+      ${hdr4}
+      ${nipRow('Apport initial', fmtE(-apport), fmtE(-apport), fmtE(-apport))}
+      ${nipRow('Tréso cumulée '+duree+' ans', fmtE(treso_lmnp), fmtE(treso_foncier), fmtE(is_treso_perso))}
+      ${hasPV&&pv ? nipRow('Net revente', fmtE(pv.net_lmnp), fmtE(pv.net_nu), fmtE(pv.net_is)) : ''}
+      ${nipRow('NIP TOTAL', fmtE(nip_lmnp), fmtE(nip_foncier), fmtE(nip_is_perso), true, 'E8F5E9')}
+      ${nipRow('Rendement / apport', apport>0?(nip_lmnp/apport*100).toFixed(1)+'%':'—', apport>0?(nip_foncier/apport*100).toFixed(1)+'%':'—', apport>0?(nip_is_perso/apport*100).toFixed(1)+'%':'—')}
+      ${nipRow('Effort mensuel moyen', fmtE(Math.round(treso_lmnp/duree/12)), fmtE(Math.round(treso_foncier/duree/12)), fmtE(Math.round(is_treso_perso/duree/12)))}
+      </w:tbl>`;
+    })(),
     hasPV && pv ? para('Société IS — Détail poche société vs perso', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}) : '',
     hasPV && pv ? tbl2(
-      tblRow2('Indicateur','Montant',true) +
       tblRow2('Poche société (avant distribution)', fmtE(nip_is_societe)) +
       tblRow2('Flat tax si distribué (' + (_n(i.taux_flat_tax)||30) + '%)', fmtE(Math.round(is_treso_societe * flat_tax_pct_r))) +
       tblRow2('Poche perso (après flat tax)', fmtE(nip_is_perso), false, 'E8F5E9')
