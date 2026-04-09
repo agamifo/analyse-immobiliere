@@ -3293,12 +3293,12 @@ function renderRapport(p) {
       <div style="background:#fff;border-radius:8px;padding:18px;
                   box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
         <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie annuelle — Combien ça coûte/rapporte chaque année ?</div>
-        <div style="position:relative;width:100%;height:220px;overflow:hidden;"><canvas id="chartRapportCF" width="800" height="220"></canvas></div>
+        <div style="position:relative;width:100%;height:300px;overflow:hidden;"><canvas id="chartRapportCF" width="800" height="220"></canvas></div>
       </div>
       <div style="background:#fff;border-radius:8px;padding:18px;
                   box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
         <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie cumulée — Au total, combien je gagne ?</div>
-        <div style="position:relative;width:100%;height:220px;overflow:hidden;"><canvas id="chartRapportCFCum" width="800" height="220"></canvas></div>
+        <div style="position:relative;width:100%;height:300px;overflow:hidden;"><canvas id="chartRapportCFCum" width="800" height="220"></canvas></div>
       </div>
       <div id="rapportChartData"
         data-years='${JSON.stringify(cfYears)}'
@@ -4544,14 +4544,16 @@ function initChartsForTab(tab, p) {
               const dFc = JSON.parse(dataElCF.dataset.foncCum||'[]');
               const dIc = JSON.parse(dataElCF.dataset.isCum||'[]');
               const cfOpts = {
-                responsive:true, maintainAspectRatio:true,
+                responsive:true, maintainAspectRatio:false,
+                animation:{duration:400},
                 plugins:{
-                  legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}},
-                  annotation: undefined
+                  legend:{position:'top',align:'end',labels:{font:{size:11,family:'DM Mono'},boxWidth:10,padding:16,
+                    filter: item => item.text !== 'Équilibre'}},
+                  tooltip:{callbacks:{label:ctx=>ctx.dataset.label+' : '+(Math.abs(ctx.parsed.y)>=1000?Math.round(ctx.parsed.y/1000)+'k€':ctx.parsed.y+'€')}}
                 },
                 scales:{
-                  y:{ticks:{callback:v=>Math.abs(v)>=1000?Math.round(v/1000)+'k€':v+'€',font:{size:10}},grid:{color:'rgba(0,32,70,0.05)'}},
-                  x:{ticks:{font:{size:10}},grid:{color:'rgba(0,32,70,0.04)'}}
+                  y:{ticks:{callback:v=>Math.abs(v)>=1000?Math.round(v/1000)+'k€':v+'€',font:{size:10,family:'DM Mono'}},grid:{color:'rgba(0,32,70,0.06)'}},
+                  x:{ticks:{font:{size:10,family:'DM Mono'}},grid:{color:'rgba(0,32,70,0.04)'}}
                 }
               };
               try {
@@ -4564,10 +4566,10 @@ function initChartsForTab(tab, p) {
                     data: {
                       labels: years,
                       datasets: [
-                        {label:'LMNP Réel', data:dL, borderColor:'#1a4f8a', backgroundColor:'rgba(26,79,138,0.1)', borderWidth:2, tension:0.3, fill:'origin', pointRadius:3},
-                        {label:'Foncier Réel', data:dF, borderColor:'#944a00', backgroundColor:'rgba(148,74,0,0.06)', borderWidth:2, tension:0.3, fill:false, pointRadius:3},
-                        {label:'Société IS', data:dI, borderColor:'#15653a', backgroundColor:'rgba(21,101,58,0.06)', borderWidth:2, tension:0.3, fill:false, pointRadius:3},
-                        {label:'Équilibre', data:years.map(()=>0), borderColor:'rgba(192,57,43,0.4)', borderWidth:1, borderDash:[6,4], pointRadius:0, fill:false},
+                        {label:'LMNP Réel', data:dL, borderColor:'#1a4f8a', backgroundColor:'rgba(26,79,138,0.12)', borderWidth:3, tension:0.3, fill:'origin', pointRadius:4, pointBackgroundColor:'#1a4f8a'},
+                        {label:'Foncier Réel', data:dF, borderColor:'#944a00', backgroundColor:'rgba(148,74,0,0.06)', borderWidth:3, tension:0.3, fill:false, pointRadius:4, pointBackgroundColor:'#944a00'},
+                        {label:'Société IS', data:dI, borderColor:'#15653a', backgroundColor:'rgba(21,101,58,0.06)', borderWidth:3, tension:0.3, fill:false, pointRadius:4, pointBackgroundColor:'#15653a'},
+                        {label:'Équilibre', data:years.map(()=>0), borderColor:'rgba(192,57,43,0.5)', borderWidth:2, borderDash:[8,4], pointRadius:0, fill:false},
                       ]
                     },
                     options: cfOpts
@@ -4582,10 +4584,10 @@ function initChartsForTab(tab, p) {
                     data: {
                       labels: years,
                       datasets: [
-                        {label:'LMNP Réel', data:dLc, borderColor:'#1a4f8a', backgroundColor:'rgba(26,79,138,0.12)', borderWidth:2.5, tension:0.3, fill:'origin', pointRadius:3},
-                        {label:'Foncier Réel', data:dFc, borderColor:'#944a00', backgroundColor:'rgba(148,74,0,0.08)', borderWidth:2.5, tension:0.3, fill:false, pointRadius:3},
-                        {label:'Société IS', data:dIc, borderColor:'#15653a', backgroundColor:'rgba(21,101,58,0.08)', borderWidth:2.5, tension:0.3, fill:false, pointRadius:3},
-                        {label:'Équilibre', data:years.map(()=>0), borderColor:'rgba(192,57,43,0.4)', borderWidth:1, borderDash:[6,4], pointRadius:0, fill:false},
+                        {label:'LMNP Réel', data:dLc, borderColor:'#1a4f8a', backgroundColor:'rgba(26,79,138,0.12)', borderWidth:3, tension:0.3, fill:'origin', pointRadius:4, pointBackgroundColor:'#1a4f8a'},
+                        {label:'Foncier Réel', data:dFc, borderColor:'#944a00', backgroundColor:'rgba(148,74,0,0.08)', borderWidth:3, tension:0.3, fill:false, pointRadius:4, pointBackgroundColor:'#944a00'},
+                        {label:'Société IS', data:dIc, borderColor:'#15653a', backgroundColor:'rgba(21,101,58,0.08)', borderWidth:3, tension:0.3, fill:false, pointRadius:4, pointBackgroundColor:'#15653a'},
+                        {label:'Équilibre', data:years.map(()=>0), borderColor:'rgba(192,57,43,0.5)', borderWidth:2, borderDash:[8,4], pointRadius:0, fill:false},
                       ]
                     },
                     options: cfOpts
