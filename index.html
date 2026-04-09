@@ -4719,6 +4719,15 @@ async function generateDocx() {
   let pv = null;
   if (hasPV) { try { pv = calcPV(i); } catch(e) {} }
 
+  // ── NIP (Net In Pocket) ──
+  const nip_lmnp = -apport + treso_lmnp + (hasPV && pv ? pv.net_lmnp : 0);
+  const nip_foncier = -apport + treso_foncier + (hasPV && pv ? pv.net_nu : 0);
+  const flat_tax_pct_r = (_n(i.taux_flat_tax) || 30) / 100;
+  const is_treso_perso = treso_is * (1 - flat_tax_pct_r);
+  const is_treso_societe = treso_is;
+  const nip_is_perso = -apport + is_treso_perso + (hasPV && pv ? pv.net_is : 0);
+  const nip_is_societe = -apport + is_treso_societe + (hasPV && pv && pv.pv_is !== undefined ? _n(i.prix_cession) - pv.is_pv : 0);
+
   const scenarios = [
     {label:'LMNP Réel',    treso:treso_lmnp},
     {label:'Location nue', treso:treso_foncier},
