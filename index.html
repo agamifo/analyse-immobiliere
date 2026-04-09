@@ -1044,6 +1044,7 @@
 ══════════════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://tvzlzfnffwdqjmfmpqrr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2emx6Zm5mZndkcWptZm1wcXJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDcyMDcsImV4cCI6MjA5MDYyMzIwN30.RET4DIwlYjZRVoWfKb3WYCwPvIzyHjdeBG-OF2c3Q9Q';
+const GLOBAL_FISCAL_ID = 'e9a8c470-d4ac-486a-b025-4d3bd4f14921'; // user_id du compte admin — ligne globale fiscal_defaults
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
@@ -1128,14 +1129,19 @@ function loadFiscalDefaults() {
   return _fiscalDefaultsCache ? { ...FISCAL_DEFAULTS, ..._fiscalDefaultsCache } : { ...FISCAL_DEFAULTS };
 }
 
-async function saveFiscalDefaults(vals) {
+async function saveFiscalDefaults(vals, merge = true) {
+  // Merge avec les données existantes pour ne pas écraser les champs de l'autre onglet
+  if (merge && _fiscalDefaultsCache) {
+    vals = Object.assign({}, _fiscalDefaultsCache, vals);
+  }
   _fiscalDefaultsCache = vals;
   if (!currentUser) return;
+  // Toujours sauver dans la ligne globale (admin)
   let { error } = await sb.from('fiscal_defaults').upsert({
-    user_id: currentUser.id, data: vals, updated_at: new Date().toISOString()
+    user_id: GLOBAL_FISCAL_ID, data: vals, updated_at: new Date().toISOString()
   });
   if (error) {
-    await sb.from('fiscal_defaults').upsert({ user_id: currentUser.id, data: vals });
+    await sb.from('fiscal_defaults').upsert({ user_id: GLOBAL_FISCAL_ID, data: vals });
   }
 }
 
@@ -1162,26 +1168,38 @@ async function saveAsFiscalDefaults() {
 }
 
 function resetFiscalToDefaults() {
+  // Récupérer les clés de l'onglet actuel uniquement (pas l'autre onglet)
+  const container = document.getElementById('tabContent');
+  const tabKeys = [];
+  if (container) {
+    container.querySelectorAll('[data-field]').forEach(el => tabKeys.push(el.dataset.field));
+  }
+  const fiscalKeys = Object.keys(FISCAL_DEFAULTS);
+  const keysToReset = tabKeys.filter(k => fiscalKeys.includes(k));
+
   if (isAdmin && !state.activeId) {
-    // Admin : réinitialiser _adminInputs
-    _adminInputs = Object.assign({}, FISCAL_DEFAULTS);
-    _fiscalDefaultsCache = null;
-    showTab('fiscal');
-    notify('Paramètres fiscaux réinitialisés ✓');
+    if (!_adminInputs) _adminInputs = Object.assign({}, FISCAL_DEFAULTS);
+    keysToReset.forEach(k => { _adminInputs[k] = FISCAL_DEFAULTS[k]; });
+    // Sauver le merge (reset cet onglet + garder l'autre)
+    const vals = {};
+    fiscalKeys.forEach(k => { if (_adminInputs[k] !== undefined) vals[k] = _adminInputs[k]; });
+    saveFiscalDefaults(vals, false); // false = pas de merge, écraser avec le résultat complet
+    showTab(state.activeTab);
+    notify('Paramètres réinitialisés ✓');
     return;
   }
   const p = state.projects[state.activeId];
   if (!p) return;
-  Object.keys(FISCAL_DEFAULTS).forEach(k => { p.inputs[k] = FISCAL_DEFAULTS[k]; });
+  keysToReset.forEach(k => { p.inputs[k] = FISCAL_DEFAULTS[k]; });
   _fiscalDefaultsCache = null;
-  showTab('fiscal');
-  notify('Paramètres fiscaux réinitialisés ✓');
+  showTab(state.activeTab);
+  notify('Paramètres réinitialisés ✓');
 }
 
 async function loadFiscalDefaultsFromDB() {
   if (!currentUser) return;
-  // maybeSingle() retourne null sans erreur si aucune ligne (évite le 406 avec .single())
-  const { data } = await sb.from('fiscal_defaults').select('data').eq('user_id', currentUser.id).maybeSingle();
+  // Charger la ligne globale (admin) — partagée par tous les users
+  const { data } = await sb.from('fiscal_defaults').select('data').eq('user_id', GLOBAL_FISCAL_ID).maybeSingle();
   if (data?.data) _fiscalDefaultsCache = data.data;
 }
 
@@ -2210,7 +2228,25 @@ function renderReferentiel(p) {
 
   return `<div style="padding:0;">
 
-  ${!isAdmin?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:5px 12px;background:rgba(0,32,70,0.04);border-radius:7px;border:1px solid rgba(0,32,70,0.09);"><span style="font-size:0.68rem;">🔒</span><div style="flex:1;font-size:0.62rem;color:var(--on-surface-2);line-height:1.4;">Référentiel fiscal verrouillé — seul le compte admin peut modifier ces paramètres.</div></div>':''}
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;
+              padding:5px 12px;background:rgba(0,32,70,0.04);
+              border-radius:7px;border:1px solid rgba(0,32,70,0.09);">
+    <span style="font-size:0.68rem;flex-shrink:0;">${isAdmin?'⚠':'🔒'}</span>
+    <div style="flex:1;font-size:0.62rem;color:var(--on-surface-2);line-height:1.4;">
+      ${isAdmin?'Référentiel fiscal. Modifiable par l\'administrateur à chaque LdF.':'Référentiel fiscal verrouillé — seul le compte admin peut modifier ces paramètres.'}
+    </div>
+    ${isAdmin?`<button onclick="saveAsFiscalDefaults()" style="flex-shrink:0;background:var(--primary);color:#fff;
+      border:none;padding:3px 10px;border-radius:5px;cursor:pointer;
+      font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:600;white-space:nowrap;">
+      💾 Enregistrer défaut
+    </button>
+    <button onclick="resetFiscalToDefaults()" style="flex-shrink:0;background:none;
+      color:var(--on-surface-3);border:1px solid rgba(0,32,70,0.15);
+      padding:3px 9px;border-radius:5px;cursor:pointer;
+      font-family:'Inter',sans-serif;font-size:0.62rem;white-space:nowrap;">
+      ↺ Réinitialiser
+    </button>`:''}
+  </div>
 
   <!-- ═══════════ LMNP ═══════════ -->
   ${_sep('LMNP — Loueur en Meublé Non Professionnel')}
