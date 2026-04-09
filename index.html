@@ -3022,8 +3022,21 @@ function renderRapport(p) {
   const rend_brut = _n(i.recettes_annuelles) / (_n(i.prix_acquisition)||1) * 100;
 
   const hasPV = _n(i.prix_cession) > 0;
+  const pvCession = _n(i.prix_cession);
   let pv = null;
   if (hasPV) { try { pv = calcPV(i); } catch(e) { pv = null; } }
+
+  // ── NIP (Net In Pocket) ─────────────────────────────
+  const nip_lmnp = -apport + treso_lmnp + (hasPV && pv ? pv.net_lmnp : 0);
+  const nip_foncier = -apport + treso_foncier + (hasPV && pv ? pv.net_nu : 0);
+  const nip_is = -apport + treso_is + (hasPV && pv ? pv.net_is : 0);
+  const flat_tax_pct_r = (_n(i.taux_flat_tax) || 30) / 100;
+  const is_treso_perso = treso_is * (1 - flat_tax_pct_r);
+  const is_treso_societe = treso_is;
+  const nip_is_perso = -apport + is_treso_perso + (hasPV && pv ? pv.net_is : 0);
+  const nip_is_societe = -apport + is_treso_societe + (hasPV && pv && pv.pv_is !== undefined ? _n(i.prix_cession) - pv.is_pv : 0);
+  const lmnp_treso = treso_lmnp;
+  const foncier_treso = treso_foncier;
 
   const scenarios = [
     {label:'LMNP Réel',    treso:treso_lmnp,    color:'#1a4f8a'},
@@ -3217,6 +3230,39 @@ function renderRapport(p) {
         </div>
       </div>`,
 
+    'section-nip': `
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
+        ${[
+          {label:'LMNP / LMP', color:'#1a4f8a', treso:lmnp_treso, pv_net:hasPV&&pv?pv.net_lmnp:0, nip:nip_lmnp},
+          {label:'Location nue', color:'#944a00', treso:foncier_treso, pv_net:hasPV&&pv?pv.net_nu:0, nip:nip_foncier},
+          {label:'Société IS (perso)', color:'#15653a', treso:is_treso_perso, pv_net:hasPV&&pv?pv.net_is:0, nip:nip_is_perso},
+        ].map(s=>`
+          <div style="flex:1;min-width:200px;background:#fff;border-radius:8px;overflow:hidden;
+                      box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
+            <div style="background:${s.color};padding:8px 14px;">
+              <span style="font-size:0.62rem;font-weight:700;color:#fff;letter-spacing:0.08em;text-transform:uppercase;">${s.label}</span>
+              <div style="font-family:'Manrope',sans-serif;font-size:1.4rem;font-weight:800;color:#fff;margin-top:4px;">${fmtE(s.nip)}</div>
+            </div>
+            <div style="padding:10px 14px;font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--on-surface-2);line-height:2.2;">
+              <div style="display:flex;justify-content:space-between;"><span>Apport initial</span><span style="color:#c0392b;">−${fmtE(apport)}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Tréso cumulée ${duree} ans</span><span style="color:${s.treso>=0?'#15803d':'#c0392b'};">${s.treso>=0?'+':''}${fmtE(s.treso)}</span></div>
+              ${hasPV&&pv?'<div style="display:flex;justify-content:space-between;"><span>Net revente</span><span style="color:#15803d;">+'+fmtE(s.pv_net)+'</span></div>':''}
+              <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(0,32,70,0.1);padding-top:4px;margin-top:2px;font-weight:700;">
+                <span>NIP total</span><span style="color:${s.nip>=0?'#15803d':'#c0392b'};">${fmtE(s.nip)}</span>
+              </div>
+              ${apport>0?'<div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--on-surface-3);"><span>Rendement / apport</span><span>'+((s.nip/apport)*100).toFixed(1)+'%</span></div>':''}
+            </div>
+          </div>`).join('')}
+      </div>
+      ${hasPV&&pv?`<div style="background:#fff;border-radius:8px;padding:14px 18px;
+                  box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
+        <div style="font-size:0.62rem;font-weight:700;color:var(--on-surface-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Société IS — Détail poche société vs perso</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.68rem;font-family:'DM Mono',monospace;">
+          <div><div style="color:var(--on-surface-3);margin-bottom:4px;">Poche société (avant distrib.)</div><div style="font-size:1.1rem;font-weight:700;color:#15653a;">${fmtE(nip_is_societe)}</div></div>
+          <div><div style="color:var(--on-surface-3);margin-bottom:4px;">Poche perso (après flat tax ${_n(i.taux_flat_tax)||30}%)</div><div style="font-size:1.1rem;font-weight:700;color:#15653a;">${fmtE(nip_is_perso)}</div></div>
+        </div>
+      </div>`:''}`,
+
     'section-cashflow': `
       <div style="background:#fff;border-radius:8px;padding:18px;
                   box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
@@ -3315,6 +3361,7 @@ function renderRapport(p) {
     'section-resume':      ['⚡', 'Résumé exécutif',       p.name+' · '+new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})],
     'section-bien':        ['🏠', 'Bien & Financement',    "Caractéristiques de l'opération"],
     'section-comparaison': ['⚖', 'Comparaison des régimes', 'Trésorerie nette cumulée sur '+duree+' ans — hors revente'],
+    'section-nip':         ['💼', 'Net In Pocket',          'Bilan global : apport + trésorerie + revente'],
     'section-cashflow':    ['📊', 'Cash flow détaillé',    'Évolution annuelle sur '+duree+' ans'],
     'section-revente':     ['💼', 'Analyse à la revente',  hasPV?'Hypothèse de cession : '+fmtE(_n(i.prix_cession))+' en '+i.annee_cession:'Saisir un prix de cession'],
     'section-ifi':         ['🏛', 'IFI',                   "Impact sur l'Impôt sur la Fortune Immobilière"],
@@ -3427,6 +3474,12 @@ function renderSynthese(p) {
   const nip_lmnp = -apport + lmnp_treso + (pvCession > 0 ? pv.net_lmnp : 0);
   const nip_foncier = -apport + foncier_treso + (pvCession > 0 ? pv.net_nu : 0);
   const nip_is = -apport + is_treso + (pvCession > 0 ? pv.net_is : 0);
+  // IS : distinction poche société vs poche perso
+  const flat_tax_pct = (_n(i.taux_flat_tax) || 30) / 100;
+  const is_treso_societe = is_treso; // tréso brute dans la société
+  const is_treso_perso = is_treso * (1 - flat_tax_pct); // après flat tax si distribué
+  const nip_is_societe = -apport + is_treso_societe + (pvCession > 0 ? (pv.pv_is ? _n(i.prix_cession) - pv.is_pv : 0) : 0);
+  const nip_is_perso = -apport + is_treso_perso + (pvCession > 0 ? pv.net_is : 0);
 
   // Effort trésorerie moyen annuel (cash out si négatif)
   const effort_lmnp = lmnp.filter(y=>y.treso<0).reduce((s,y)=>s+y.treso,0) / duree;
@@ -3454,7 +3507,15 @@ function renderSynthese(p) {
   <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
     ${nipCard('LMNP / LMP', 'var(--blue)', lmnp_treso, pvCession>0?pv.net_lmnp:0, nip_lmnp, effort_lmnp)}
     ${nipCard('Location nue', 'var(--orange)', foncier_treso, pvCession>0?pv.net_nu:0, nip_foncier, effort_foncier)}
-    ${nipCard('Société IS', 'var(--green)', is_treso, pvCession>0?pv.net_is:0, nip_is, effort_is)}
+    ${nipCard('Société IS — Poche perso', 'var(--green)', is_treso_perso, pvCession>0?pv.net_is:0, nip_is_perso, effort_is)}
+    ${`<div style="flex:1;background:#fff;border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;min-width:180px;opacity:0.75;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:10px;">Société IS — Poche société</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:${nip_is_societe>=0?'var(--green)':'var(--red)'};margin-bottom:10px;">${nip_is_societe>=0?'':'-\u00a0'}${fmt(Math.abs(nip_is_societe))}</div>
+      <div style="font-size:0.65rem;font-family:'DM Mono',monospace;color:var(--text3);line-height:2;">
+        <div style="display:flex;justify-content:space-between;"><span>Tréso société (avant distrib.)</span><span>${fmt(is_treso_societe)}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Flat tax si distribué (${(_n(i.taux_flat_tax)||30)}%)</span><span style="color:var(--red)">- ${fmt(Math.abs(is_treso_societe - is_treso_perso))}</span></div>
+      </div>
+    </div>`}
   </div>`;
   window._syntheseChartData = {
     labels: lmnp.map(y=>y.year),
