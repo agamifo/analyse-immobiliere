@@ -1292,7 +1292,11 @@ async function loadState() {
     // sans écraser ce qui était déjà saisi
     const base = defaultProject(row.name, false).inputs;
     const fiscalOverrides = loadFiscalDefaults();
-    const merged = Object.assign({}, base, row.data || {}, fiscalOverrides);
+    // Clés du plan d'amortissement : modifiables par le FO dans chaque projet (pas écrasées par admin)
+    const PROJECT_AMORT_KEYS = ['lmnp_part_terrain_pct','lmnp_gros_oeuvre_pct','lmnp_gros_oeuvre_duree','lmnp_toiture_pct','lmnp_toiture_duree','lmnp_installations_pct','lmnp_installations_duree','lmnp_agencements_pct','lmnp_agencements_duree','lmnp_mobilier_duree','lmnp_seuil_immobilisation','duree_amort_travaux'];
+    const fiscalOnly = Object.assign({}, fiscalOverrides);
+    PROJECT_AMORT_KEYS.forEach(k => delete fiscalOnly[k]);
+    const merged = Object.assign({}, base, row.data || {}, fiscalOnly);
     state.projects[row.id] = { id: row.id, name: row.name, inputs: merged };
   });
 }
@@ -1573,7 +1577,10 @@ async function reloadActiveProject() {
   }
   const base = defaultProject(data.name, false).inputs;
   const fiscalOverrides = loadFiscalDefaults();
-  const merged = Object.assign({}, base, data.data || {}, fiscalOverrides);
+  const PROJECT_AMORT_KEYS = ['lmnp_part_terrain_pct','lmnp_gros_oeuvre_pct','lmnp_gros_oeuvre_duree','lmnp_toiture_pct','lmnp_toiture_duree','lmnp_installations_pct','lmnp_installations_duree','lmnp_agencements_pct','lmnp_agencements_duree','lmnp_mobilier_duree','lmnp_seuil_immobilisation','duree_amort_travaux'];
+  const fiscalOnly = Object.assign({}, fiscalOverrides);
+  PROJECT_AMORT_KEYS.forEach(k => delete fiscalOnly[k]);
+  const merged = Object.assign({}, base, data.data || {}, fiscalOnly);
   if (!state.projects[state.activeId]) {
     state.projects[state.activeId] = { id: data.id, name: data.name, inputs: {} };
   }
