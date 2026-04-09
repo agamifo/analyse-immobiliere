@@ -4886,9 +4886,13 @@ async function generateDocx() {
       tblRow2('Rendement brut', fmtPct(rend_brut)) +
       tblRow2('Mensualité', fmtE(loan.mensualite)) +
       tblRow2('Apport', fmtE(apport)) +
+      tblRow2('Effort mensuel ('+best.label+')', fmtE(Math.abs(Math.round(best.treso/duree/12))) + (best.treso>=0?' (gain)':' (effort)')) +
       tblRow2('Tréso cumulée LMNP '+duree+' ans', fmtE(treso_lmnp)) +
       tblRow2('Tréso cumulée Foncier '+duree+' ans', fmtE(treso_foncier)) +
-      tblRow2('Tréso cumulée IS '+duree+' ans', fmtE(treso_is))
+      tblRow2('Tréso cumulée IS '+duree+' ans', fmtE(treso_is)) +
+      (hasPV&&pv ? tblRow2('NIP — LMNP', fmtE(nip_lmnp), false, nip_lmnp>=nip_foncier&&nip_lmnp>=nip_is_perso?'E8F5E9':'') +
+        tblRow2('NIP — Location nue', fmtE(nip_foncier)) +
+        tblRow2('NIP — Société IS (perso)', fmtE(nip_is_perso)) : '')
     ),
 
     // ── PAGE 2 : BIEN & FINANCEMENT ──────────────────────────────────────────
@@ -4948,6 +4952,53 @@ async function generateDocx() {
       ${hdr}${rows}</w:tbl>`;
     })(),
 
+    // ── Plan d'amortissement par composant ──
+    para('Plan d\'amortissement par composant', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}),
+    (() => {
+      const amort = calcAmortissements(i);
+      const _terrain_pct = _n(i.lmnp_part_terrain_pct, 15);
+      const prix = _n(i.prix_acquisition);
+      const frais = _n(i.frais_notaire);
+      const base = (prix + frais) - (prix * _terrain_pct / 100);
+      const comps = [
+        ['Terrain', _terrain_pct+'%', '—', '—', fmtE(prix*_terrain_pct/100)],
+        ['Gros œuvre', _n(i.lmnp_gros_oeuvre_pct,50)+'%', _n(i.lmnp_gros_oeuvre_duree,60)+' ans', fmtE(base*_n(i.lmnp_gros_oeuvre_pct,50)/100/_n(i.lmnp_gros_oeuvre_duree,60)), fmtE(base*_n(i.lmnp_gros_oeuvre_pct,50)/100)],
+        ['Toiture', _n(i.lmnp_toiture_pct,10)+'%', _n(i.lmnp_toiture_duree,25)+' ans', fmtE(base*_n(i.lmnp_toiture_pct,10)/100/_n(i.lmnp_toiture_duree,25)), fmtE(base*_n(i.lmnp_toiture_pct,10)/100)],
+        ['Installations', _n(i.lmnp_installations_pct,15)+'%', _n(i.lmnp_installations_duree,20)+' ans', fmtE(base*_n(i.lmnp_installations_pct,15)/100/_n(i.lmnp_installations_duree,20)), fmtE(base*_n(i.lmnp_installations_pct,15)/100)],
+        ['Agencements', _n(i.lmnp_agencements_pct,20)+'%', _n(i.lmnp_agencements_duree,15)+' ans', fmtE(base*_n(i.lmnp_agencements_pct,20)/100/_n(i.lmnp_agencements_duree,15)), fmtE(base*_n(i.lmnp_agencements_pct,20)/100)],
+        ['Travaux', '—', (_n(i.duree_amort_travaux)||20)+' ans', fmtE(_n(i.travaux)/(_n(i.duree_amort_travaux)||20)), fmtE(_n(i.travaux))],
+        ['Mobilier', '—', _n(i.lmnp_mobilier_duree,7)+' ans', fmtE(_n(i.meubles)/_n(i.lmnp_mobilier_duree,7)), fmtE(_n(i.meubles))],
+      ];
+      const hdrs = ['Composant','%','Durée','Amort./an','Base totale'];
+      const cols = [2200,1200,1400,2200,2500];
+      return `<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>
+        <w:tblBorders><w:insideH w:val="single" w:sz="2" w:space="0" w:color="D0DCE8"/></w:tblBorders>
+      </w:tblPr>
+      <w:tblGrid>${cols.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
+      <w:tr>${hdrs.map((h,ci)=>`<w:tc><w:tcPr><w:tcW w:w="${cols[ci]}" w:type="dxa"/>
+        <w:shd w:val="clear" w:color="auto" w:fill="002046"/>
+        <w:tcMar><w:top w:w="50" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="50" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar>
+      </w:tcPr><w:p><w:pPr><w:jc w:val="${ci>2?'right':'left'}"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="FFFFFF"/>
+        <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
+        <w:t>${esc(h)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>
+      ${comps.map((r,idx)=>`<w:tr>${r.map((v,ci)=>`<w:tc><w:tcPr><w:tcW w:w="${cols[ci]}" w:type="dxa"/>
+        <w:shd w:val="clear" w:color="auto" w:fill="${idx%2?'F8FAFC':'FFFFFF'}"/>
+        <w:tcMar><w:top w:w="40" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar>
+      </w:tcPr><w:p><w:pPr><w:jc w:val="${ci>2?'right':'left'}"/></w:pPr>
+      <w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="1e3a52"/>
+        <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
+        <w:t>${esc(v)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`).join('')}
+      <w:tr>${['Total',(_terrain_pct+_n(i.lmnp_gros_oeuvre_pct,50)+_n(i.lmnp_toiture_pct,10)+_n(i.lmnp_installations_pct,15)+_n(i.lmnp_agencements_pct,20))+'%','',fmtE(amort.immo_annuel+amort.travaux_annuel+amort.meubles_annuel)+'/an',fmtE(base+_n(i.travaux)+_n(i.meubles))].map((v,ci)=>`<w:tc><w:tcPr><w:tcW w:w="${cols[ci]}" w:type="dxa"/>
+        <w:shd w:val="clear" w:color="auto" w:fill="E8F0FE"/>
+        <w:tcMar><w:top w:w="50" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="50" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar>
+      </w:tcPr><w:p><w:pPr><w:jc w:val="${ci>2?'right':'left'}"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="002046"/>
+        <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
+        <w:t>${esc(v)}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>
+      </w:tbl>`;
+    })(),
+
     // ── PAGE 3 : COMPARAISON DES RÉGIMES ─────────────────────────────────────
     pageBreak(),
     sectionTitle('Comparaison des régimes'),
@@ -5004,6 +5055,27 @@ async function generateDocx() {
       <w:tblGrid>${cols.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
       ${hdr}${rows}</w:tbl>`;
     })(),
+
+    // ── PAGE 3bis : NET IN POCKET ───────────────────────────────────────────
+    pageBreak(),
+    sectionTitle('Net In Pocket — Bilan global'),
+    para('Apport + trésorerie + revente sur ' + duree + ' ans', {size:18, color:'5a7a96', spAfter:160}),
+    tbl2(
+      tblRow2('Composante','LMNP / LMP','Location nue','Société IS (perso)',true).replace('w:gridSpan w:val="2"','') +
+      tblRow2('Apport initial', fmtE(-apport), fmtE(-apport), fmtE(-apport)) +
+      tblRow2('Tréso cumulée ' + duree + ' ans', fmtE(treso_lmnp), fmtE(treso_foncier), fmtE(is_treso_perso)) +
+      (hasPV && pv ? tblRow2('Net revente', fmtE(pv.net_lmnp), fmtE(pv.net_nu), fmtE(pv.net_is)) : '') +
+      tblRow2('NIP TOTAL', fmtE(nip_lmnp), fmtE(nip_foncier), fmtE(nip_is_perso), false, nip_lmnp>=nip_foncier&&nip_lmnp>=nip_is_perso?'E8F5E9':'FFFFFF') +
+      tblRow2('Rendement / apport', apport>0?(nip_lmnp/apport*100).toFixed(1)+'%':'—', apport>0?(nip_foncier/apport*100).toFixed(1)+'%':'—', apport>0?(nip_is_perso/apport*100).toFixed(1)+'%':'—') +
+      tblRow2('Effort mensuel moyen', fmtE(Math.round(treso_lmnp/duree/12)), fmtE(Math.round(treso_foncier/duree/12)), fmtE(Math.round(is_treso_perso/duree/12)))
+    ),
+    hasPV && pv ? para('Société IS — Détail poche société vs perso', {bold:true, size:20, color:'002046', spBefore:200, spAfter:80}) : '',
+    hasPV && pv ? tbl2(
+      tblRow2('Indicateur','Montant',true) +
+      tblRow2('Poche société (avant distribution)', fmtE(nip_is_societe)) +
+      tblRow2('Flat tax si distribué (' + (_n(i.taux_flat_tax)||30) + '%)', fmtE(Math.round(is_treso_societe * flat_tax_pct_r))) +
+      tblRow2('Poche perso (après flat tax)', fmtE(nip_is_perso), false, 'E8F5E9')
+    ) : '',
 
     // ── PAGE 4 : CASH FLOW ANNUEL ─────────────────────────────────────────────
     pageBreak(),
