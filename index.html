@@ -3290,15 +3290,17 @@ function renderRapport(p) {
       </div>`:''}`,
 
     'section-cashflow': `
-      <div style="background:#fff;border-radius:8px;padding:18px;
-                  box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
-        <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie annuelle — Combien ça coûte/rapporte chaque année ?</div>
-        <div style="position:relative;width:100%;height:300px;overflow:hidden;"><canvas id="chartRapportCF" width="800" height="220"></canvas></div>
-      </div>
-      <div style="background:#fff;border-radius:8px;padding:18px;
-                  box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);margin-bottom:18px;">
-        <div style="font-size:0.62rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Trésorerie cumulée — Au total, combien je gagne ?</div>
-        <div style="position:relative;width:100%;height:300px;overflow:hidden;"><canvas id="chartRapportCFCum" width="800" height="220"></canvas></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+        <div style="background:#fff;border-radius:8px;padding:14px;
+                    box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
+          <div style="font-size:0.58rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">Trésorerie annuelle</div>
+          <div style="position:relative;width:100%;height:260px;overflow:hidden;"><canvas id="chartRapportCF"></canvas></div>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:14px;
+                    box-shadow:0 1px 4px rgba(0,32,70,0.07),0 0 0 1px rgba(0,32,70,0.06);">
+          <div style="font-size:0.58rem;font-weight:700;color:#5a7a96;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">Trésorerie cumulée</div>
+          <div style="position:relative;width:100%;height:260px;overflow:hidden;"><canvas id="chartRapportCFCum"></canvas></div>
+        </div>
       </div>
       <div id="rapportChartData"
         data-years='${JSON.stringify(cfYears)}'
@@ -4876,6 +4878,16 @@ async function generateDocx() {
     alert('⚠ Total des composants incorrect (' + _totalComp.toFixed(0) + '% au lieu de 100%) — vérifiez le plan d\'amortissement (onglet Projet).');
     return;
   }
+  // Capturer les graphiques cashflow si visibles
+  window._chartImgCF = null;
+  window._chartImgCFCum = null;
+  try {
+    const c1 = document.getElementById('chartRapportCF');
+    if (c1) window._chartImgCF = c1.toDataURL('image/png').split(',')[1];
+    const c2 = document.getElementById('chartRapportCFCum');
+    if (c2) window._chartImgCFCum = c2.toDataURL('image/png').split(',')[1];
+  } catch(e) { console.warn('Chart capture failed:', e); }
+
   const _n = (v, d=0) => parseFloat(v)||d;
 
   const lmnp    = calcYearsLMNP(i);
@@ -5290,6 +5302,37 @@ async function generateDocx() {
     pageBreak(),
     sectionTitle('Cash flow détaillé'),
     para(`Évolution annuelle sur ${duree} ans`, {size:18, color:'5a7a96', spAfter:160}),
+    // Images des graphiques (capturées avant la génération)
+    ...(window._chartImgCF ? [`<w:p><w:pPr><w:spacing w:before="0" w:after="120"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="5a7a96"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
+      <w:t>Trésorerie annuelle</w:t></w:r></w:p>`,
+      `<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">
+        <wp:extent cx="5400000" cy="2000000"/>
+        <wp:docPr id="10" name="ChartCF"/>
+        <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+            <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+              <pic:nvPicPr><pic:cNvPr id="10" name="chartCF.png"/><pic:cNvPicPr/></pic:nvPicPr>
+              <pic:blipFill><a:blip r:embed="rIdChartCF"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>
+              <pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="5400000" cy="2000000"/></a:xfrm>
+                <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>
+            </pic:pic></a:graphicData></a:graphic>
+      </wp:inline></w:drawing></w:r></w:p>`] : []),
+    ...(window._chartImgCFCum ? [`<w:p><w:pPr><w:spacing w:before="200" w:after="120"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="5a7a96"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>
+      <w:t>Trésorerie cumulée</w:t></w:r></w:p>`,
+      `<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">
+        <wp:extent cx="5400000" cy="2000000"/>
+        <wp:docPr id="11" name="ChartCFCum"/>
+        <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+            <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+              <pic:nvPicPr><pic:cNvPr id="11" name="chartCFCum.png"/><pic:cNvPicPr/></pic:nvPicPr>
+              <pic:blipFill><a:blip r:embed="rIdChartCFCum"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>
+              <pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="5400000" cy="2000000"/></a:xfrm>
+                <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>
+            </pic:pic></a:graphicData></a:graphic>
+      </wp:inline></w:drawing></w:r></w:p>`] : []),
     (() => {
       const cols = [1200,2100,2100,2100,2000];
       const hdr = `<w:tr>${['Année','LMNP Réel','Foncier Réel','Société IS','Mensualité'].map((h,ci)=>`
@@ -5396,6 +5439,21 @@ async function generateDocx() {
 
     // Remplacer document.xml
     zip.file('word/document.xml', newDocXml);
+
+    // Ajouter les images des graphiques si capturées
+    if (window._chartImgCF || window._chartImgCFCum) {
+      if (window._chartImgCF) zip.file('word/media/chartCF.png', window._chartImgCF, {base64:true});
+      if (window._chartImgCFCum) zip.file('word/media/chartCFCum.png', window._chartImgCFCum, {base64:true});
+      // Mettre à jour les relations
+      let rels = await zip.file('word/_rels/document.xml.rels')?.async('text') || '';
+      if (rels && window._chartImgCF && !rels.includes('rIdChartCF')) {
+        rels = rels.replace('</Relationships>',
+          '<Relationship Id="rIdChartCF" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/chartCF.png"/>' +
+          (window._chartImgCFCum ? '<Relationship Id="rIdChartCFCum" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/chartCFCum.png"/>' : '') +
+          '</Relationships>');
+        zip.file('word/_rels/document.xml.rels', rels);
+      }
+    }
 
     // Générer le blob
     const blob = await zip.generateAsync({
