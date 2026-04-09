@@ -3059,10 +3059,10 @@ function renderRapport(p) {
   const foncier_treso = treso_foncier;
 
   const scenarios = [
-    {label:'LMNP Réel',    treso:treso_lmnp,    color:'#1a4f8a'},
-    {label:'Location nue', treso:treso_foncier,  color:'#944a00'},
-    {label:'Société IS',   treso:treso_is,       color:'#15653a'},
-  ].sort((a,b)=>b.treso-a.treso);
+    {label:'LMNP Réel',    treso:treso_lmnp,    nip:nip_lmnp,    color:'#1a4f8a'},
+    {label:'Location nue', treso:treso_foncier,  nip:nip_foncier, color:'#944a00'},
+    {label:'Société IS',   treso:treso_is,       nip:nip_is_perso,color:'#15653a'},
+  ].sort((a,b)=>b.nip-a.nip);
   const best = scenarios[0];
 
   // ── Formatage ────────────────────────────────────────
@@ -3129,7 +3129,7 @@ function renderRapport(p) {
         </div>
         <div style="color:rgba(255,255,255,0.85);font-size:0.73rem;line-height:1.7;">
           Sur <strong style="color:#fff;">${duree} ans</strong>, la structure <strong style="color:#fff;">${best.label}</strong>
-          génère la meilleure trésorerie nette cumulée de <strong style="color:#fff;">${fmtE(best.treso)}</strong>.
+          génère le meilleur enrichissement net (NIP) de <strong style="color:#fff;">${fmtE(best.nip)}</strong>.
           ${hasPV&&pv?`À la revente (<strong style="color:#fff;">${fmtE(_n(i.prix_cession))}</strong> en ${i.annee_cession}), le net en poche varie de <strong style="color:#fff;">${fmtE(Math.min(pv.net_nu,pv.net_lmnp,pv.net_is))}</strong> à <strong style="color:#fff;">${fmtE(Math.max(pv.net_nu,pv.net_lmnp,pv.net_is))}</strong> selon la structure.`:''}
         </div>
       </div>
@@ -4916,10 +4916,10 @@ async function generateDocx() {
   const nip_is_societe = -apport + is_treso_societe + (hasPV && pv && pv.pv_is !== undefined ? _n(i.prix_cession) - pv.is_pv : 0);
 
   const scenarios = [
-    {label:'LMNP Réel',    treso:treso_lmnp},
-    {label:'Location nue', treso:treso_foncier},
-    {label:'Société IS',   treso:treso_is},
-  ].sort((a,b)=>b.treso-a.treso);
+    {label:'LMNP Réel',    treso:treso_lmnp,    nip:nip_lmnp},
+    {label:'Location nue', treso:treso_foncier,  nip:nip_foncier},
+    {label:'Société IS',   treso:treso_is,       nip:nip_is_perso},
+  ].sort((a,b)=>b.nip-a.nip);
   const best = scenarios[0];
 
   const today = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
@@ -5071,7 +5071,7 @@ async function generateDocx() {
     para(`Analyse du ${today}`, {size:21, color:'5a7a96', spAfter:200}),
 
     para(`Régime optimal : ${best.label}`, {bold:true, size:22, color:'002046', spBefore:120}),
-    para(`Sur ${duree} ans, la structure ${best.label} génère la meilleure trésorerie nette cumulée de ${fmtE(best.treso)}.`, {size:20, spAfter:80}),
+    para(`Sur ${duree} ans, la structure ${best.label} génère le meilleur enrichissement net (NIP) de ${fmtE(best.nip)}.`, {size:20, spAfter:80}),
     hasPV && pv ? para(`À la revente (${fmtE(_n(i.prix_cession))} en ${i.annee_cession}), le net en poche varie de ${fmtE(Math.min(pv.net_nu,pv.net_lmnp,pv.net_is))} à ${fmtE(Math.max(pv.net_nu,pv.net_lmnp,pv.net_is))} selon la structure.`, {size:20, spAfter:200}) : '',
 
     para('Indicateurs clés', {bold:true, size:26, color:'002046', spBefore:160, spAfter:80}),
@@ -5255,7 +5255,7 @@ async function generateDocx() {
 
     // Analyse comparaison
     para('💡 Analyse', {bold:true, size:22, color:'002046', spBefore:200, spAfter:60}),
-    para(`Sur ${duree} ans, le régime ${best.label} génère la meilleure trésorerie nette cumulée de ${fmtE(best.treso)}. ` +
+    para(`Sur ${duree} ans, le régime ${best.label} génère le meilleur enrichissement net (NIP) de ${fmtE(best.nip)}. ` +
       `L'effort mensuel moyen pour l'investisseur est de ${fmtE(Math.abs(Math.round(best.treso/duree/12)))}${best.treso>=0?' de gain':' d\'effort'} par mois. ` +
       (treso_lmnp !== treso_foncier ? `L'écart entre LMNP (${fmtE(treso_lmnp)}) et Foncier (${fmtE(treso_foncier)}) sur ${duree} ans est de ${fmtE(Math.abs(treso_lmnp-treso_foncier))}.` : ''),
       {size:20, color:'3a3a3a', spAfter:100}),
