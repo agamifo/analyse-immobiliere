@@ -1291,7 +1291,8 @@ async function loadState() {
     // les nouveaux champs ajoutés après création du projet ont leur valeur par défaut,
     // sans écraser ce qui était déjà saisi
     const base = defaultProject(row.name, false).inputs;
-    const merged = Object.assign({}, base, loadFiscalDefaults(), row.data || {});
+    const fiscalOverrides = loadFiscalDefaults();
+    const merged = Object.assign({}, base, row.data || {}, fiscalOverrides);
     state.projects[row.id] = { id: row.id, name: row.name, inputs: merged };
   });
 }
@@ -1571,7 +1572,8 @@ async function reloadActiveProject() {
     return;
   }
   const base = defaultProject(data.name, false).inputs;
-  const merged = Object.assign({}, base, loadFiscalDefaults(), data.data || {});
+  const fiscalOverrides = loadFiscalDefaults();
+  const merged = Object.assign({}, base, data.data || {}, fiscalOverrides);
   if (!state.projects[state.activeId]) {
     state.projects[state.activeId] = { id: data.id, name: data.name, inputs: {} };
   }
